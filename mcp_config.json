@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "omnipress": {
+      "command": "python",
+      "args": ["src/server.py"],
+      "env": {
+        "ARTICLES_DIR": "./articles"
+      }
+    }
+  }
+}

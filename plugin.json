@@ -1,0 +1,27 @@
+{
+  "name": "omnipress-mcp",
+  "version": "0.1.0",
+  "description": "Agentic multi-channel publishing engine for Antigravity via Model Context Protocol (MCP).",
+  "author": {
+    "name": "OmniPress Team"
+  },
+  "keywords": [
+    "antigravity",
+    "mcp",
+    "publishing",
+    "linkedin",
+    "tax",
+    "legaltech",
+    "social-media",
+    "automation"
+  ],
+  "mcpServers": {
+    "omnipress": {
+      "command": "python",
+      "args": ["${pluginDir}/src/server.py"],
+      "env": {
+        "ARTICLES_DIR": "${pluginDir}/articles"
+      }
+    }
+  }
+}

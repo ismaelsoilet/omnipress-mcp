@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "omnipress": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\Ismael\\projects\\omnipress-mcp\\src\\server.js"
+      ],
+      "env": {
+        "ARTICLES_DIR": "C:\\Users\\Ismael\\projects\\omnipress-mcp\\articles"
+      }
+    }
+  }
+}

@@ -1,0 +1,239 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OmniPress Publishing Engine API",
+    "description": "Agentic multi-channel publishing API for long-form articles, LinkedIn, X (Twitter), Threads, and Reddit with built-in LGPD & judicial de-identification privacy scanning.",
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3333",
+      "description": "Local OmniPress HTTP Gateway (or replace with your ngrok / cloudflared tunnel URL)"
+    }
+  ],
+  "paths": {
+    "/api/publish_article": {
+      "post": {
+        "operationId": "publishArticle",
+        "summary": "Publish and archive a long-form article",
+        "description": "Saves a complete, publication-ready long-form article to the local archive with YAML frontmatter (for Substack, Jusbrasil, Medium, or static blog). Automatically scans and anonymizes lawsuit numbers, CPFs, and CNPJs.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Title of the article"
+                  },
+                  "contentMarkdown": {
+                    "type": "string",
+                    "description": "Full body of the article in Markdown format"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Category: technology, tributario, pericia-judicial, or gestao-publica",
+                    "default": "technology"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Relevant tags for indexing"
+                  },
+                  "author": {
+                    "type": "string",
+                    "description": "Author name",
+                    "default": "OmniPress"
+                  },
+                  "sanitize": {
+                    "type": "boolean",
+                    "description": "Mask judicial process numbers, CPF/CNPJ, and emails (defaults to true)",
+                    "default": true
+                  }
+                },
+                "required": ["title", "contentMarkdown"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Article saved report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/queue_post": {
+      "post": {
+        "operationId": "queueSocialPost",
+        "summary": "Queue post or thread to social platforms in draft mode",
+        "description": "Queues a post or thread to Buffer (LinkedIn, X, Threads) or Reddit in draft/review mode for human approval before publishing.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "Post text or thread content"
+                  },
+                  "platforms": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Target platforms: [\"linkedin\"], [\"x\"], [\"threads\"], [\"reddit:subreddit_name\"], or [\"all\"]"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Title for platforms requiring titles (e.g. Reddit)"
+                  },
+                  "mediaUrls": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Optional list of image/media URLs"
+                  },
+                  "scheduleTime": {
+                    "type": "string",
+                    "description": "ISO 8601 timestamp for scheduling"
+                  },
+                  "sanitize": {
+                    "type": "boolean",
+                    "description": "Mask sensitive data prior to queuing",
+                    "default": true
+                  }
+                },
+                "required": ["text"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Queue status report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inspect_content": {
+      "post": {
+        "operationId": "inspectContent",
+        "summary": "Inspect text for sensitive legal, tax, or PII identifiers",
+        "description": "Pre-flight compliance scan for CNJ lawsuit numbers, CPF, CNPJ, and email addresses.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "Text to analyze"
+                  }
+                },
+                "required": ["text"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Inspection report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "clean": { "type": "boolean" },
+                    "findings": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": { "type": "string" },
+                          "match": { "type": "string" }
+                        }
+                      }
+                    },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/list_recent": {
+      "get": {
+        "operationId": "listRecentArticles",
+        "summary": "List recently published articles",
+        "description": "Returns metadata of recently saved long-form articles in the local archive.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 5
+            },
+            "description": "Maximum number of recent articles to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of recent articles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "articles": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "name": "omnipress-mcp",
+  "version": "0.1.0",
+  "description": "Agentic multi-channel publishing engine for Antigravity via Model Context Protocol (MCP)",
+  "main": "src/server.js",
+  "bin": {
+    "omnipress-mcp": "src/server.js"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "start:http": "node src/server.js --http 3333",
+    "setup:claude": "node scripts/setup_claude.js",
+    "test": "node tests/test_omnipress.js"
+  },
+  "keywords": [
+    "antigravity",
+    "mcp",
+    "model-context-protocol",
+    "publishing",
+    "linkedin",
+    "twitter",
+    "tax",
+    "legaltech",
+    "govtech",
+    "automation"
+  ],
+  "author": "OmniPress Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

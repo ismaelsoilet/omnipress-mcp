@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "omnipress-mcp"
+version = "0.1.0"
+description = "Agentic multi-channel publishing engine for Antigravity via Model Context Protocol (MCP)"
+readme = "README.md"
+authors = [{ name = "OmniPress Team" }]
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.0.0"
+]
+
+[project.scripts]
+omnipress-mcp = "src.server:main"
