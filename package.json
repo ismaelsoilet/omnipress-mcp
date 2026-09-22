@@ -26,6 +26,14 @@
   ],
   "author": "OmniPress Team",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ismaelsoilet/omnipress-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ismaelsoilet/omnipress-mcp/issues"
+  },
+  "homepage": "https://github.com/ismaelsoilet/omnipress-mcp#readme",
   "engines": {
     "node": ">=18.0.0"
   }

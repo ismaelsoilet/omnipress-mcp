@@ -629,7 +629,7 @@ function createHttpServer() {
       return res.end();
     }
 
-    const parsedUrl = url.parse(req.url, true);
+    const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const pathname = parsedUrl.pathname;
 
     try {
@@ -730,7 +730,7 @@ function createHttpServer() {
       if (pathname === '/api/list_recent' && (req.method === 'GET' || req.method === 'POST')) {
         let limit = 5;
         if (req.method === 'GET') {
-          limit = parseInt(parsedUrl.query.limit, 10) || 5;
+          limit = parseInt(parsedUrl.searchParams.get('limit'), 10) || 5;
         } else {
           const body = await parseRequestBody(req);
           limit = parseInt(body.limit, 10) || 5;

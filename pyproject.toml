@@ -17,5 +17,10 @@ dependencies = [
     "pydantic>=2.0.0"
 ]
 
+[project.urls]
+Homepage = "https://github.com/ismaelsoilet/omnipress-mcp"
+Repository = "https://github.com/ismaelsoilet/omnipress-mcp.git"
+Issues = "https://github.com/ismaelsoilet/omnipress-mcp/issues"
+
 [project.scripts]
 omnipress-mcp = "src.server:main"

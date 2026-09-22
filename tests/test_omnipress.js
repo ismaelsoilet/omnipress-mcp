@@ -133,11 +133,75 @@ async function runTests() {
   assert(queueOutput.includes('Masked 1 sensitive item'), 'Should report 1 masked item');
   console.log('  ✓ Threads & Reddit queue test passed: Sanitization & parameters validated.\n');
 
+  // Test 7: HTTP Gateway & OpenAPI Specification (ChatGPT Custom GPT Actions)
+  console.log('Test 7: HTTP Gateway & ChatGPT OpenAPI Specification...');
+  const server = createHttpServer();
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const assignedPort = server.address().port;
+  const baseUrl = `http://127.0.0.1:${assignedPort}`;
+
+  try {
+    // 7.1 Health check
+    const healthRes = await fetch(`${baseUrl}/health`);
+    assert.strictEqual(healthRes.status, 200);
+    const healthJson = await healthRes.json();
+    assert.strictEqual(healthJson.status, 'ok');
+    assert.strictEqual(healthJson.service, 'omnipress-mcp');
+
+    // 7.2 OpenAPI 3.1 Spec endpoint
+    const openApiRes = await fetch(`${baseUrl}/openapi.json`);
+    assert.strictEqual(openApiRes.status, 200);
+    const openApiJson = await openApiRes.json();
+    assert.strictEqual(openApiJson.openapi, '3.1.0');
+    assert(openApiJson.paths['/api/publish_article'], 'Must define publish_article path');
+    assert(openApiJson.paths['/api/queue_post'], 'Must define queue_post path');
+    assert(openApiJson.paths['/api/inspect_content'], 'Must define inspect_content path');
+    assert(openApiJson.paths['/api/list_recent'], 'Must define list_recent path');
+
+    // 7.3 REST Inspect Content
+    const inspectRes = await fetch(`${baseUrl}/api/inspect_content`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: 'Processo CNJ 0001234-56.2023.8.26.0100 verificado.' })
+    });
+    assert.strictEqual(inspectRes.status, 200);
+    const inspectJson = await inspectRes.json();
+    assert.strictEqual(inspectJson.clean, false);
+    assert.strictEqual(inspectJson.findings.length, 1);
+    assert.strictEqual(inspectJson.findings[0].type, 'lawsuit_number');
+
+    // 7.4 REST Publish Article
+    const publishRes = await fetch(`${baseUrl}/api/publish_article`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Artigo Via HTTP Gateway',
+        contentMarkdown: 'Conteúdo publicado através do endpoint HTTP.',
+        category: 'technology',
+        tags: ['http', 'chatgpt']
+      })
+    });
+    assert.strictEqual(publishRes.status, 200);
+    const publishJson = await publishRes.json();
+    assert.strictEqual(publishJson.success, true);
+    assert(publishJson.message.includes('Article archived successfully'));
+
+    // 7.5 REST List Recent
+    const listRes = await fetch(`${baseUrl}/api/list_recent?limit=3`);
+    assert.strictEqual(listRes.status, 200);
+    const listJson = await listRes.json();
+    assert.strictEqual(listJson.success, true);
+
+    console.log('  ✓ HTTP Gateway passed: Health, OpenAPI 3.1, and REST tool endpoints all verified.\n');
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+
   // Clean up test directory
   fs.rmSync(tempDir, { recursive: true, force: true });
 
   console.log('═══════════════════════════════════════════════════════');
-  console.log('🎉 ALL 6 TEST SUITES PASSED WITH MAXIMUM RIGOR & CARE!');
+  console.log('🎉 ALL 7 TEST SUITES PASSED WITH MAXIMUM RIGOR & CARE!');
   console.log('═══════════════════════════════════════════════════════');
 }
 
