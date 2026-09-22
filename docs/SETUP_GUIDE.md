@@ -138,3 +138,104 @@ ARTICLES_DIR=C:/Users/Ismael/Documents/MyVault/Articles
    ```
 2. In Antigravity chat, test multi-platform queuing:
    > *"OmniPress: Prepare a release post for our open-source project and queue it for LinkedIn, Threads, and Reddit r/SideProject."*
+
+---
+
+## 6. Claude Desktop Integration
+
+Claude Desktop natively connects to MCP servers over standard input/output (`stdio`).
+
+### Automated Setup (Recommended)
+Run the automated configuration script:
+```bash
+npm run setup:claude
+```
+This utility:
+- Detects your operating system configuration file (`%APPDATA%\Claude\claude_desktop_config.json` on Windows).
+- Backs up your existing settings.
+- Injects the `omnipress` MCP server configuration with absolute paths and environment variables.
+
+### Manual Setup
+Open `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) and add:
+
+```json
+{
+  "mcpServers": {
+    "omnipress": {
+      "command": "node",
+      "args": ["C:\\Users\\Ismael\\projects\\omnipress-mcp\\src\\server.js"],
+      "env": {
+        "ARTICLES_DIR": "C:\\Users\\Ismael\\projects\\omnipress-mcp\\articles"
+      }
+    }
+  }
+}
+```
+*Restart Claude Desktop after editing.*
+
+---
+
+## 7. Google Gemini Ecosystem
+
+### Windows Consumer App Analysis
+> [!NOTE]
+> The official Google Gemini Windows app (Microsoft Store / PWA) currently does **not** support direct local MCP servers (`stdio`). It exclusively connects to Google Workspace, YouTube, and Spotify extensions.
+
+### Working Solutions for Gemini:
+1. **Google Antigravity (Current Environment)**:
+   - Native support via `~/.gemini/config/mcp_config.json`.
+2. **Google Gemini CLI**:
+   - Add to `~/.gemini/settings.json`:
+     ```json
+     {
+       "mcpServers": {
+         "omnipress": {
+           "command": "node",
+           "args": ["C:\\Users\\Ismael\\projects\\omnipress-mcp\\src\\server.js"],
+           "env": {
+             "ARTICLES_DIR": "C:\\Users\\Ismael\\projects\\omnipress-mcp\\articles"
+           }
+         }
+       }
+     }
+     ```
+3. **Community Gemini Desktop Clients (e.g. Tome / Gemini MCP Desktop)**:
+   - Open-source desktop apps allow entering your Gemini API key and pointing directly to `C:\Users\Ismael\projects\omnipress-mcp\src\server.js`.
+
+---
+
+## 8. ChatGPT Classic & Custom GPT Integration
+
+ChatGPT Web and Desktop Classic connect to external tools through **Custom GPT Actions (OpenAPI 3.1)** or remote MCP connectors.
+
+### Step 8.1: Start the OmniPress HTTP Gateway
+Launch the zero-dependency HTTP server:
+```bash
+npm run start:http
+```
+OmniPress will start listening on port `3333`:
+- Health check: `http://localhost:3333/health`
+- Dynamic OpenAPI 3.1 Spec: `http://localhost:3333/openapi.json`
+- REST Actions: `POST /api/publish_article`, `POST /api/queue_post`, `POST /api/inspect_content`, `GET /api/list_recent`
+
+### Step 8.2: Expose via Tunnel (for ChatGPT Web access)
+Since ChatGPT cloud servers cannot reach `localhost`, expose the port using a tunnel:
+```bash
+npx ngrok http 3333
+# or using cloudflared:
+# cloudflared tunnel --url http://localhost:3333
+```
+Copy your public forwarding URL (e.g. `https://your-domain.ngrok-free.app`).
+
+### Step 8.3: Configure Custom GPT Action in ChatGPT
+1. In ChatGPT, click **Explore GPTs** > **Create**.
+2. Under the **Configure** tab:
+   - **Name**: `OmniPress Publishing Engine`
+   - **Instructions**: Copy instructions from `config/chatgpt_gpt_instructions.md`.
+3. Under **Actions**, click **Create new action**.
+4. In the **Schema** box, import `config/openapi.json` or fetch from `https://your-domain.ngrok-free.app/openapi.json`.
+5. Set **Authentication** to `None`.
+6. Test in the GPT preview pane:
+   > *"Inspect this text: 'No processo 0001234-56.2023.8.26.0100 analisamos o CPF 123.456.789-00'."*
+   ChatGPT will invoke the `inspectContent` action and display the masked findings!
+
