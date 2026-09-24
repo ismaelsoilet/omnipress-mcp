@@ -152,7 +152,7 @@ Configure OmniPress globally in `~/.gemini/config/mcp_config.json`:
 | `omnipress_publish_article` | Archives long-form article locally with YAML frontmatter organized by `YYYY/MM/`. Runs privacy & de-identification scan. |
 | `omnipress_queue_post` | Queues short-form post/thread to LinkedIn, X, Threads, or Reddit in Draft/Review mode. |
 | `omnipress_inspect_content` | Standalone utility to scan text for credentials, PII, or confidential court IDs without publishing. |
-| `omnipress_list_recent` | Lists recently archived articles and metadata. |
+| `omnipress_list_articles` | Lists recently archived articles and metadata (backward-compatible alias: `omnipress_list_recent`). |
 
 ---
 

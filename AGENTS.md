@@ -22,9 +22,12 @@ When an agent generates a content campaign, it must produce three synchronized a
 2. **LinkedIn Post**: Attention-grabbing opening hook, 3–5 bulleted insights, discussion question, 3–5 hashtags.
 3. **X Thread**: 3 to 5 connected micro-posts (hook, evidence, conclusion).
 
-### 3. Modifying MCP Tools
-- Do not break existing tool signatures in [`src/server.py`](src/server.py).
-- Tool descriptions must be explicit, describing parameters and expected formats to guide LLM tool calling.
+### 3. Modifying MCP Tools & Protocol Standards (Rule 07)
+- **Glama TDQS A+ (5.0) Standards**: All tools must comply with [`.agents/rules/07_mcp_quality_and_tdqs_standards.md`](.agents/rules/07_mcp_quality_and_tdqs_standards.md).
+- **Mandatory Annotations**: `readOnlyHint`, `destructiveHint`, `idempotentHint`, and `openWorldHint` must be declared.
+- **Canonical Naming**: Use canonical `verb_noun` format (`omnipress_publish_article`, `omnipress_queue_post`, `omnipress_inspect_content`, `omnipress_list_articles`).
+- **Backward Compatibility**: Always maintain legacy aliases (`omnipress_list_recent`) in tool dispatchers.
+- **Structured Guidance**: Docstrings and descriptions must specify `Use when:`, `Do NOT use when:`, and `Returns:`.
 
 ---
 
@@ -46,6 +49,9 @@ Ao gerar campanhas de conteúdo, o agente deve produzir 3 formatos integrados:
 2. **Post para LinkedIn**: Gancho forte inicial, 3 a 5 pontos objetivos, pergunta para engajamento e 3 a 5 hashtags.
 3. **Thread para X**: Sequência de 3 a 5 posts curtos e de alto impacto.
 
-### 3. Modificação das Ferramentas MCP
-- Mantenha a retrocompatibilidade das ferramentas em [`src/server.py`](src/server.py).
-- Docstrings devem ser claras e descritivas para orientar o modelo na seleção dos parâmetros.
+### 3. Modificação das Ferramentas MCP e Padrões de Protocolo (Regra 07)
+- **Padrões Glama TDQS A+ (5.0)**: Todas as ferramentas devem cumprir [`.agents/rules/07_mcp_quality_and_tdqs_standards.md`](.agents/rules/07_mcp_quality_and_tdqs_standards.md).
+- **Anotações Mandatórias**: Inclua `readOnlyHint`, `destructiveHint`, `idempotentHint` e `openWorldHint`.
+- **Nomenclatura Canônica**: Padrão `verb_noun` (`omnipress_publish_article`, `omnipress_queue_post`, `omnipress_inspect_content`, `omnipress_list_articles`).
+- **Compatibilidade Retroativa**: Mantenha aliases legados (`omnipress_list_recent`) nos despachantes.
+- **Estruturação**: Descrições e docstrings devem conter `Use when:`, `Do NOT use when:` e `Returns:`.

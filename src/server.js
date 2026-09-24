@@ -426,20 +426,68 @@ function listRecentArticles(limit = 5) {
 }
 
 // ==========================================
+// MCP Protocol Constants & Tool Annotations
+// ==========================================
+const MCP_TOOL_ANNOTATIONS = {
+  omnipress_publish_article: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: false
+  },
+  omnipress_queue_post: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true
+  },
+  omnipress_inspect_content: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false
+  },
+  omnipress_list_articles: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false
+  }
+};
+
+// ==========================================
 // MCP JSON-RPC 2.0 Protocol Handler
 // ==========================================
 const TOOLS_DEFINITIONS = [
   {
     name: 'omnipress_publish_article',
-    description: 'Saves a complete, publication-ready long-form article to the local archive with YAML frontmatter. Runs automatic legal/PII de-identification.',
+    title: 'Publish and Archive Article',
+    description: `Saves a complete, publication-ready long-form article to the local archive with YAML frontmatter (for Substack, Jusbrasil, Medium, or static blog) and optional event dispatch.
+
+Use when:
+- Archiving a completed markdown article with structured frontmatter metadata.
+- Publishing long-form thought leadership, legal tech, or tax analysis articles.
+- Ensuring content is checked and de-identified against CNJ court process numbers, CPFs, CNPJs, and personal emails before persistence.
+
+Do NOT use when:
+- Queuing short social media updates or micro-posts (use omnipress_queue_post instead).
+- Only checking for sensitive PII without writing files (use omnipress_inspect_content instead).
+
+Returns:
+- Formatted confirmation with filename, full storage path, category/tags, and detailed log of any sanitized privacy items.`,
+    annotations: MCP_TOOL_ANNOTATIONS.omnipress_publish_article,
     inputSchema: {
       type: 'object',
       properties: {
-        title: { type: 'string', description: 'Article title' },
-        content_markdown: { type: 'string', description: 'Complete article in GitHub-flavored Markdown' },
-        category: { type: 'string', description: 'Topic category (technology, tributario, pericia, govtech)' },
-        tags: { type: 'array', items: { type: 'string' }, description: 'Array of keyword tags' },
-        author: { type: 'string', description: 'Author name' },
+        title: { type: 'string', minLength: 1, maxLength: 300, description: 'Article title' },
+        content_markdown: { type: 'string', minLength: 1, description: 'Complete article body in GitHub-flavored Markdown' },
+        category: {
+          type: 'string',
+          enum: ['technology', 'tributario', 'pericia', 'govtech', 'general'],
+          description: 'Topic category (technology, tributario, pericia, govtech, general)'
+        },
+        tags: { type: 'array', items: { type: 'string' }, description: 'Array of keyword tags for categorization' },
+        author: { type: 'string', description: 'Author name (default OmniPress)' },
         sanitize: { type: 'boolean', description: 'Whether to sanitize court numbers and PII (default true)' }
       },
       required: ['title', 'content_markdown']
@@ -447,11 +495,25 @@ const TOOLS_DEFINITIONS = [
   },
   {
     name: 'omnipress_queue_post',
-    description: 'Queues a post or thread to social platforms (LinkedIn, X, Threads via Buffer, or Reddit) in Draft/Review mode.',
+    title: 'Queue Social Post or Thread',
+    description: `Queues a post, thread segment, or social announcement to distribution channels (LinkedIn, X/Twitter, Threads via Buffer, or Reddit) in draft/review mode.
+
+Use when:
+- Scheduling or queuing social media posts for human review or automated publishing.
+- Distributing snippets, summaries, or threads derived from long-form articles.
+- Targeting specific platforms such as LinkedIn, Threads, X, or a Reddit subreddit.
+
+Do NOT use when:
+- Storing long-form articles with frontmatter locally (use omnipress_publish_article instead).
+- Running a non-publishing privacy check (use omnipress_inspect_content instead).
+
+Returns:
+- Dispatch status report indicating successful queuing across configured providers (Buffer, Reddit, Webhook) or formatted draft fallback with sanitization notices.`,
+    annotations: MCP_TOOL_ANNOTATIONS.omnipress_queue_post,
     inputSchema: {
       type: 'object',
       properties: {
-        text: { type: 'string', description: 'Post text or thread segment' },
+        text: { type: 'string', minLength: 1, description: 'Post text or thread segment' },
         platforms: {
           type: 'array',
           items: { type: 'string' },
@@ -467,22 +529,48 @@ const TOOLS_DEFINITIONS = [
   },
   {
     name: 'omnipress_inspect_content',
-    description: 'Scans text for sensitive judicial lawsuit numbers (CNJ), tax IDs (CPF/CNPJ), emails, or PII without publishing.',
+    title: 'Inspect Content for PII and Legal IDs',
+    description: `Pre-flight compliance scan that analyzes draft content for Brazilian lawsuit numbers (CNJ), tax IDs (CPF/CNPJ), personal emails, and phone numbers without modifying or publishing content.
+
+Use when:
+- Auditing draft text for LGPD compliance, judicial confidentiality (segredo de justiça), or privacy leaks before publishing.
+- Verifying if content requires anonymization or de-identification.
+
+Do NOT use when:
+- Saving the article to disk (use omnipress_publish_article instead).
+- Queuing social posts (use omnipress_queue_post instead).
+
+Returns:
+- Summary report stating whether the text is clean, or a detailed itemized list of detected sensitive matches with their classification types.`,
+    annotations: MCP_TOOL_ANNOTATIONS.omnipress_inspect_content,
     inputSchema: {
       type: 'object',
       properties: {
-        text: { type: 'string', description: 'Text to scan for PII' }
+        text: { type: 'string', minLength: 1, description: 'Draft text to scan for sensitive PII or legal process IDs' }
       },
       required: ['text']
     }
   },
   {
-    name: 'omnipress_list_recent',
-    description: 'Lists recently saved articles in the local archive.',
+    name: 'omnipress_list_articles',
+    title: 'List Archived Articles',
+    description: `Retrieves metadata of recently archived long-form articles from the local repository directory.
+
+Use when:
+- Discovering existing articles, file paths, and modification dates.
+- Verifying recently published drafts or checking past article slugs.
+
+Do NOT use when:
+- Inspecting text content for privacy leaks (use omnipress_inspect_content instead).
+- Publishing new content (use omnipress_publish_article instead).
+
+Returns:
+- Formatted list of recent articles including filename, file size in bytes, and ISO-8601 modification timestamp.`,
+    annotations: MCP_TOOL_ANNOTATIONS.omnipress_list_articles,
     inputSchema: {
       type: 'object',
       properties: {
-        limit: { type: 'number', description: 'Number of articles to return (default 5)' }
+        limit: { type: 'integer', minimum: 1, maximum: 100, default: 5, description: 'Maximum number of articles to return (1-100, default 5)' }
       }
     }
   }
@@ -545,7 +633,7 @@ async function handleRpcRequest(message) {
             resultText = `⚠️ Found ${findings.length} sensitive item(s):\n` +
               findings.map(f => `  - [${f.type.toUpperCase()}]: ${f.match}`).join('\n');
           }
-        } else if (toolName === 'omnipress_list_recent') {
+        } else if (toolName === 'omnipress_list_articles' || toolName === 'omnipress_list_recent') {
           resultText = listRecentArticles(args.limit || 5);
         } else {
           return {
@@ -644,6 +732,7 @@ function createHttpServer() {
             publish_article: 'POST /api/publish_article',
             queue_post: 'POST /api/queue_post',
             inspect_content: 'POST /api/inspect_content',
+            list_articles: 'GET /api/list_articles',
             list_recent: 'GET /api/list_recent',
             mcp_rpc: 'POST /mcp'
           }
@@ -727,7 +816,7 @@ function createHttpServer() {
         });
       }
 
-      if (pathname === '/api/list_recent' && (req.method === 'GET' || req.method === 'POST')) {
+      if ((pathname === '/api/list_articles' || pathname === '/api/list_recent') && (req.method === 'GET' || req.method === 'POST')) {
         let limit = 5;
         if (req.method === 'GET') {
           limit = parseInt(parsedUrl.searchParams.get('limit'), 10) || 5;
@@ -814,6 +903,7 @@ module.exports = {
   queuePost,
   handleRpcRequest,
   TOOLS_DEFINITIONS,
+  MCP_TOOL_ANNOTATIONS,
   createHttpServer,
   startHttpServer
 };

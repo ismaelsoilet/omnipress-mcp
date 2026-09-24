@@ -59,10 +59,49 @@ def test_markdown_adapter(tmp_path: Path):
     print("✓ Markdown adapter test passed successfully.")
 
 
+def test_mcp_server():
+    from src.server import (
+        MCP_TOOL_ANNOTATIONS,
+        omnipress_publish_article,
+        omnipress_queue_post,
+        omnipress_inspect_content,
+        omnipress_list_articles,
+        omnipress_list_recent,
+    )
+
+    required_tools = [
+        "omnipress_publish_article",
+        "omnipress_queue_post",
+        "omnipress_inspect_content",
+        "omnipress_list_articles",
+        "omnipress_list_recent",
+    ]
+
+    for tool_name in required_tools:
+        assert tool_name in MCP_TOOL_ANNOTATIONS, f"Missing annotation for {tool_name}"
+        annot = MCP_TOOL_ANNOTATIONS[tool_name]
+        for key in ("readOnlyHint", "destructiveHint", "idempotentHint", "openWorldHint"):
+            assert isinstance(annot.get(key), bool), f"{key} in {tool_name} must be a boolean"
+
+    # Verify structured docstrings
+    for func in (omnipress_publish_article, omnipress_queue_post, omnipress_inspect_content, omnipress_list_articles):
+        doc = func.__doc__ or ""
+        assert "Use when:" in doc, f"{func.__name__} docstring missing 'Use when:'"
+        assert "Do NOT use when:" in doc, f"{func.__name__} docstring missing 'Do NOT use when:'"
+        assert "Returns:" in doc, f"{func.__name__} docstring missing 'Returns:'"
+
+    # Verify alias parity
+    canonical_res = omnipress_list_articles(limit=5)
+    alias_res = omnipress_list_recent(limit=5)
+    assert canonical_res == alias_res, "omnipress_list_articles and omnipress_list_recent must yield identical output"
+    print("✓ MCP server annotations, docstrings, and alias parity passed successfully.")
+
+
 if __name__ == "__main__":
     test_sanitizer_detection()
     test_slugify()
     import tempfile
     with tempfile.TemporaryDirectory() as tmpdir:
         test_markdown_adapter(Path(tmpdir))
+    test_mcp_server()
     print("\n🎉 ALL TESTS PASSED SUCCESSFULLY!")

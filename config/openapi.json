@@ -195,10 +195,10 @@
         }
       }
     },
-    "/api/list_recent": {
+    "/api/list_articles": {
       "get": {
-        "operationId": "listRecentArticles",
-        "summary": "List recently published articles",
+        "operationId": "listArticles",
+        "summary": "List archived long-form articles",
         "description": "Returns metadata of recently saved long-form articles in the local archive.",
         "parameters": [
           {
@@ -207,6 +207,50 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 5
+            },
+            "description": "Maximum number of articles to return (1-100, default 5)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of recent articles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "articles": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/list_recent": {
+      "get": {
+        "operationId": "listRecentArticles",
+        "summary": "List recently published articles (alias)",
+        "description": "Returns metadata of recently saved long-form articles in the local archive (backward-compatible alias for /api/list_articles).",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
               "default": 5
             },
             "description": "Maximum number of recent articles to return"

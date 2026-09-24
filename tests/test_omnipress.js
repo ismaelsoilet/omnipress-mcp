@@ -94,11 +94,23 @@ async function runTests() {
   assert(toolNames.includes('omnipress_publish_article'));
   assert(toolNames.includes('omnipress_queue_post'));
   assert(toolNames.includes('omnipress_inspect_content'));
-  assert(toolNames.includes('omnipress_list_recent'));
-  console.log('  ✓ MCP protocol passed: initialize and tools/list resolved correctly.\n');
+  assert(toolNames.includes('omnipress_list_articles'), 'Must include canonical verb_noun omnipress_list_articles');
+
+  for (const tool of toolsRes.result.tools) {
+    assert(tool.title, `Tool ${tool.name} must have a title`);
+    assert(tool.annotations, `Tool ${tool.name} must have annotations`);
+    assert(typeof tool.annotations.readOnlyHint === 'boolean');
+    assert(typeof tool.annotations.destructiveHint === 'boolean');
+    assert(typeof tool.annotations.idempotentHint === 'boolean');
+    assert(typeof tool.annotations.openWorldHint === 'boolean');
+    assert(tool.description.includes('Use when:'), `Tool ${tool.name} description missing 'Use when:'`);
+    assert(tool.description.includes('Do NOT use when:'), `Tool ${tool.name} description missing 'Do NOT use when:'`);
+    assert(tool.description.includes('Returns:'), `Tool ${tool.name} description missing 'Returns:'`);
+  }
+  console.log('  ✓ MCP protocol passed: initialize, TDQS annotations, and canonical tools/list resolved correctly.\n');
 
   // Test 5: Tool Call Execution via JSON-RPC
-  console.log('Test 5: MCP Tool Call Execution (omnipress_inspect_content)...');
+  console.log('Test 5: MCP Tool Call Execution (omnipress_inspect_content & list alias)...');
   const callRes = await handleRpcRequest({
     jsonrpc: '2.0',
     id: 3,
@@ -111,7 +123,24 @@ async function runTests() {
     }
   });
   assert(callRes.result.content[0].text.includes('Content is clean!'));
-  console.log('  ✓ MCP tool call passed.\n');
+
+  // Test 5.1: Canonical and Alias Tool Calls (omnipress_list_articles & omnipress_list_recent)
+  const listCanonicalRes = await handleRpcRequest({
+    jsonrpc: '2.0',
+    id: 31,
+    method: 'tools/call',
+    params: { name: 'omnipress_list_articles', arguments: { limit: 3 } }
+  });
+  assert(listCanonicalRes.result.content[0].text.includes('Recent Articles') || listCanonicalRes.result.content[0].text.includes('No articles'));
+
+  const listAliasRes = await handleRpcRequest({
+    jsonrpc: '2.0',
+    id: 32,
+    method: 'tools/call',
+    params: { name: 'omnipress_list_recent', arguments: { limit: 3 } }
+  });
+  assert.strictEqual(listCanonicalRes.result.content[0].text, listAliasRes.result.content[0].text, 'Canonical and alias calls must return identical output');
+  console.log('  ✓ MCP tool call passed: canonical inspection and list_articles/list_recent parity verified.\n');
 
   // Test 6: Threads & Reddit Tool Call Execution via JSON-RPC
   console.log('Test 6: MCP Queue Post (Threads & Reddit)...');

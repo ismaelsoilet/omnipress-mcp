@@ -3,12 +3,14 @@
 import os
 import re
 import datetime
+import unicodedata
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
 
 def slugify(value: str) -> str:
     """Converts a title into a URL-safe, clean filename slug."""
+    value = unicodedata.normalize("NFKD", str(value)).encode("ascii", "ignore").decode("ascii")
     value = re.sub(r"[^\w\s-]", "", value.lower())
     return re.sub(r"[-\s]+", "-", value).strip("-")
 

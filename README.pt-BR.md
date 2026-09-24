@@ -141,7 +141,7 @@ Configure o OmniPress no arquivo global `~/.gemini/config/mcp_config.json`:
 | `omnipress_publish_article` | Salva o artigo completo no arquivo local organizado por `AAAA/MM/` com frontmatter YAML e filtro LGPD/Segredo de Justiça. |
 | `omnipress_queue_post` | Envia postagens para a fila de rascunhos do LinkedIn, X, Threads ou Reddit. |
 | `omnipress_inspect_content` | Utilitário isolado para checar texto em busca de credenciais, processos judiciais ou dados sensíveis. |
-| `omnipress_list_recent` | Lista os artigos recentemente salvos e seus metadados. |
+| `omnipress_list_articles` | Lista os artigos recentemente salvos e seus metadados (alias retrocompatível: `omnipress_list_recent`). |
 
 ---
 
