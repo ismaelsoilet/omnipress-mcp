@@ -278,6 +278,128 @@
           }
         }
       }
+    },
+    "/api/brainstorm_channel": {
+      "post": {
+        "operationId": "brainstormChannel",
+        "summary": "Brainstorm channel names, pillars, and viral topics",
+        "description": "Generates 5 high-CTR channel names, 3 core content pillars, and 10 viral video topics with scroll-stopping 0-3s hooks.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "niche": { "type": "string", "default": "historia" },
+                  "tone": { "type": "string", "default": "mystery" },
+                  "targetAudience": { "type": "string", "default": "geral" },
+                  "language": { "type": "string", "default": "pt-BR" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Channel strategy bundle",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "strategy": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/generate_speech": {
+      "post": {
+        "operationId": "generateSpeech",
+        "summary": "Synthesize neural voice audio (TTS)",
+        "description": "Synthesizes high-definition neural narration audio using edge-tts (pt-BR-AntonioNeural).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": { "type": "string" },
+                  "voice": { "type": "string", "default": "pt-BR-AntonioNeural" },
+                  "outputFilename": { "type": "string" }
+                },
+                "required": ["text"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated audio metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "audio_path": { "type": "string" },
+                    "audio_size_bytes": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/render_video": {
+      "post": {
+        "operationId": "renderVideo",
+        "summary": "Render MP4 video with narration and visuals",
+        "description": "Renders vertical (9:16) or horizontal (16:9) video using ffmpeg from narration audio and image frames.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": { "type": "string" },
+                  "audioPath": { "type": "string" },
+                  "imagePaths": { "type": "array", "items": { "type": "string" } },
+                  "outputFilename": { "type": "string" },
+                  "aspectRatio": { "type": "string", "enum": ["9:16", "16:9"], "default": "9:16" },
+                  "voice": { "type": "string", "default": "pt-BR-AntonioNeural" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rendered video metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "video_path": { "type": "string" },
+                    "audio_path": { "type": "string" },
+                    "ffmpeg_available": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

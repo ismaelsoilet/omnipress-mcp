@@ -30,6 +30,10 @@ venv/
 # Generated content archives (optional, keep directory structure)
 articles/*
 !articles/.gitkeep
+media/output/*
+media/staging/*
+!media/.gitkeep
+!media/assets/.gitkeep
 
 # IDE
 .vscode/

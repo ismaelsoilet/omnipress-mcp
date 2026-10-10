@@ -10,6 +10,7 @@ const crypto = require('node:crypto');
 const readline = require('node:readline');
 const http = require('node:http');
 const url = require('node:url');
+const { execFile } = require('node:child_process');
 
 // ==========================================
 // Environment & Configuration
@@ -486,6 +487,274 @@ function prepareDarkScript({
   return bundle;
 }
 
+function brainstormChannel({
+  niche = 'historia',
+  tone = 'mystery',
+  targetAudience = 'geral',
+  language = 'pt-BR'
+}) {
+  const cleanNiche = (niche || 'historia').toLowerCase().trim();
+  let concepts = [];
+  let pillars = [];
+  let viralTopics = [];
+
+  if (cleanNiche.includes('hist') || cleanNiche.includes('antig') || cleanNiche.includes('passad') || cleanNiche.includes('guerra')) {
+    concepts = [
+      {
+        name: 'Dossiê Histórico',
+        handle: '@dossiehistorico',
+        tagline: 'O que os livros oficiais apagaram do passado.',
+        ctrAngle: 'Gatilho de segredo de estado e conspiração desclassificada.',
+        visualPalette: ['#0A0C10', '#D4AF37', '#8B0000'],
+        avatarPrompt: 'Cinematic silhouette of a 19th century archivist examining a glowing ancient dossier, dark moody background, amber rim light, 1:1'
+      },
+      {
+        name: 'Crônicas Ocultas',
+        handle: '@cronicasocultas.oficial',
+        tagline: 'Fatos reais que parecem pesadelo ou ficção.',
+        ctrAngle: 'Gatilho de bizarrice e choque factual.',
+        visualPalette: ['#070809', '#C0C0C0', '#4A0E17'],
+        avatarPrompt: 'Mysterious antique hourglass with black sand, golden filigree details, dark gothic studio lighting, photorealistic, 1:1'
+      },
+      {
+        name: 'O Passado Redigido',
+        handle: '@passadoredigido',
+        tagline: 'Documentos confidenciais que você nunca deveria ler.',
+        ctrAngle: 'Gatilho de censura e conhecimento proibido.',
+        visualPalette: ['#111215', '#E63946', '#F1FAEE'],
+        avatarPrompt: 'Top-secret archival stamp with redacted black marker bars over a historical sepia portrait, high contrast, 1:1'
+      },
+      {
+        name: 'Sombras da História',
+        handle: '@sombrasdahistoria',
+        tagline: 'As decisões mais sombrias que moldaram o mundo moderno.',
+        ctrAngle: 'Gatilho de poder, decisões secretas de bastidores.',
+        visualPalette: ['#050505', '#DAA520', '#1C2541'],
+        avatarPrompt: 'Shadowy figures in vintage military trench coats in a dimly lit rainy alleyway, atmospheric volumetric lighting, 1:1'
+      },
+      {
+        name: 'Arquivos do Tempo',
+        handle: '@arquivosdotempo',
+        tagline: 'Investigação profunda das maiores anomalias da humanidade.',
+        ctrAngle: 'Gatilho investigativo e documental solene.',
+        visualPalette: ['#0D1117', '#C9D1D9', '#58A6FF'],
+        avatarPrompt: 'Macro shot of an ancient brass astrolabe mechanism surrounded by forgotten manuscripts, cinematic golden hour lighting, 1:1'
+      }
+    ];
+
+    pillars = [
+      {
+        pillar: '1. Documentos Desclassificados & Conspirações Reais',
+        description: 'Operações militares secretas, arquivos de inteligência liberados após décadas e fraudes históricas desmascaradas.'
+      },
+      {
+        pillar: '2. Batalhas Bizarras & O Pior Erro Militar',
+        description: 'Conflitos onde generais perderam tudo por arrogância, blefes lendários e exércitos que lutaram contra si mesmos.'
+      },
+      {
+        pillar: '3. Anomalias & Mistérios Não Resolvidos',
+        description: 'Civilizações esquecidas, surtos coletivos bizarros e artefatos arqueológicos fora do seu tempo.'
+      }
+    ];
+
+    viralTopics = [
+      {
+        id: 1,
+        title: 'O Exército Fantasma da Segunda Guerra',
+        hook_0_3s: 'Você sabia que os EUA venceram uma das batalhas mais decisivas da história usando tanques de borracha e caixas de som?',
+        curiosityLoop: 'O 23º Quartel-General de Tropas Especiais enganou 20 divisões alemãs com cenografia de Hollywood.',
+        format: 'Shorts / Reels (9:16) + X Thread'
+      },
+      {
+        id: 2,
+        title: 'A Dança de São Vito de 1518',
+        hook_0_3s: 'Em julho de 1518, uma mulher começou a dançar na rua. Em 30 dias, 400 pessoas dançavam sem conseguir parar até o coração explodir.',
+        curiosityLoop: 'A histeria coletiva de Estrasburgo que médicos e padres tentaram conter com música ao vivo.',
+        format: 'Shorts / Reels (9:16) + Instagram Carrossel'
+      },
+      {
+        id: 3,
+        title: 'A Batalha de Karánsebes (O Exército que se Autodestruiu)',
+        hook_0_3s: 'Esta foi a batalha mais bizarra de todos os tempos: um exército perdeu 10.000 soldados sem que houvesse um único inimigo por perto.',
+        curiosityLoop: 'Uma briga por barris de aguardente causou fogo amigo generalizado no exército austríaco.',
+        format: 'Shorts / Reels (9:16) + Artigo'
+      },
+      {
+        id: 4,
+        title: 'O Submarino B-59 e o Homem que Salvou o Mundo',
+        hook_0_3s: 'Em outubro de 1962, a Terceira Guerra Mundial foi evitada pelo voto solitário de um único oficial soviético.',
+        curiosityLoop: 'Vasili Arkhipov se recusou a autorizar o lançamento de um torpedo nuclear a 50 metros de profundidade.',
+        format: 'Shorts / Reels (9:16) + X Thread'
+      },
+      {
+        id: 5,
+        title: 'O Mecanismo de Anticítera',
+        hook_0_3s: 'Mergulhadores encontraram um computador analógico da Grécia Antiga no fundo do mar. Como ele existiu há 2.000 anos?',
+        curiosityLoop: 'Engrenagens de bronze capazes de calcular eclipses que desafiam a linha do tempo tecnológica.',
+        format: 'Shorts / Reels (9:16) + Carrossel'
+      },
+      {
+        id: 6,
+        title: 'A Cidade Subterrânea de Derinkuyu',
+        hook_0_3s: 'Em 1963, um homem derrubou a parede de sua casa na Turquia e descobriu uma metrópole subterrânea para 20.000 pessoas.',
+        curiosityLoop: 'Túneis de 85 metros de profundidade com ventilação perfeita e portas de pedra inexpugnáveis.',
+        format: 'Shorts / Reels (9:16)'
+      },
+      {
+        id: 7,
+        title: 'O Mistério da Expedição Franklin',
+        hook_0_3s: 'Dois navios modernos e 129 marinheiros entraram no Ártico em 1845. Nenhum deles retornou com vida.',
+        curiosityLoop: 'Envenenamento por chumbo nas latas de comida e registros de canibalismo congelados no gelo.',
+        format: 'Shorts / Reels (9:16) + Artigo Completo'
+      },
+      {
+        id: 8,
+        title: 'O Veneno dos Médici',
+        hook_0_3s: 'Como a família mais poderosa da Renascença eliminava cardeais e duques em banquetes sem deixar vestígios.',
+        curiosityLoop: 'As receitas químicas de arsênico e belladonna disfarçadas em vinhos da Toscana.',
+        format: 'Instagram Carrossel + X Thread'
+      },
+      {
+        id: 9,
+        title: 'A Batalha de Pelúsio (A Tática dos Gatos)',
+        hook_0_3s: 'Os persas conquistaram o Egito usando gatos amarrados aos seus escudos porque sabiam que os egípcios não atacariam animais sagrados.',
+        curiosityLoop: 'Uma das maiores guerras psicológicas da antiguidade.',
+        format: 'Shorts / Reels (9:16)'
+      },
+      {
+        id: 10,
+        title: 'O Julgamento do Cadáver (O Sínodo do Cadáver)',
+        hook_0_3s: 'Em 897, a Igreja exumou o corpo de um Papa falecido há 9 meses, vestiu-o com roupas papais e colocou-o em julgamento.',
+        curiosityLoop: 'O Papa Estêvão VI gritando com o cadáver do Papa Formoso no tribunal de Roma.',
+        format: 'Shorts / Reels (9:16) + Carrossel'
+      }
+    ];
+  } else {
+    concepts = [
+      {
+        name: `${cleanNiche.toUpperCase()} Revelado`,
+        handle: `@${slugify(cleanNiche)}.revelado`,
+        tagline: `Os segredos e bastidores que ninguém te conta sobre ${cleanNiche}.`,
+        ctrAngle: 'Gatilho de revelação de bastidores.',
+        visualPalette: ['#0A0C10', '#3B82F6', '#F3F4F6']
+      },
+      {
+        name: `Dossiê ${cleanNiche.toUpperCase()}`,
+        handle: `@dossie.${slugify(cleanNiche)}`,
+        tagline: `Investigação aprofundada e fatos sem filtro.`,
+        ctrAngle: 'Gatilho de autoridade documental.',
+        visualPalette: ['#111827', '#E5E7EB', '#EF4444']
+      }
+    ];
+    pillars = [
+      { pillar: '1. O que não te contam', description: 'Casos e anomalias ocultas.' },
+      { pillar: '2. Histórias de impacto', description: 'Narrativas de alta retenção.' },
+      { pillar: '3. Análise crítica', description: 'Visão de longo prazo e conclusões.' }
+    ];
+    viralTopics = [
+      { id: 1, title: `O maior segredo sobre ${cleanNiche}`, hook_0_3s: `A maioria das pessoas ignora esse fato crucial...`, format: 'Shorts / Reels (9:16)' }
+    ];
+  }
+
+  return {
+    niche: cleanNiche,
+    tone,
+    targetAudience,
+    channelConcepts: concepts,
+    contentPillars: pillars,
+    viralTopicsBacklog: viralTopics,
+    productionSpecs: {
+      audioVoice: 'pt-BR-AntonioNeural (Edge-TTS gravado com tom documental solene)',
+      audioBgm: 'Dark Ambient / Drone com sub-graves em 80-90 BPM',
+      visualAiPrompts: 'Cinematic 8k, dark moody atmosphere, historical archival textures, volumetric amber rim lighting, 9:16 aspect ratio',
+      recommendedPacing: 'Cortes visuais a cada 3 a 5 segundos, pausas dramáticas na locução'
+    }
+  };
+}
+
+function runMediaScript(args) {
+  return new Promise((resolve, reject) => {
+    const scriptPath = path.join(PROJECT_ROOT, 'scripts', 'generate_dark_media.py');
+    const uvPath = '/home/ismaelsoilet/.local/bin/uv';
+    const hasUv = fs.existsSync(uvPath) || (process.env.PATH && process.env.PATH.includes('uv'));
+    let binary = 'python3';
+    let execArgs = [scriptPath, ...args];
+
+    if (hasUv) {
+      binary = fs.existsSync(uvPath) ? uvPath : 'uv';
+      execArgs = ['run', 'python', scriptPath, ...args];
+    }
+
+    execFile(binary, execArgs, { cwd: PROJECT_ROOT, maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => {
+      if (err) {
+        if (binary !== 'python3') {
+          execFile('python3', [scriptPath, ...args], { cwd: PROJECT_ROOT, maxBuffer: 10 * 1024 * 1024 }, (err2, stdout2, stderr2) => {
+            if (err2) return reject(new Error(stderr2 || stderr || err2.message));
+            try {
+              resolve(JSON.parse(stdout2.trim()));
+            } catch (e) {
+              resolve({ success: true, rawOutput: stdout2.trim() });
+            }
+          });
+          return;
+        }
+        return reject(new Error(stderr || err.message));
+      }
+      try {
+        const parsed = JSON.parse(stdout.trim());
+        resolve(parsed);
+      } catch (e) {
+        resolve({ success: true, rawOutput: stdout.trim() });
+      }
+    });
+  });
+}
+
+async function generateSpeech({ text, voice = 'pt-BR-AntonioNeural', outputFilename = null }) {
+  const now = Date.now();
+  const filename = outputFilename || `speech-${now}.mp3`;
+  const outPath = path.join(PROJECT_ROOT, 'media', 'output', filename);
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+
+  const res = await runMediaScript([
+    '--text', text,
+    '--voice', voice,
+    '--output', outPath,
+    '--audio-only',
+    '--json'
+  ]);
+  return res;
+}
+
+async function renderDarkVideo({
+  text = null,
+  audioPath = null,
+  imagePaths = [],
+  outputFilename = null,
+  aspectRatio = '9:16',
+  voice = 'pt-BR-AntonioNeural'
+}) {
+  const now = Date.now();
+  const filename = outputFilename || `video-${now}.mp4`;
+  const outPath = path.join(PROJECT_ROOT, 'media', 'output', filename);
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+
+  const args = [
+    '--output', outPath,
+    '--ratio', aspectRatio,
+    '--voice', voice,
+    '--json'
+  ];
+  if (text) args.push('--text', text);
+  if (audioPath) args.push('--audio-path', audioPath);
+  if (imagePaths && imagePaths.length > 0) {
+    args.push('--images', ...imagePaths);
+  }
+
+  const res = await runMediaScript(args);
+  return res;
+}
+
 async function queueMediaPost({
   title = null,
   caption,
@@ -921,6 +1190,24 @@ const MCP_TOOL_ANNOTATIONS = {
     destructiveHint: false,
     idempotentHint: true,
     openWorldHint: false
+  },
+  omnipress_brainstorm_channel: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false
+  },
+  omnipress_generate_speech: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: false
+  },
+  omnipress_render_dark_video: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: false
   }
 };
 
@@ -1121,6 +1408,121 @@ Returns:
       },
       required: ['caption', 'platforms']
     }
+  },
+  {
+    name: 'omnipress_brainstorm_channel',
+    title: 'Brainstorm Channel Strategy and Backlog',
+    description: `Generates high-retention channel concepts, psychological CTR names, 3 core content pillars, and a backlog of 10 viral video topics with tested 0-3s scroll-stop hooks for dark or niche channels (History, Tech, Geopolitics, Finance).
+
+Use when:
+- Bootstrapping or brainstorming a new content channel on YouTube, Instagram, TikTok, or X.
+- Looking for viral topic ideas with proven high-retention hooks and psychological curiosity loops.
+- Defining brand positioning, visual palettes, and neural TTS voice personas.
+
+Do NOT use when:
+- Writing a full script for an already chosen topic (use omnipress_prepare_dark_script instead).
+
+Returns:
+- JSON bundle with 5 channel name concepts, 3 content pillars, 10 viral backlog topics with hooks, and audio/visual production specs.`,
+    annotations: MCP_TOOL_ANNOTATIONS.omnipress_brainstorm_channel,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        niche: {
+          type: 'string',
+          description: 'Channel niche or theme (e.g., historia, misterios, geopolitica, tecnologia, financas)',
+          default: 'historia'
+        },
+        tone: {
+          type: 'string',
+          enum: ['mystery', 'documentary', 'dramatic', 'philosophical'],
+          default: 'mystery',
+          description: 'Narrative tone and aesthetic style'
+        },
+        target_audience: {
+          type: 'string',
+          description: 'Intended audience (default "geral")',
+          default: 'geral'
+        },
+        language: {
+          type: 'string',
+          description: 'Primary channel language code (default "pt-BR")',
+          default: 'pt-BR'
+        }
+      }
+    }
+  },
+  {
+    name: 'omnipress_generate_speech',
+    title: 'Generate Neural Speech Audio (TTS)',
+    description: `Synthesizes natural, high-definition neural narration audio (Edge-TTS) for Dark Channels, Reels, Shorts, and long-form storytelling.
+
+Use when:
+- Converting script narrations into immersive MP3 voice files.
+- Producing documentary voiceovers with grave, solemn pacing (pt-BR-AntonioNeural).
+
+Do NOT use when:
+- Only formatting text or scripts (use omnipress_prepare_dark_script instead).
+
+Returns:
+- Path to generated MP3 file, audio size in bytes, and voice specifications.`,
+    annotations: MCP_TOOL_ANNOTATIONS.omnipress_generate_speech,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        text: { type: 'string', description: 'Script or narrative text to be converted to speech' },
+        voice: {
+          type: 'string',
+          description: 'Neural voice name (default "pt-BR-AntonioNeural" - solemn dark documentary tone)',
+          default: 'pt-BR-AntonioNeural'
+        },
+        output_filename: {
+          type: 'string',
+          description: 'Optional output filename (e.g., exercito_fantasma.mp3)'
+        }
+      },
+      required: ['text']
+    }
+  },
+  {
+    name: 'omnipress_render_dark_video',
+    title: 'Render Dark Video with Narration and Visuals',
+    description: `Renders an MP4 video (vertical 9:16 for Shorts/Reels/TikTok or 16:9 for YouTube) by combining neural audio narration with images or atmospheric visuals using ffmpeg.
+
+Use when:
+- Producing ready-to-publish MP4 video files from script narrations and generated scene images.
+- Creating automated Ken Burns zoom-effect videos for high-retention dark channels.
+
+Do NOT use when:
+- Staging YouTube metadata or queuing Buffer drafts without rendering video (use omnipress_queue_media_post instead).
+
+Returns:
+- Path to rendered MP4 video, audio file path, aspect ratio, and video dimensions.`,
+    annotations: MCP_TOOL_ANNOTATIONS.omnipress_render_dark_video,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        text: { type: 'string', description: 'Narrative text to synthesize (optional if audio_path is provided)' },
+        audio_path: { type: 'string', description: 'Path to pre-existing MP3 audio file' },
+        image_paths: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'List of local image file paths to stitch into the video slideshow'
+        },
+        output_filename: { type: 'string', description: 'Target output video filename (e.g. video_01.mp4)' },
+        aspect_ratio: {
+          type: 'string',
+          enum: ['9:16', '16:9'],
+          default: '9:16',
+          description: 'Video aspect ratio: 9:16 for vertical Shorts/Reels/TikTok, 16:9 for YouTube long-form'
+        },
+        voice: {
+          type: 'string',
+          default: 'pt-BR-AntonioNeural',
+          description: 'Neural voice persona if text is provided'
+        }
+      }
+    }
   }
 ];
 
@@ -1203,6 +1605,31 @@ async function handleRpcRequest(message) {
             scheduleTime: args.schedule_time,
             sanitize: args.sanitize !== false
           });
+        } else if (toolName === 'omnipress_brainstorm_channel') {
+          const strategy = brainstormChannel({
+            niche: args.niche || 'historia',
+            tone: args.tone || 'mystery',
+            targetAudience: args.target_audience || 'geral',
+            language: args.language || 'pt-BR'
+          });
+          resultText = JSON.stringify(strategy, null, 2);
+        } else if (toolName === 'omnipress_generate_speech') {
+          const res = await generateSpeech({
+            text: args.text,
+            voice: args.voice || 'pt-BR-AntonioNeural',
+            outputFilename: args.output_filename || null
+          });
+          resultText = JSON.stringify(res, null, 2);
+        } else if (toolName === 'omnipress_render_dark_video') {
+          const res = await renderDarkVideo({
+            text: args.text,
+            audioPath: args.audio_path,
+            imagePaths: args.image_paths || [],
+            outputFilename: args.output_filename || null,
+            aspectRatio: args.aspect_ratio || '9:16',
+            voice: args.voice || 'pt-BR-AntonioNeural'
+          });
+          resultText = JSON.stringify(res, null, 2);
         } else {
           return {
             jsonrpc: '2.0',
@@ -1435,6 +1862,43 @@ function createHttpServer() {
         return sendJson(res, 200, { success: true, message: report });
       }
 
+      if (pathname === '/api/brainstorm_channel' && req.method === 'POST') {
+        const body = await parseRequestBody(req);
+        const strategy = brainstormChannel({
+          niche: body.niche || 'historia',
+          tone: body.tone || 'mystery',
+          targetAudience: body.targetAudience || body.target_audience || 'geral',
+          language: body.language || 'pt-BR'
+        });
+        return sendJson(res, 200, { success: true, strategy });
+      }
+
+      if (pathname === '/api/generate_speech' && req.method === 'POST') {
+        const body = await parseRequestBody(req);
+        if (!body.text) {
+          return sendJson(res, 400, { success: false, error: 'Missing required field: text is mandatory.' });
+        }
+        const speechRes = await generateSpeech({
+          text: body.text,
+          voice: body.voice || 'pt-BR-AntonioNeural',
+          outputFilename: body.outputFilename || body.output_filename || null
+        });
+        return sendJson(res, 200, speechRes);
+      }
+
+      if (pathname === '/api/render_video' && req.method === 'POST') {
+        const body = await parseRequestBody(req);
+        const videoRes = await renderDarkVideo({
+          text: body.text || null,
+          audioPath: body.audioPath || body.audio_path || null,
+          imagePaths: body.imagePaths || body.image_paths || [],
+          outputFilename: body.outputFilename || body.output_filename || null,
+          aspectRatio: body.aspectRatio || body.aspect_ratio || '9:16',
+          voice: body.voice || 'pt-BR-AntonioNeural'
+        });
+        return sendJson(res, 200, videoRes);
+      }
+
       // Not Found
       return sendJson(res, 404, { error: `Endpoint not found: ${req.method} ${pathname}` });
     } catch (err) {
@@ -1514,6 +1978,9 @@ module.exports = {
   segmentTwitterThread,
   stageYouTubeVideo,
   prepareDarkScript,
+  brainstormChannel,
+  generateSpeech,
+  renderDarkVideo,
   queueMediaPost,
   handleRpcRequest,
   TOOLS_DEFINITIONS,

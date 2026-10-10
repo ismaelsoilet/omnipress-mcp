@@ -1,0 +1,75 @@
+version: '3.8'
+
+# ==============================================================================
+# OMNIPRESS MCP — DOCKER COMPOSE PARA COOLIFY & TRAEFIK (ORACLE CLOUD VPS)
+# ==============================================================================
+# Integração direta com Coolify, SSL automático via Traefik e comunicação
+# interna direta de alta velocidade com o Hermes Agent na rede hermes-net.
+# ==============================================================================
+
+networks:
+  default:
+    driver: bridge
+  hermes-net:
+    name: hermes-net
+    external: true
+
+volumes:
+  omnipress_articles:
+    driver: local
+  omnipress_media:
+    driver: local
+
+services:
+  omnipress:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omnipress_api_coolify
+    hostname: omnipress_api_coolify
+    restart: unless-stopped
+    expose:
+      - "3333"
+    ports:
+      # Exposto localmente ou no IP da VPN (Tailscale/WireGuard)
+      - "${OMNIPRESS_BIND_IP:-0.0.0.0}:${PORT:-3333}:3333"
+    environment:
+      NODE_ENV: production
+      PORT: 3333
+      OMNIPRESS_MODE: http
+      ARTICLES_DIR: /app/articles
+      MEDIA_STAGING_DIR: /app/media/staging
+      TZ: ${TZ:-America/Sao_Paulo}
+      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:-omnipress.suitplus.com.br}
+      
+      # Credenciais opcionais de publicação (Buffer, Reddit, Webhooks)
+      BUFFER_ACCESS_TOKEN: ${BUFFER_ACCESS_TOKEN:-}
+      BUFFER_LINKEDIN_PROFILE_ID: ${BUFFER_LINKEDIN_PROFILE_ID:-}
+      BUFFER_X_PROFILE_ID: ${BUFFER_X_PROFILE_ID:-}
+      BUFFER_THREADS_PROFILE_ID: ${BUFFER_THREADS_PROFILE_ID:-}
+      BUFFER_INSTAGRAM_PROFILE_ID: ${BUFFER_INSTAGRAM_PROFILE_ID:-}
+      REDDIT_CLIENT_ID: ${REDDIT_CLIENT_ID:-}
+      REDDIT_CLIENT_SECRET: ${REDDIT_CLIENT_SECRET:-}
+      REDDIT_USERNAME: ${REDDIT_USERNAME:-}
+      REDDIT_PASSWORD: ${REDDIT_PASSWORD:-}
+      OMNIPRESS_WEBHOOK_URL: ${OMNIPRESS_WEBHOOK_URL:-}
+    volumes:
+      - omnipress_articles:/app/articles
+      - omnipress_media:/app/media
+    networks:
+      - default
+      - hermes-net
+    labels:
+      - "coolify.managed=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.omnipress_api.rule=Host(`${PUBLIC_DOMAIN:-omnipress.suitplus.com.br}`)"
+      - "traefik.http.routers.omnipress_api.entrypoints=websecure,https,http"
+      - "traefik.http.routers.omnipress_api.tls=true"
+      - "traefik.http.routers.omnipress_api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.omnipress_api.loadbalancer.server.port=3333"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3333/health | grep -qE '^(200)$' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s

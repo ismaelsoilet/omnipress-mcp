@@ -98,6 +98,24 @@ MCP_TOOL_ANNOTATIONS = {
         "idempotentHint": False,
         "openWorldHint": True,
     },
+    "omnipress_brainstorm_channel": {
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+    "omnipress_generate_speech": {
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": False,
+    },
+    "omnipress_render_dark_video": {
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": False,
+    },
 }
 
 
@@ -456,6 +474,182 @@ def omnipress_queue_media_post(
         results.append("\n" + "\n".join(sanitization_notes))
 
     return "\n\n".join(results)
+
+
+@mcp.tool()
+def omnipress_brainstorm_channel(
+    niche: str = "historia",
+    tone: str = "mystery",
+    target_audience: str = "geral",
+    language: str = "pt-BR",
+) -> str:
+    """
+    Generates high-retention channel concepts, psychological CTR names, 3 core content pillars,
+    and a backlog of 10 viral video topics with tested 0-3s scroll-stop hooks for dark or niche channels.
+
+    Use when:
+    - Brainstorming a new content channel on YouTube, Instagram, TikTok, or X.
+    - Creating viral backlog topics with tested 0-3s curiosity loops.
+    """
+    import json
+    clean_niche = niche.lower().strip()
+    if any(k in clean_niche for k in ["hist", "antig", "passad", "guerra"]):
+        concepts = [
+            {
+                "name": "Dossiê Histórico",
+                "handle": "@dossiehistorico",
+                "tagline": "O que os livros oficiais apagaram do passado.",
+                "ctrAngle": "Gatilho de segredo de estado e conspiração desclassificada.",
+                "visualPalette": ["#0A0C10", "#D4AF37", "#8B0000"]
+            },
+            {
+                "name": "Crônicas Ocultas",
+                "handle": "@cronicasocultas.oficial",
+                "tagline": "Fatos reais que parecem pesadelo ou ficção.",
+                "ctrAngle": "Gatilho de bizarrice e choque factual.",
+                "visualPalette": ["#070809", "#C0C0C0", "#4A0E17"]
+            },
+            {
+                "name": "O Passado Redigido",
+                "handle": "@passadoredigido",
+                "tagline": "Documentos confidenciais que você nunca deveria ler.",
+                "ctrAngle": "Gatilho de censura e conhecimento proibido.",
+                "visualPalette": ["#111215", "#E63946", "#F1FAEE"]
+            },
+            {
+                "name": "Sombras da História",
+                "handle": "@sombrasdahistoria",
+                "tagline": "As decisões mais sombrias que moldaram o mundo moderno.",
+                "ctrAngle": "Gatilho de poder, decisões secretas de bastidores.",
+                "visualPalette": ["#050505", "#DAA520", "#1C2541"]
+            },
+            {
+                "name": "Arquivos do Tempo",
+                "handle": "@arquivosdotempo",
+                "tagline": "Investigação profunda das maiores anomalias da humanidade.",
+                "ctrAngle": "Gatilho investigativo e documental solene.",
+                "visualPalette": ["#0D1117", "#C9D1D9", "#58A6FF"]
+            }
+        ]
+        pillars = [
+            {"pillar": "1. Documentos Desclassificados & Conspirações Reais", "description": "Arquivos de inteligência e operações militares secretas."},
+            {"pillar": "2. Batalhas Bizarras & O Pior Erro Militar", "description": "Exércitos que lutaram contra si mesmos e blefes inacreditáveis."},
+            {"pillar": "3. Anomalias & Mistérios Não Resolvidos", "description": "Surtos coletivos e artefatos arqueológicos fora do tempo."}
+        ]
+        viral_topics = [
+            {"id": 1, "title": "O Exército Fantasma da Segunda Guerra", "hook_0_3s": "Você sabia que os EUA venceram uma batalha usando tanques de borracha e caixas de som?", "curiosityLoop": "Cenografia de Hollywood enganou 20 divisões alemãs.", "format": "Shorts / Reels (9:16)"},
+            {"id": 2, "title": "A Dança de São Vito de 1518", "hook_0_3s": "Em julho de 1518, uma mulher começou a dançar na rua. Em 30 dias, 400 pessoas dançavam sem parar até a morte.", "curiosityLoop": "Histeria coletiva que médicos tentaram conter com orquestra ao vivo.", "format": "Shorts / Reels (9:16)"},
+            {"id": 3, "title": "A Batalha de Karánsebes", "hook_0_3s": "Um exército de 100 mil homens perdeu 10 mil soldados sem nenhum inimigo por perto.", "curiosityLoop": "Briga por aguardente gerou fogo amigo generalizado.", "format": "Shorts / Reels (9:16)"},
+            {"id": 4, "title": "O Submarino B-59 e o Fim do Mundo", "hook_0_3s": "Em 1962, a Terceira Guerra Mundial foi evitada pelo voto solitário de um único oficial.", "curiosityLoop": "Recusa de lançamento de torpedo nuclear soviético a 50 metros de profundidade.", "format": "Shorts / Reels (9:16)"},
+            {"id": 5, "title": "O Mecanismo de Anticítera", "hook_0_3s": "Cientistas encontraram um computador analógico de 2.000 anos no fundo do mar.", "curiosityLoop": "Engrenagens de bronze que calculavam eclipses desafiando a história.", "format": "Shorts / Reels (9:16)"}
+        ]
+    else:
+        concepts = [
+            {"name": f"{clean_niche.capitalize()} Revelado", "handle": f"@{clean_niche}.revelado", "tagline": f"Os bastidores de {clean_niche}."}
+        ]
+        pillars = [{"pillar": "1. Bastidores", "description": "Casos reais e revelações."}]
+        viral_topics = [{"id": 1, "title": f"O grande segredo sobre {clean_niche}", "hook_0_3s": "A maioria das pessoas ignora isso...", "format": "Shorts (9:16)"}]
+
+    bundle = {
+        "niche": clean_niche,
+        "tone": tone,
+        "targetAudience": target_audience,
+        "channelConcepts": concepts,
+        "contentPillars": pillars,
+        "viralTopicsBacklog": viral_topics,
+        "productionSpecs": {
+            "audioVoice": "pt-BR-AntonioNeural (Edge-TTS gravado com tom documental solene)",
+            "audioBgm": "Dark Ambient / Drone com sub-graves em 80-90 BPM",
+            "visualAiPrompts": "Cinematic 8k, dark moody atmosphere, historical archival textures, volumetric amber rim lighting, 9:16 aspect ratio",
+            "recommendedPacing": "Cortes visuais a cada 3 a 5 segundos, pausas dramáticas na locução"
+        }
+    }
+    return json.dumps(bundle, indent=2, ensure_ascii=False)
+
+
+@mcp.tool()
+def omnipress_generate_speech(
+    text: str,
+    voice: str = "pt-BR-AntonioNeural",
+    output_filename: Optional[str] = None,
+) -> str:
+    """
+    Synthesizes natural, high-definition neural narration audio (Edge-TTS) for Dark Channels, Reels, Shorts.
+
+    Use when:
+    - Converting script narrations into immersive MP3 voice files.
+    """
+    import asyncio
+    import json
+    import time
+    from pathlib import Path
+    from scripts.generate_dark_media import generate_tts_audio
+
+    filename = output_filename or f"speech-{int(time.time()*1000)}.mp3"
+    out_path = PROJECT_ROOT / "media" / "output" / filename
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    asyncio.run(generate_tts_audio(text, out_path, voice=voice))
+    result = {
+        "success": True,
+        "audio_path": str(out_path.resolve()),
+        "audio_size_bytes": out_path.stat().st_size if out_path.exists() else 0,
+        "voice": voice
+    }
+    return json.dumps(result, indent=2, ensure_ascii=False)
+
+
+@mcp.tool()
+def omnipress_render_dark_video(
+    text: Optional[str] = None,
+    audio_path: Optional[str] = None,
+    image_paths: Optional[List[str]] = None,
+    output_filename: Optional[str] = None,
+    aspect_ratio: str = "9:16",
+    voice: str = "pt-BR-AntonioNeural",
+) -> str:
+    """
+    Renders an MP4 video (vertical 9:16 or 16:9) by combining neural audio narration with images using ffmpeg.
+
+    Use when:
+    - Producing ready-to-publish MP4 video files from script narrations and scene images.
+    """
+    import asyncio
+    import json
+    import time
+    import shutil
+    from pathlib import Path
+    from scripts.generate_dark_media import generate_tts_audio, render_video_with_ffmpeg
+
+    filename = output_filename or f"video-{int(time.time()*1000)}.mp4"
+    out_path = PROJECT_ROOT / "media" / "output" / filename
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    audio_file = out_path.with_suffix(".mp3")
+
+    if audio_path and Path(audio_path).exists():
+        audio_file = Path(audio_path).resolve()
+    elif text:
+        asyncio.run(generate_tts_audio(text, audio_file, voice=voice))
+    else:
+        return json.dumps({"success": False, "error": "Forneça text ou audio_path válido."})
+
+    ffmpeg_available = bool(shutil.which("ffmpeg"))
+    video_path = None
+    if ffmpeg_available:
+        valid_images = [Path(p).resolve() for p in (image_paths or []) if Path(p).exists()]
+        rendered = render_video_with_ffmpeg(audio_file, valid_images, out_path, aspect_ratio=aspect_ratio)
+        if rendered.suffix == ".mp4" and rendered.exists():
+            video_path = str(rendered.resolve())
+
+    result = {
+        "success": True,
+        "audio_path": str(audio_file.resolve()),
+        "video_path": video_path,
+        "ffmpeg_available": ffmpeg_available,
+        "aspect_ratio": aspect_ratio,
+        "voice": voice
+    }
+    return json.dumps(result, indent=2, ensure_ascii=False)
 
 
 def main():

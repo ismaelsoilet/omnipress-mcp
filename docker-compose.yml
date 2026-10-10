@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  omnipress:
+    build: .
+    container_name: omnipress-mcp
+    restart: unless-stopped
+    ports:
+      # Disponível na porta 3333 (idealmente na interface da VPN/Tailscale da Oracle)
+      - "3333:3333"
+    environment:
+      - PORT=3333
+      - OMNIPRESS_MODE=http
+      - ARTICLES_DIR=/app/articles
+      - MEDIA_STAGING_DIR=/app/media/staging
+    env_file:
+      - .env
+    volumes:
+      - ./articles:/app/articles
+      - ./media:/app/media

@@ -95,7 +95,7 @@ async function runTests() {
     method: 'tools/list',
     params: {}
   });
-  assert.strictEqual(toolsRes.result.tools.length, 6);
+  assert.strictEqual(toolsRes.result.tools.length, 9);
   const toolNames = toolsRes.result.tools.map(t => t.name);
   assert(toolNames.includes('omnipress_publish_article'));
   assert(toolNames.includes('omnipress_queue_post'));
@@ -103,6 +103,9 @@ async function runTests() {
   assert(toolNames.includes('omnipress_list_articles'), 'Must include canonical verb_noun omnipress_list_articles');
   assert(toolNames.includes('omnipress_prepare_dark_script'), 'Must include omnipress_prepare_dark_script');
   assert(toolNames.includes('omnipress_queue_media_post'), 'Must include omnipress_queue_media_post');
+  assert(toolNames.includes('omnipress_brainstorm_channel'), 'Must include omnipress_brainstorm_channel');
+  assert(toolNames.includes('omnipress_generate_speech'), 'Must include omnipress_generate_speech');
+  assert(toolNames.includes('omnipress_render_dark_video'), 'Must include omnipress_render_dark_video');
 
   for (const tool of toolsRes.result.tools) {
     assert(tool.title, `Tool ${tool.name} must have a title`);
@@ -326,11 +329,79 @@ async function runTests() {
   assert(mediaQueueOutput.includes('[PROCESSO ANÔNIMO]'), 'Sensitive court case must be sanitized in media post');
   console.log('  ✓ Rich media post queuing passed: Multi-platform dispatch verified.\n');
 
+  // Test 13: Channel Ideation & Strategy (omnipress_brainstorm_channel)
+  console.log('Test 13: Channel Strategy & Ideation (omnipress_brainstorm_channel)...');
+  const brainstormRes = await handleRpcRequest({
+    jsonrpc: '2.0',
+    id: 13,
+    method: 'tools/call',
+    params: {
+      name: 'omnipress_brainstorm_channel',
+      arguments: {
+        niche: 'historia',
+        tone: 'mystery',
+        target_audience: 'geral'
+      }
+    }
+  });
+  assert(brainstormRes.result?.content?.[0]?.text, 'Must return strategy bundle text');
+  const parsedStrategy = JSON.parse(brainstormRes.result.content[0].text);
+  assert.strictEqual(parsedStrategy.niche, 'historia');
+  assert(parsedStrategy.channelConcepts.length >= 3, 'Must contain at least 3 channel name concepts');
+  assert(parsedStrategy.contentPillars.length >= 3, 'Must contain at least 3 content pillars');
+  assert(parsedStrategy.viralTopicsBacklog.length >= 5, 'Must contain at least 5 viral topics');
+  assert(parsedStrategy.viralTopicsBacklog[0].hook_0_3s, 'Topics must contain tested 0-3s hooks');
+  assert(parsedStrategy.productionSpecs.audioVoice.includes('AntonioNeural'), 'Must recommend AntonioNeural voice');
+  console.log('  ✓ Channel strategy ideation passed: High-retention concepts and pillars verified.\n');
+
+  // Test 14: Neural Speech Audio Generation (omnipress_generate_speech)
+  console.log('Test 14: Neural Speech Audio Generation (omnipress_generate_speech)...');
+  const speechRes = await handleRpcRequest({
+    jsonrpc: '2.0',
+    id: 14,
+    method: 'tools/call',
+    params: {
+      name: 'omnipress_generate_speech',
+      arguments: {
+        text: 'Em 1944, os Estados Unidos venceram uma das batalhas mais decisivas da história usando tanques de borracha.',
+        voice: 'pt-BR-AntonioNeural',
+        output_filename: 'test_unit_speech.mp3'
+      }
+    }
+  });
+  assert(speechRes.result?.content?.[0]?.text, 'Must return speech generation response');
+  const parsedSpeech = JSON.parse(speechRes.result.content[0].text);
+  assert.strictEqual(parsedSpeech.success, true, 'Speech generation must succeed');
+  assert(parsedSpeech.audio_path && fs.existsSync(parsedSpeech.audio_path), 'Audio MP3 file must exist on disk');
+  assert(parsedSpeech.audio_size_bytes > 0, 'Audio file size must be greater than zero');
+  console.log('  ✓ Neural speech audio generation passed: MP3 file generated with valid size.\n');
+
+  // Test 15: Dark Video Rendering Pipeline (omnipress_render_dark_video)
+  console.log('Test 15: Dark Video Rendering Pipeline (omnipress_render_dark_video)...');
+  const renderRes = await handleRpcRequest({
+    jsonrpc: '2.0',
+    id: 15,
+    method: 'tools/call',
+    params: {
+      name: 'omnipress_render_dark_video',
+      arguments: {
+        audio_path: parsedSpeech.audio_path,
+        output_filename: 'test_unit_video.mp4',
+        aspect_ratio: '9:16'
+      }
+    }
+  });
+  assert(renderRes.result?.content?.[0]?.text, 'Must return render pipeline response');
+  const parsedRender = JSON.parse(renderRes.result.content[0].text);
+  assert.strictEqual(parsedRender.success, true, 'Render pipeline execution must succeed');
+  assert.strictEqual(parsedRender.aspect_ratio, '9:16');
+  console.log('  ✓ Dark video pipeline passed: Robust audio & video staging verified.\n');
+
   // Clean up test directory
   fs.rmSync(tempDir, { recursive: true, force: true });
 
   console.log('═══════════════════════════════════════════════════════');
-  console.log('🎉 ALL 12 TEST SUITES PASSED WITH MAXIMUM RIGOR & CARE!');
+  console.log('🎉 ALL 15 TEST SUITES PASSED WITH MAXIMUM RIGOR & CARE!');
   console.log('═══════════════════════════════════════════════════════');
 }
 
