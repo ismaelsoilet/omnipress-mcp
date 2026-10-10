@@ -150,7 +150,9 @@ Configure OmniPress globally in `~/.gemini/config/mcp_config.json`:
 | Tool | Purpose |
 | :--- | :--- |
 | `omnipress_publish_article` | Archives long-form article locally with YAML frontmatter organized by `YYYY/MM/`. Runs privacy & de-identification scan. |
-| `omnipress_queue_post` | Queues short-form post/thread to LinkedIn, X, Threads, or Reddit in Draft/Review mode. |
+| `omnipress_queue_post` | Queues short-form post/thread to LinkedIn, X, Threads, Instagram, or Reddit in Draft/Review mode. |
+| `omnipress_queue_media_post` | Queues rich media content (Instagram Reels/Carousels, YouTube Shorts, X media posts) with staging and validation. |
+| `omnipress_prepare_dark_script` | Generates high-retention viral dark channel script, scene-by-scene AI image prompts, voice narration specs, and YouTube/Instagram SEO metadata. |
 | `omnipress_inspect_content` | Standalone utility to scan text for credentials, PII, or confidential court IDs without publishing. |
 | `omnipress_list_articles` | Lists recently archived articles and metadata (backward-compatible alias: `omnipress_list_recent`). |
 

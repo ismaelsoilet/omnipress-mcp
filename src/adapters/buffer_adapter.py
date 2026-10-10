@@ -16,9 +16,18 @@ class BufferPublisherAdapter(BasePublisherAdapter):
         self.linkedin_profile_id = os.getenv("BUFFER_LINKEDIN_PROFILE_ID", "").strip()
         self.x_profile_id = os.getenv("BUFFER_X_PROFILE_ID", "").strip()
         self.threads_profile_id = os.getenv("BUFFER_THREADS_PROFILE_ID", "").strip()
+        self.instagram_profile_id = os.getenv("BUFFER_INSTAGRAM_PROFILE_ID", "").strip()
 
     def is_configured(self) -> bool:
-        return bool(self.access_token and (self.linkedin_profile_id or self.x_profile_id or self.threads_profile_id))
+        return bool(
+            self.access_token
+            and (
+                self.linkedin_profile_id
+                or self.x_profile_id
+                or self.threads_profile_id
+                or self.instagram_profile_id
+            )
+        )
 
     def _resolve_profile_ids(self, platforms: List[str]) -> List[str]:
         target_ids = []
@@ -30,6 +39,8 @@ class BufferPublisherAdapter(BasePublisherAdapter):
             target_ids.append(self.x_profile_id)
         if ("threads" in normalized or "all" in normalized) and self.threads_profile_id:
             target_ids.append(self.threads_profile_id)
+        if ("instagram" in normalized or "ig" in normalized or "all" in normalized) and self.instagram_profile_id:
+            target_ids.append(self.instagram_profile_id)
 
         return target_ids
 

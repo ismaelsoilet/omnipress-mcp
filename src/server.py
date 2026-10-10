@@ -21,6 +21,7 @@ from src.adapters.markdown_adapter import MarkdownArchiveAdapter
 from src.adapters.buffer_adapter import BufferPublisherAdapter
 from src.adapters.webhook_adapter import WebhookPublisherAdapter
 from src.adapters.reddit_adapter import RedditPublisherAdapter
+from src.adapters.youtube_adapter import YouTubeStagingAdapter
 from src.utils.sanitizer import sanitize_text, inspect_sensitive_data
 
 # Initialize FastMCP Server with graceful fallback
@@ -50,6 +51,7 @@ markdown_adapter = MarkdownArchiveAdapter()
 buffer_adapter = BufferPublisherAdapter()
 webhook_adapter = WebhookPublisherAdapter()
 reddit_adapter = RedditPublisherAdapter()
+youtube_adapter = YouTubeStagingAdapter()
 
 
 # MCP Tool Annotations for 2026 Protocol & TDQS Standards
@@ -83,6 +85,18 @@ MCP_TOOL_ANNOTATIONS = {
         "destructiveHint": False,
         "idempotentHint": True,
         "openWorldHint": False,
+    },
+    "omnipress_prepare_dark_script": {
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+    "omnipress_queue_media_post": {
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True,
     },
 }
 
@@ -297,6 +311,151 @@ def omnipress_list_recent(limit: int = 5) -> str:
     Retrieves metadata of recently archived long-form articles from the local repository directory.
     """
     return omnipress_list_articles(limit=limit)
+
+
+@mcp.tool()
+def omnipress_prepare_dark_script(
+    topic: str,
+    format: str = "all",
+    tone: str = "mystery",
+    target_audience: str = "geral",
+) -> str:
+    """
+    Generates a high-retention viral dark channel script, scene-by-scene AI image prompts,
+    voice narration specs (TTS), Instagram carousel/caption, X viral thread, and YouTube SEO metadata.
+
+    Use when:
+    - Creating a complete production bundle for dark channels across YouTube, Instagram, X (Twitter), and TikTok.
+    - Generating scene-by-scene visual image prompts for AI generators.
+    - Formatting YouTube SEO tags, descriptions with timestamps, and Instagram carousel copy.
+    """
+    import json
+    clean_topic = topic.strip()
+    bundle = {
+        "topic": clean_topic,
+        "tone": tone,
+        "targetAudience": target_audience,
+        "audioDirection": {
+            "voice": "pt-BR-AntonioNeural (grave, pausado, tom documental investigativo)",
+            "bgm": "Dark Ambient / Drone misterioso com sub-graves (80-90 BPM)",
+            "pacing": "Pausas dramáticas a cada 5 segundos",
+        },
+        "shortScript": {
+            "durationSeconds": 55,
+            "hook_0_3s": f"Você NUNCA deveria saber sobre isso... mas a verdade sobre {clean_topic} finalmente veio à tona.",
+            "retention_3_15s": "A maioria das pessoas acredita na versão que contam por aí. Mas se você analisar os registros confidenciais, algo perturbador não fecha.",
+            "development_15_45s": "Nos bastidores, o que realmente aconteceu foi orquestrado em silêncio. Três anomalias foram apagadas dos livros: o sumiço dos relatórios originais, o isolamento dos envolvidos e o padrão que continua se repetindo hoje.",
+            "climax_45_50s": "E a pergunta que ninguém quer responder é: quem realmente lucrou com o silêncio desse caso?",
+            "cta_50_55s": "Comente sua teoria abaixo e se inscreva antes que derrubem este conteúdo.",
+        },
+        "visualScenePrompts": [
+            {
+                "scene": 1,
+                "timecode": "00:00 - 00:03",
+                "aiPrompt": "Cinematic 8k, dark moody atmosphere, mysterious silhouette holding classified dossier, dramatic volumetric lighting, 9:16 aspect ratio, ultra-detailed",
+            },
+            {
+                "scene": 2,
+                "timecode": "00:03 - 00:15",
+                "aiPrompt": "Close-up macro of ancient classified parchment papers with redacted black marks, vintage magnifying glass, dark wooden archival desk, 9:16 aspect ratio, photorealistic",
+            },
+            {
+                "scene": 3,
+                "timecode": "00:15 - 00:30",
+                "aiPrompt": "Epic wide angle of an underground vault or forgotten monolithic chamber, brutalist architecture, moody dark cinematography, 9:16 aspect ratio",
+            },
+            {
+                "scene": 4,
+                "timecode": "00:30 - 00:45",
+                "aiPrompt": "Dramatic high contrast portrait of powerful shadowy figures around a dimly lit boardroom map, cinematic rim lighting, 9:16 aspect ratio",
+            },
+            {
+                "scene": 5,
+                "timecode": "00:45 - 00:55",
+                "aiPrompt": "Surreal conceptual artwork of a clock ticking backwards inside a shattered hourglass, dark cosmic backdrop, cinematic illumination, 9:16 aspect ratio",
+            },
+        ],
+        "instagramCarousel": {
+            "slide1_cover": f"O que esconderam sobre: {clean_topic} ⚠️",
+            "slide2_context": "Durante anos contaram a versão conveniente. Os documentos desclassificados mostram o oposto.",
+            "slide7_cta": "Salve para não esquecer e siga a página para os próximos relatórios secretos.",
+        },
+        "youtubeMetadata": {
+            "title": f"O Segredo Oculto Sobre {clean_topic} (O Que Apagaram da História)",
+            "description": f"Investigação aprofundada revelando anomalias e documentos esquecidos sobre {clean_topic}.",
+            "tags": [clean_topic, "misterio", "documentario dark", "canal dark", "curiosidades"],
+        },
+    }
+    return json.dumps(bundle, indent=2, ensure_ascii=False)
+
+
+@mcp.tool()
+def omnipress_queue_media_post(
+    caption: str,
+    platforms: List[str],
+    title: Optional[str] = None,
+    media_urls: Optional[List[str]] = None,
+    media_type: str = "image",
+    tags: Optional[List[str]] = None,
+    thumbnail_url: Optional[str] = None,
+    schedule_time: Optional[str] = None,
+    sanitize: bool = True,
+) -> str:
+    """
+    Queues rich media content (Images, Carousels, Video Reels, YouTube Shorts) to Instagram,
+    YouTube, X/Twitter, and Threads with platform-specific formatting and asset staging.
+    """
+    processed_caption = caption
+    sanitization_notes = []
+
+    if sanitize:
+        processed_caption, findings = sanitize_text(caption)
+        if findings:
+            sanitization_notes.append(f"🔒 Masked {len(findings)} sensitive item(s).")
+
+    results = []
+    normalized = [p.lower().strip() for p in platforms]
+
+    # Instagram
+    if "instagram" in normalized or "ig" in normalized or "all" in normalized:
+        if not media_urls:
+            results.append("⚠️ Instagram Warning: Media is required for Instagram posts.")
+        if buffer_adapter.is_configured() and buffer_adapter.instagram_profile_id:
+            res = buffer_adapter.queue_social_post(
+                processed_caption, ["instagram"], media_urls, schedule_time
+            )
+            results.append(f"✅ Queued to Instagram via Buffer: {res.get('buffer_response', 'Draft queued')}")
+        else:
+            results.append(f"📷 Instagram Draft Formatted:\n```text\n{processed_caption}\n```")
+
+    # YouTube
+    if "youtube" in normalized or "youtube_shorts" in normalized or "shorts" in normalized or "all" in normalized:
+        is_short = "youtube_shorts" in normalized or "shorts" in normalized or media_type == "short"
+        yt_res = youtube_adapter.stage_video(
+            title=title or (processed_caption.split("\n")[0] if processed_caption else "Vídeo Dark"),
+            description=processed_caption,
+            tags=tags or [],
+            is_short=is_short,
+            media_urls=media_urls or [],
+            thumbnail_url=thumbnail_url,
+            schedule_time=schedule_time,
+        )
+        results.append(f"🎬 YouTube ({'Shorts' if is_short else 'Long-form'}) Staged at: `{yt_res['filepath']}`")
+
+    # X / Twitter
+    if "x" in normalized or "twitter" in normalized or "all" in normalized:
+        if buffer_adapter.is_configured() and buffer_adapter.x_profile_id:
+            res = buffer_adapter.queue_social_post(
+                processed_caption, ["x"], media_urls, schedule_time
+            )
+            results.append(f"✅ Queued to X via Buffer: {res.get('buffer_response', 'Draft queued')}")
+        else:
+            results.append(f"🐦 X (Twitter) Content Formatted:\n```text\n{processed_caption}\n```")
+
+    if sanitization_notes:
+        results.append("\n" + "\n".join(sanitization_notes))
+
+    return "\n\n".join(results)
 
 
 def main():

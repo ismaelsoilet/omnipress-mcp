@@ -11,6 +11,12 @@ const {
   sanitizeText,
   slugify,
   saveArticle,
+  queuePost,
+  formatInstagramCaption,
+  segmentTwitterThread,
+  stageYouTubeVideo,
+  prepareDarkScript,
+  queueMediaPost,
   handleRpcRequest,
   TOOLS_DEFINITIONS,
   createHttpServer
@@ -89,12 +95,14 @@ async function runTests() {
     method: 'tools/list',
     params: {}
   });
-  assert.strictEqual(toolsRes.result.tools.length, 4);
+  assert.strictEqual(toolsRes.result.tools.length, 6);
   const toolNames = toolsRes.result.tools.map(t => t.name);
   assert(toolNames.includes('omnipress_publish_article'));
   assert(toolNames.includes('omnipress_queue_post'));
   assert(toolNames.includes('omnipress_inspect_content'));
   assert(toolNames.includes('omnipress_list_articles'), 'Must include canonical verb_noun omnipress_list_articles');
+  assert(toolNames.includes('omnipress_prepare_dark_script'), 'Must include omnipress_prepare_dark_script');
+  assert(toolNames.includes('omnipress_queue_media_post'), 'Must include omnipress_queue_media_post');
 
   for (const tool of toolsRes.result.tools) {
     assert(tool.title, `Tool ${tool.name} must have a title`);
@@ -226,11 +234,103 @@ async function runTests() {
     await new Promise((resolve) => server.close(resolve));
   }
 
+  // Test 8: Instagram Caption Formatting & Tagging
+  console.log('Test 8: Instagram Formatting...');
+  const igCaption = formatInstagramCaption(
+    'O segredo oculto dos arquivos desclassificados.',
+    ['darkchannel', 'misterio', 'investigacao']
+  );
+  assert(igCaption.includes('#darkchannel #misterio #investigacao'), 'Must include formatted hashtags');
+  assert(igCaption.length <= 2200, 'Must not exceed 2200 characters');
+  console.log('  ✓ Instagram caption formatting passed.\n');
+
+  // Test 9: Twitter / X Thread Auto-Segmentation
+  console.log('Test 9: Twitter Thread Auto-Segmentation...');
+  const multiTweet = 'Tweet 1 de introdução chocante.\n---\nTweet 2 com os dados e evidências.\n---\nTweet 3 com o desfecho e CTA.';
+  const segmented = segmentTwitterThread(multiTweet);
+  assert.strictEqual(segmented.length, 3, 'Should segment into 3 tweets');
+  assert(segmented[0].startsWith('1/3'), 'Should number first tweet');
+  assert(segmented[2].startsWith('3/3'), 'Should number last tweet');
+  console.log('  ✓ Twitter thread auto-segmentation passed.\n');
+
+  // Test 10: YouTube Video & Shorts Staging
+  console.log('Test 10: YouTube Video & Shorts Staging...');
+  const stagingTemp = fs.mkdtempSync(path.join(os.tmpdir(), 'omnipress-yt-staging-'));
+  process.env.MEDIA_STAGING_DIR = stagingTemp;
+
+  const ytStaged = stageYouTubeVideo({
+    title: 'O Enigma do Manuscrito Proibido',
+    description: 'Documentário completo sobre o manuscrito.',
+    tags: ['historia', 'misterio'],
+    isShort: true,
+    mediaUrls: ['https://example.com/video.mp4']
+  });
+
+  assert(ytStaged.manifest.title.includes('#Shorts'), 'Shorts title must include #Shorts');
+  assert.strictEqual(ytStaged.manifest.isShort, true);
+  assert(fs.existsSync(ytStaged.filepath), 'Manifest JSON file must exist on disk');
+  const readManifest = JSON.parse(fs.readFileSync(ytStaged.filepath, 'utf8'));
+  assert.strictEqual(readManifest.platform, 'youtube_shorts');
+  assert.strictEqual(readManifest.title, ytStaged.manifest.title);
+  fs.rmSync(stagingTemp, { recursive: true, force: true });
+  console.log('  ✓ YouTube Shorts & Long-form staging passed.\n');
+
+  // Test 11: Dark Channel Script Generator (omnipress_prepare_dark_script)
+  console.log('Test 11: Dark Channel Script Generator (JSON-RPC)...');
+  const scriptRes = await handleRpcRequest({
+    jsonrpc: '2.0',
+    id: 11,
+    method: 'tools/call',
+    params: {
+      name: 'omnipress_prepare_dark_script',
+      arguments: {
+        topic: 'A Cidade Perdida de Z',
+        tone: 'mystery',
+        target_audience: 'curiosos e historiadores'
+      }
+    }
+  });
+  assert(scriptRes.result?.content?.[0]?.text, 'Must return script bundle text');
+  const parsedBundle = JSON.parse(scriptRes.result.content[0].text);
+  assert.strictEqual(parsedBundle.topic, 'A Cidade Perdida de Z');
+  assert(parsedBundle.shortScript.hook_0_3s, 'Must contain 0-3s hook');
+  assert(parsedBundle.visualScenePrompts.length >= 5, 'Must contain scene prompts');
+  assert(parsedBundle.visualScenePrompts[0].aiPrompt.includes('9:16'), 'Image prompt must specify 9:16 aspect ratio');
+  assert(parsedBundle.instagramCarousel.slide1_cover, 'Must contain Instagram carousel slides');
+  assert(parsedBundle.xThread.length >= 5, 'Must contain X thread tweets');
+  assert(parsedBundle.youtubeMetadata.title, 'Must contain YouTube title');
+  console.log('  ✓ Dark channel script generator passed: Complete multi-platform bundle verified.\n');
+
+  // Test 12: Rich Media Post Queuing (omnipress_queue_media_post)
+  console.log('Test 12: Rich Media Post Queuing (Instagram, YouTube, X)...');
+  const mediaQueueRes = await handleRpcRequest({
+    jsonrpc: '2.0',
+    id: 12,
+    method: 'tools/call',
+    params: {
+      name: 'omnipress_queue_media_post',
+      arguments: {
+        title: 'O Mistério de Z Revelado',
+        caption: 'Uma investigação proibida sobre os arquivos esquecidos da expedição de 1925 no processo 0001234-56.2023.8.26.0100.',
+        platforms: ['instagram', 'youtube_shorts', 'x'],
+        media_type: 'short',
+        media_urls: ['https://example.com/shorts/video.mp4'],
+        tags: ['misterio', 'historia']
+      }
+    }
+  });
+  const mediaQueueOutput = mediaQueueRes.result.content[0].text;
+  assert(mediaQueueOutput.includes('Instagram'), 'Must include Instagram report');
+  assert(mediaQueueOutput.includes('YouTube'), 'Must include YouTube report');
+  assert(mediaQueueOutput.includes('X (Twitter)'), 'Must include X report');
+  assert(mediaQueueOutput.includes('[PROCESSO ANÔNIMO]'), 'Sensitive court case must be sanitized in media post');
+  console.log('  ✓ Rich media post queuing passed: Multi-platform dispatch verified.\n');
+
   // Clean up test directory
   fs.rmSync(tempDir, { recursive: true, force: true });
 
   console.log('═══════════════════════════════════════════════════════');
-  console.log('🎉 ALL 7 TEST SUITES PASSED WITH MAXIMUM RIGOR & CARE!');
+  console.log('🎉 ALL 12 TEST SUITES PASSED WITH MAXIMUM RIGOR & CARE!');
   console.log('═══════════════════════════════════════════════════════');
 }
 

@@ -40,10 +40,18 @@ loadEnv();
 function getArticlesDir() {
   return path.resolve(process.env.ARTICLES_DIR || path.join(PROJECT_ROOT, 'articles'));
 }
+function getMediaStagingDir() {
+  return path.resolve(process.env.MEDIA_STAGING_DIR || path.join(PROJECT_ROOT, 'media', 'staging'));
+}
 const BUFFER_ACCESS_TOKEN = process.env.BUFFER_ACCESS_TOKEN || '';
 const BUFFER_LINKEDIN_PROFILE_ID = process.env.BUFFER_LINKEDIN_PROFILE_ID || '';
 const BUFFER_X_PROFILE_ID = process.env.BUFFER_X_PROFILE_ID || '';
 const BUFFER_THREADS_PROFILE_ID = process.env.BUFFER_THREADS_PROFILE_ID || '';
+const BUFFER_INSTAGRAM_PROFILE_ID = process.env.BUFFER_INSTAGRAM_PROFILE_ID || '';
+
+// YouTube & Video settings
+const YOUTUBE_WEBHOOK_URL = process.env.YOUTUBE_WEBHOOK_URL || '';
+const TIKTOK_WEBHOOK_URL = process.env.TIKTOK_WEBHOOK_URL || '';
 
 // Reddit API credentials
 const REDDIT_CLIENT_ID = process.env.REDDIT_CLIENT_ID || '';
@@ -239,6 +247,425 @@ async function postToReddit({ title, text, subreddit }) {
   }
 }
 
+// ==========================================
+// Social Media Helpers (Instagram, YouTube, X, Dark Channels)
+// ==========================================
+function formatInstagramCaption(text, tags = []) {
+  let cleaned = (text || '').trim();
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+
+  if (tags && tags.length > 0) {
+    const formattedTags = tags.map(t => t.startsWith('#') ? t : `#${t.replace(/\s+/g, '')}`).join(' ');
+    cleaned = `${cleaned}\n\n.\n.\n${formattedTags}`;
+  }
+
+  if (cleaned.length > 2200) {
+    cleaned = cleaned.slice(0, 2197) + '...';
+  }
+  return cleaned;
+}
+
+function segmentTwitterThread(text, maxTweetLen = 280) {
+  const raw = (text || '').trim();
+  if (raw.includes('---')) {
+    const segments = raw.split(/\n\s*---\s*\n/).map(s => s.trim()).filter(Boolean);
+    if (segments.length > 1) {
+      return segments.map((seg, idx) => `${idx + 1}/${segments.length} ${seg}`);
+    }
+  }
+
+  const tweetTagRegex = /\[(?:TWEET|POST)\s*\d*\]/i;
+  if (tweetTagRegex.test(raw)) {
+    const segments = raw.split(/\[(?:TWEET|POST)\s*\d*\]/i).map(s => s.trim()).filter(Boolean);
+    if (segments.length > 1) {
+      return segments.map((seg, idx) => `${idx + 1}/${segments.length} ${seg}`);
+    }
+  }
+
+  if (raw.length <= maxTweetLen) {
+    return [raw];
+  }
+
+  const paragraphs = raw.split(/\n\n+/);
+  const chunks = [];
+  let currentChunk = '';
+
+  for (const p of paragraphs) {
+    if ((currentChunk + '\n\n' + p).length <= maxTweetLen) {
+      currentChunk = currentChunk ? currentChunk + '\n\n' + p : p;
+    } else {
+      if (currentChunk) chunks.push(currentChunk);
+      if (p.length <= maxTweetLen) {
+        currentChunk = p;
+      } else {
+        const sentences = p.match(/[^.!?]+[.!?]+|\s*[^.!?]+$/g) || [p];
+        for (const sent of sentences) {
+          if ((currentChunk + ' ' + sent).length <= maxTweetLen) {
+            currentChunk = currentChunk ? currentChunk + ' ' + sent.trim() : sent.trim();
+          } else {
+            if (currentChunk) chunks.push(currentChunk);
+            currentChunk = sent.trim();
+          }
+        }
+      }
+    }
+  }
+  if (currentChunk) chunks.push(currentChunk);
+
+  return chunks.map((c, idx) => `${idx + 1}/${chunks.length} ${c}`);
+}
+
+function stageYouTubeVideo({
+  title,
+  description,
+  tags = [],
+  isShort = false,
+  categoryId = '27',
+  privacyStatus = 'private',
+  mediaUrls = [],
+  thumbnailUrl = null,
+  scheduleTime = null
+}) {
+  let cleanTitle = (title || 'Vídeo Sem Título').trim();
+  if (isShort && !cleanTitle.toLowerCase().includes('#shorts')) {
+    cleanTitle = `${cleanTitle} #Shorts`;
+  }
+  if (cleanTitle.length > 100) {
+    cleanTitle = cleanTitle.slice(0, 97) + '...';
+  }
+
+  let formattedDesc = (description || '').trim();
+  if (tags && tags.length > 0) {
+    const hashTags = tags.slice(0, 5).map(t => t.startsWith('#') ? t : `#${t.replace(/\s+/g, '')}`).join(' ');
+    formattedDesc += `\n\n${hashTags}`;
+  }
+
+  const now = new Date();
+  const yyyy = now.getUTCFullYear().toString();
+  const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(now.getUTCDate()).padStart(2, '0');
+  const dateStr = `${yyyy}-${mm}-${dd}`;
+  const slug = slugify(cleanTitle) || `yt-${Date.now()}`;
+
+  const baseDir = getMediaStagingDir();
+  const targetDir = path.join(baseDir, 'youtube', yyyy, mm);
+  fs.mkdirSync(targetDir, { recursive: true });
+
+  const manifest = {
+    platform: isShort ? 'youtube_shorts' : 'youtube',
+    title: cleanTitle,
+    description: formattedDesc,
+    tags: tags.map(t => t.replace(/^#/, '')),
+    categoryId,
+    privacyStatus,
+    isShort,
+    mediaUrls,
+    thumbnailUrl,
+    scheduleTime,
+    stagedAt: now.toISOString(),
+    status: 'staged_draft'
+  };
+
+  const filename = `${dateStr}-${slug}.json`;
+  const filepath = path.join(targetDir, filename);
+  fs.writeFileSync(filepath, JSON.stringify(manifest, null, 2), 'utf8');
+
+  return { filepath, filename, manifest };
+}
+
+function prepareDarkScript({
+  topic,
+  format = 'all',
+  tone = 'mystery',
+  targetAudience = 'geral'
+}) {
+  const tones = {
+    mystery: {
+      mood: 'Enigmático, sombrio e revelador',
+      voice: 'pt-BR-AntonioNeural (grave, pausado, tom documental investigativo)',
+      bgm: 'Dark Ambient / Drone misterioso com sub-graves (80-90 BPM)',
+      pacing: 'Pausas dramáticas a cada 5 segundos'
+    },
+    wealth: {
+      mood: 'Poder, psicologia financeira, segredos da elite',
+      voice: 'pt-BR-FabioNeural (firme, articulado, alta autoridade)',
+      bgm: 'Cinematic Orchestral / Neo-Classical com piano tenso',
+      pacing: 'Dinâmico com números e quebras de crença'
+    },
+    dramatic: {
+      mood: 'Urgente, visceral e cinematográfico',
+      voice: 'pt-BR-AntonioNeural (intenso com modulação de perigo)',
+      bgm: 'Suspense Cinematic Thriller com percussão crescente',
+      pacing: 'Cortes rápidos de 2 a 3 segundos'
+    },
+    philosophical: {
+      mood: 'Estóico, provocador, reflexão profunda',
+      voice: 'pt-BR-AntonioNeural (sereno, profundo, compassado)',
+      bgm: 'Minimalist Lo-Fi Dark / Ambient Strings',
+      pacing: 'Frases curtas com impacto reflexivo'
+    }
+  };
+
+  const selectedTone = tones[tone] || tones.mystery;
+  const cleanTopic = (topic || '').trim();
+
+  const bundle = {
+    topic: cleanTopic,
+    tone,
+    targetAudience,
+    audioDirection: selectedTone,
+    shortScript: {
+      durationSeconds: 55,
+      hook_0_3s: `Você NUNCA deveria saber sobre isso... mas a verdade sobre ${cleanTopic} finalmente veio à tona.`,
+      retention_3_15s: `A maioria das pessoas acredita na versão que contam por aí. Mas se você analisar os registros confidenciais, algo perturbador não fecha.`,
+      development_15_45s: `Nos bastidores, o que realmente aconteceu foi orquestrado em silêncio. Três anomalias foram apagadas dos livros: o sumiço dos relatórios originais, o isolamento dos envolvidos e o padrão que continua se repetindo hoje sem você perceber.`,
+      climax_45_50s: `E a pergunta que ninguém quer responder é: quem realmente lucrou com o silêncio desse caso?`,
+      cta_50_55s: `Comente sua teoria abaixo e se inscreva antes que derrubem este conteúdo.`
+    },
+    visualScenePrompts: [
+      {
+        scene: 1,
+        timecode: '00:00 - 00:03',
+        description: 'Gancho visual chocante e cinematográfico',
+        aiPrompt: `Cinematic 8k, dark moody atmosphere, mysterious silhouette holding classified dossier, dramatic volumetric lighting, foggy background, cold blue and amber tones, photorealistic, 9:16 aspect ratio, ultra-detailed`
+      },
+      {
+        scene: 2,
+        timecode: '00:03 - 00:15',
+        description: 'Documentos e evidências confidenciais',
+        aiPrompt: `Close-up macro of ancient classified parchment papers with redacted black marks, vintage magnifying glass, dark wooden archival desk, eerie candlelight, hyper-detailed textures, 9:16 aspect ratio, photorealistic`
+      },
+      {
+        scene: 3,
+        timecode: '00:15 - 00:30',
+        description: 'O mecanismo ou local oculto',
+        aiPrompt: `Epic wide angle of an underground vault or forgotten monolithic chamber, brutalist architecture, moody dark cinematography, ominous shadows, dust particles in ray of light, photorealistic, 9:16 aspect ratio`
+      },
+      {
+        scene: 4,
+        timecode: '00:30 - 00:45',
+        description: 'Figuras sombrias e os bastidores',
+        aiPrompt: `Dramatic high contrast portrait of powerful shadowy figures around a dimly lit boardroom map, cinematic rim lighting, mysterious tension, 8k resolution, photorealistic, 9:16 aspect ratio`
+      },
+      {
+        scene: 5,
+        timecode: '00:45 - 00:55',
+        description: 'A pergunta final e o clímax',
+        aiPrompt: `Surreal conceptual artwork of a clock ticking backwards inside a shattered hourglass, dark cosmic backdrop, cinematic illumination, award-winning concept art, photorealistic, 9:16 aspect ratio`
+      }
+    ],
+    instagramCarousel: {
+      slide1_cover: `O que esconderam sobre: ${cleanTopic} ⚠️`,
+      slide2_context: `Durante anos nos disseram apenas o que era conveniente. Mas os registros desclassificados revelam um cenário completamente diferente.`,
+      slide3_point1: `1. O primeiro rastro: Documentos e transferências que sumiram no mesmo dia em que o caso veio à tona.`,
+      slide4_point2: `2. O padrão: Por que as mesmas organizações tomaram medidas idênticas em segredo absoluto?`,
+      slide5_point3: `3. O impacto atual: Como essa decisão moldou diretamente a estrutura que vivemos hoje.`,
+      slide6_insight: `Quando você junta os fatos reais, não há espaço para coincidências. Foi tudo calculado.`,
+      slide7_cta: `Salve este carrossel para não esquecer e siga a página para os próximos relatórios sem censura.`
+    },
+    instagramCaption: formatInstagramCaption(
+      `O que eles tentaram apagar sobre ${cleanTopic}.\n\nQuando você examina os documentos desclassificados e ignora o ruído da superfície, a verdade se torna inegável.\n\nQual é a sua opinião sobre isso? Deixe seu comentário. 👇`,
+      ['darkchannel', 'misterio', 'historiaoculta', 'documentario', 'curiosidades', 'fatoscuriosos', 'investigacao', 'conhecimento']
+    ),
+    xThread: [
+      `1/6 O dossiê proibido sobre ${cleanTopic} que você nunca viu nos noticiários. Uma thread investigativa necessária: 🧵👇`,
+      `2/6 A história oficial sempre tentou vender uma versão simples e digerível. Mas quem tem acesso aos arquivos sabe que pontos cruciais foram deliberadamente ignorados.`,
+      `3/6 O primeiro indício: relatórios preliminares foram alterados em menos de 24 horas. Testemunhas-chave simplesmente pararam de prestar declarações.`,
+      `4/6 Seguindo o fluxo de influência e poder, os mesmos nomes continuam surgindo em posições estratégicas até hoje.`,
+      `5/6 Não estamos falando de especulação, mas de congruência factual. Quando você alinha data, hora e interesse, o padrão fica óbvio.`,
+      `6/6 Se essa investigação foi útil para você, dê RT no primeiro tweet para apoiar nosso trabalho e siga para mais dossiês confidenciais toda semana.`
+    ],
+    youtubeMetadata: {
+      title: `O Segredo Oculto Sobre ${cleanTopic} (O Que Apagaram da História)`,
+      description: `Investigação aprofundada revelando os detalhes e anomalias documentadas sobre ${cleanTopic}.\n\n⏱️ Capítulos:\n00:00 - A Revelação Inicial\n01:10 - Documentos Desaparecidos\n02:35 - O Que Aconteceu nos Bastidores\n04:15 - Consequências Atuais\n05:10 - O Desfecho\n\n🔔 Inscreva-se e ative as notificações para acompanhar novos dossiês.`,
+      tags: [cleanTopic, 'misterio', 'documentario dark', 'historia oculta', 'curiosidades', 'segredos revelados', 'canal dark'],
+      suggestedThumbnail: `Texto em amarelo: "ELES APAGARAM ISSO?". Imagem de fundo contrastada em preto e dourado com iluminação dramática nos olhos ou no documento central.`
+    }
+  };
+
+  return bundle;
+}
+
+async function queueMediaPost({
+  title = null,
+  caption,
+  platforms = ['instagram', 'x'],
+  mediaType = 'image',
+  mediaUrls = [],
+  tags = [],
+  thumbnailUrl = null,
+  scheduleTime = null,
+  sanitize = true
+}) {
+  let processedCaption = caption || '';
+  let processedTitle = title || '';
+  let findings = [];
+
+  if (sanitize) {
+    const resCap = sanitizeText(processedCaption);
+    processedCaption = resCap.sanitized;
+    findings = findings.concat(resCap.findings);
+
+    if (processedTitle) {
+      const resTitle = sanitizeText(processedTitle);
+      processedTitle = resTitle.sanitized;
+      findings = findings.concat(resTitle.findings);
+    }
+  }
+
+  const results = [];
+  const normalizedPlatforms = platforms.map(p => p.toLowerCase().trim());
+
+  // 1. Instagram Handling
+  if (normalizedPlatforms.includes('instagram') || normalizedPlatforms.includes('ig') || normalizedPlatforms.includes('all')) {
+    if (!mediaUrls || mediaUrls.length === 0) {
+      results.push('⚠️ Aviso Instagram: O Instagram exige ao menos uma imagem ou vídeo (media_urls). Adicione uma URL ou caminho de arquivo.');
+    }
+    const igCaption = formatInstagramCaption(processedCaption, tags);
+    if (BUFFER_ACCESS_TOKEN && BUFFER_INSTAGRAM_PROFILE_ID) {
+      try {
+        const formData = new URLSearchParams();
+        formData.append('access_token', BUFFER_ACCESS_TOKEN);
+        formData.append('profile_ids[]', BUFFER_INSTAGRAM_PROFILE_ID);
+        formData.append('text', igCaption);
+        formData.append('top', 'false');
+        formData.append('now', 'false');
+        if (scheduleTime) formData.append('scheduled_at', scheduleTime);
+        if (mediaUrls && mediaUrls.length > 0) formData.append('media[link]', mediaUrls[0]);
+
+        const response = await fetch('https://api.bufferapp.com/1/updates/create.json', {
+          method: 'POST',
+          body: formData
+        });
+        if (response.ok) {
+          results.push(`✅ Queued to Instagram via Buffer (Profile: ${BUFFER_INSTAGRAM_PROFILE_ID}) as Draft.`);
+        } else {
+          results.push(`⚠️ Buffer Instagram error (${response.status}): ${await response.text()}`);
+        }
+      } catch (err) {
+        results.push(`⚠️ Buffer Instagram request failed: ${err.message}`);
+      }
+    } else {
+      results.push(
+        '📷 Instagram Draft Formatted (Configure BUFFER_INSTAGRAM_PROFILE_ID in .env for direct sync):\n' +
+        '```text\n' + igCaption + '\n```' +
+        (mediaUrls.length > 0 ? `\nAttached media: ${mediaUrls.join(', ')}` : '')
+      );
+    }
+  }
+
+  // 2. YouTube / YouTube Shorts Staging
+  const isYtShort = normalizedPlatforms.includes('youtube_shorts') || normalizedPlatforms.includes('shorts') || mediaType === 'short';
+  const isYtLong = normalizedPlatforms.includes('youtube') || normalizedPlatforms.includes('yt');
+  if (isYtShort || isYtLong || normalizedPlatforms.includes('all')) {
+    const ytStaged = stageYouTubeVideo({
+      title: processedTitle || (processedCaption.split('\n')[0] || 'Novo Vídeo Dark'),
+      description: processedCaption,
+      tags,
+      isShort: isYtShort,
+      mediaUrls,
+      thumbnailUrl,
+      scheduleTime
+    });
+
+    results.push(
+      `🎬 YouTube (${isYtShort ? 'Shorts' : 'Long-form'}) Staged:\n` +
+      `  - File: \`${ytStaged.filepath}\`\n` +
+      `  - Title: "${ytStaged.manifest.title}"\n` +
+      `  - Tags: ${JSON.stringify(ytStaged.manifest.tags)}`
+    );
+
+    const ytWebhook = YOUTUBE_WEBHOOK_URL || OMNIPRESS_WEBHOOK_URL;
+    if (ytWebhook) {
+      const whRes = await dispatchWebhook('youtube_video_staged', ytStaged.manifest);
+      if (whRes.success) {
+        results.push(`  ✓ Event dispatched to YouTube upload pipeline.`);
+      }
+    }
+  }
+
+  // 3. X (Twitter) Dispatch (Thread-aware)
+  if (normalizedPlatforms.includes('x') || normalizedPlatforms.includes('twitter') || normalizedPlatforms.includes('all')) {
+    const threadTweets = segmentTwitterThread(processedCaption);
+    if (BUFFER_ACCESS_TOKEN && BUFFER_X_PROFILE_ID) {
+      try {
+        const formData = new URLSearchParams();
+        formData.append('access_token', BUFFER_ACCESS_TOKEN);
+        formData.append('profile_ids[]', BUFFER_X_PROFILE_ID);
+        formData.append('text', threadTweets[0]);
+        formData.append('top', 'false');
+        formData.append('now', 'false');
+        if (scheduleTime) formData.append('scheduled_at', scheduleTime);
+        if (mediaUrls && mediaUrls.length > 0) formData.append('media[link]', mediaUrls[0]);
+
+        const response = await fetch('https://api.bufferapp.com/1/updates/create.json', {
+          method: 'POST',
+          body: formData
+        });
+        if (response.ok) {
+          results.push(`✅ Queued Tweet 1/${threadTweets.length} to X via Buffer as Draft.`);
+        } else {
+          results.push(`⚠️ Buffer X error (${response.status}): ${await response.text()}`);
+        }
+      } catch (err) {
+        results.push(`⚠️ Buffer X request failed: ${err.message}`);
+      }
+    } else {
+      results.push(
+        `🐦 X (Twitter) Thread Formatted (${threadTweets.length} tweet(s)):\n` +
+        threadTweets.map((tw, i) => `--- Tweet ${i + 1} ---\n${tw}`).join('\n\n')
+      );
+    }
+  }
+
+  // 4. Threads Dispatch
+  if (normalizedPlatforms.includes('threads')) {
+    if (BUFFER_ACCESS_TOKEN && BUFFER_THREADS_PROFILE_ID) {
+      try {
+        const formData = new URLSearchParams();
+        formData.append('access_token', BUFFER_ACCESS_TOKEN);
+        formData.append('profile_ids[]', BUFFER_THREADS_PROFILE_ID);
+        formData.append('text', processedCaption);
+        formData.append('top', 'false');
+        formData.append('now', 'false');
+        if (scheduleTime) formData.append('scheduled_at', scheduleTime);
+        if (mediaUrls && mediaUrls.length > 0) formData.append('media[link]', mediaUrls[0]);
+
+        const response = await fetch('https://api.bufferapp.com/1/updates/create.json', {
+          method: 'POST',
+          body: formData
+        });
+        if (response.ok) results.push(`✅ Queued to Threads via Buffer as Draft.`);
+      } catch (err) {
+        results.push(`⚠️ Threads error: ${err.message}`);
+      }
+    } else {
+      results.push(`🧵 Threads Draft Formatted:\n\`\`\`text\n${processedCaption}\n\`\`\``);
+    }
+  }
+
+  // 5. Webhook Dispatch
+  if (OMNIPRESS_WEBHOOK_URL) {
+    await dispatchWebhook('media_post_queued', {
+      title: processedTitle,
+      caption: processedCaption,
+      platforms,
+      mediaType,
+      mediaUrls,
+      tags,
+      thumbnailUrl,
+      scheduleTime
+    });
+    results.push(`📡 Dispatched rich media post event to Webhook.`);
+  }
+
+  if (findings.length > 0) {
+    results.push(`🔒 Masked ${findings.length} sensitive item(s) across title and caption.`);
+  }
+
+  return results.join('\n\n');
+}
+
 async function queuePost({ text, platforms = ['linkedin'], title = null, mediaUrls = [], scheduleTime = null, sanitize = true }) {
   let processedText = text;
   let findings = [];
@@ -252,8 +679,13 @@ async function queuePost({ text, platforms = ['linkedin'], title = null, mediaUr
   const results = [];
   const normalizedPlatforms = platforms.map(p => p.toLowerCase().trim());
 
-  // 1. Buffer Dispatch (LinkedIn, X, Threads)
-  if (BUFFER_ACCESS_TOKEN && (BUFFER_LINKEDIN_PROFILE_ID || BUFFER_X_PROFILE_ID || BUFFER_THREADS_PROFILE_ID)) {
+  // Check Instagram media requirement
+  if ((normalizedPlatforms.includes('instagram') || normalizedPlatforms.includes('ig')) && (!mediaUrls || mediaUrls.length === 0)) {
+    results.push('⚠️ Aviso Instagram: O Instagram exige ao menos uma imagem ou vídeo.');
+  }
+
+  // 1. Buffer Dispatch (LinkedIn, X, Threads, Instagram)
+  if (BUFFER_ACCESS_TOKEN && (BUFFER_LINKEDIN_PROFILE_ID || BUFFER_X_PROFILE_ID || BUFFER_THREADS_PROFILE_ID || BUFFER_INSTAGRAM_PROFILE_ID)) {
     const profileIds = [];
     if ((normalizedPlatforms.includes('linkedin') || normalizedPlatforms.includes('all')) && BUFFER_LINKEDIN_PROFILE_ID) {
       profileIds.push(BUFFER_LINKEDIN_PROFILE_ID);
@@ -263,6 +695,9 @@ async function queuePost({ text, platforms = ['linkedin'], title = null, mediaUr
     }
     if ((normalizedPlatforms.includes('threads') || normalizedPlatforms.includes('all')) && BUFFER_THREADS_PROFILE_ID) {
       profileIds.push(BUFFER_THREADS_PROFILE_ID);
+    }
+    if ((normalizedPlatforms.includes('instagram') || normalizedPlatforms.includes('ig') || normalizedPlatforms.includes('all')) && BUFFER_INSTAGRAM_PROFILE_ID) {
+      profileIds.push(BUFFER_INSTAGRAM_PROFILE_ID);
     }
 
     if (profileIds.length > 0) {
@@ -300,7 +735,6 @@ async function queuePost({ text, platforms = ['linkedin'], title = null, mediaUr
       ? redditPlatform.split(':')[1].trim()
       : REDDIT_DEFAULT_SUBREDDIT;
 
-    // Extract title from explicit title arg or first line of text
     let postTitle = title;
     let postBody = processedText;
     if (!postTitle) {
@@ -323,7 +757,21 @@ async function queuePost({ text, platforms = ['linkedin'], title = null, mediaUr
     }
   }
 
-  // 3. Webhook Dispatch
+  // 3. YouTube Staging Dispatch (if youtube or shorts requested)
+  if (normalizedPlatforms.includes('youtube') || normalizedPlatforms.includes('youtube_shorts') || normalizedPlatforms.includes('shorts')) {
+    const isShort = normalizedPlatforms.includes('youtube_shorts') || normalizedPlatforms.includes('shorts');
+    const ytStaged = stageYouTubeVideo({
+      title: title || processedText.split('\n')[0],
+      description: processedText,
+      tags: [],
+      isShort,
+      mediaUrls,
+      scheduleTime
+    });
+    results.push(`🎬 Staged YouTube (${isShort ? 'Shorts' : 'Long'}) metadata at \`${ytStaged.filepath}\``);
+  }
+
+  // 4. Webhook Dispatch
   if (OMNIPRESS_WEBHOOK_URL) {
     const whResult = await dispatchWebhook('social_post_queued', {
       text: processedText,
@@ -339,14 +787,23 @@ async function queuePost({ text, platforms = ['linkedin'], title = null, mediaUr
     }
   }
 
-  // 4. Fallback when no keys configured
+  // 5. Fallback when no keys configured
   const hasConfiguredService = BUFFER_ACCESS_TOKEN || REDDIT_CLIENT_ID || OMNIPRESS_WEBHOOK_URL;
   if (!hasConfiguredService) {
-    results.push(
-      'ℹ️ No external provider configured in `.env` (BUFFER_ACCESS_TOKEN, REDDIT_CLIENT_ID, or OMNIPRESS_WEBHOOK_URL).\n' +
-      'Content formatted and de-identified successfully. Ready for copy-paste:\n\n' +
-      '```text\n' + processedText + '\n```'
-    );
+    // If multiple tweets or thread formatting, show threaded view
+    if (normalizedPlatforms.includes('x') || normalizedPlatforms.includes('twitter')) {
+      const threadTweets = segmentTwitterThread(processedText);
+      results.push(
+        '🐦 X (Twitter) Content Formatted:\n' +
+        threadTweets.map((t, i) => `--- Tweet ${i + 1} ---\n${t}`).join('\n\n')
+      );
+    } else {
+      results.push(
+        'ℹ️ No external provider configured in `.env` (BUFFER_ACCESS_TOKEN, REDDIT_CLIENT_ID, or OMNIPRESS_WEBHOOK_URL).\n' +
+        'Content formatted and de-identified successfully. Ready for copy-paste:\n\n' +
+        '```text\n' + processedText + '\n```'
+      );
+    }
   }
 
   if (findings.length > 0) {
@@ -448,6 +905,18 @@ const MCP_TOOL_ANNOTATIONS = {
     openWorldHint: false
   },
   omnipress_list_articles: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false
+  },
+  omnipress_queue_media_post: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true
+  },
+  omnipress_prepare_dark_script: {
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
@@ -573,6 +1042,85 @@ Returns:
         limit: { type: 'integer', minimum: 1, maximum: 100, default: 5, description: 'Maximum number of articles to return (1-100, default 5)' }
       }
     }
+  },
+  {
+    name: 'omnipress_prepare_dark_script',
+    title: 'Prepare Dark Channel Script and Production Bundle',
+    description: `Generates a high-retention viral dark channel script, scene-by-scene AI image prompts, voice narration specs (TTS), Instagram carousel/caption, X viral thread, and YouTube SEO metadata.
+
+Use when:
+- Creating a complete production bundle for dark channels across YouTube, Instagram, X (Twitter), and TikTok.
+- Generating scene-by-scene visual image prompts for AI generators.
+- Formatting YouTube SEO tags, descriptions with timestamps, and Instagram carousel copy.
+
+Do NOT use when:
+- Queuing media or posts directly to distribution channels (use omnipress_queue_media_post or omnipress_queue_post).
+
+Returns:
+- Complete production bundle containing short script, visual prompts, audio specs, Instagram carousel, X thread, and YouTube metadata.`,
+    annotations: MCP_TOOL_ANNOTATIONS.omnipress_prepare_dark_script,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        topic: { type: 'string', minLength: 1, description: 'Core topic, mystery, historical anomaly, or theme' },
+        format: {
+          type: 'string',
+          enum: ['all', 'short', 'video', 'carousel', 'thread'],
+          default: 'all',
+          description: 'Format to generate (all, short, video, carousel, thread)'
+        },
+        tone: {
+          type: 'string',
+          enum: ['mystery', 'wealth', 'dramatic', 'philosophical'],
+          default: 'mystery',
+          description: 'Tone style: mystery, wealth, dramatic, philosophical'
+        },
+        target_audience: { type: 'string', default: 'geral', description: 'Target audience descriptor' }
+      },
+      required: ['topic']
+    }
+  },
+  {
+    name: 'omnipress_queue_media_post',
+    title: 'Queue Rich Media Post (Instagram, YouTube, X, Threads)',
+    description: `Queues rich media content (Images, Carousels, Video Reels, YouTube Shorts) to Instagram, YouTube, X/Twitter, and Threads with platform-specific formatting and asset staging.
+
+Use when:
+- Scheduling or staging video content (YouTube Shorts, YouTube long-form, Instagram Reels).
+- Publishing image carousels to Instagram or media posts to X with attachments.
+- Dispatching video upload jobs to staging and webhooks.
+
+Do NOT use when:
+- Storing long-form text articles (use omnipress_publish_article).
+- Just generating the script without queuing (use omnipress_prepare_dark_script).
+
+Returns:
+- Multi-platform status report confirming Instagram formatting/queue, YouTube staging path, X thread breakdown, and webhook dispatches.`,
+    annotations: MCP_TOOL_ANNOTATIONS.omnipress_queue_media_post,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        caption: { type: 'string', minLength: 1, description: 'Post caption, script, or description' },
+        platforms: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Target platforms: ["instagram"], ["youtube_shorts"], ["youtube"], ["x"], ["threads"], ["all"]'
+        },
+        title: { type: 'string', description: 'Optional post or video title (vital for YouTube)' },
+        media_urls: { type: 'array', items: { type: 'string' }, description: 'Array of media URLs or local file paths (image/video)' },
+        media_type: {
+          type: 'string',
+          enum: ['image', 'carousel', 'video', 'short'],
+          default: 'image',
+          description: 'Media format type: image, carousel, video, short'
+        },
+        tags: { type: 'array', items: { type: 'string' }, description: 'Array of keyword tags or hashtags' },
+        thumbnail_url: { type: 'string', description: 'Thumbnail/cover URL or local path for video' },
+        schedule_time: { type: 'string', description: 'Optional ISO schedule time' },
+        sanitize: { type: 'boolean', description: 'Whether to sanitize sensitive IDs before queuing (default true)' }
+      },
+      required: ['caption', 'platforms']
+    }
   }
 ];
 
@@ -635,6 +1183,26 @@ async function handleRpcRequest(message) {
           }
         } else if (toolName === 'omnipress_list_articles' || toolName === 'omnipress_list_recent') {
           resultText = listRecentArticles(args.limit || 5);
+        } else if (toolName === 'omnipress_prepare_dark_script') {
+          const bundle = prepareDarkScript({
+            topic: args.topic,
+            format: args.format || 'all',
+            tone: args.tone || 'mystery',
+            targetAudience: args.target_audience || 'geral'
+          });
+          resultText = JSON.stringify(bundle, null, 2);
+        } else if (toolName === 'omnipress_queue_media_post') {
+          resultText = await queueMediaPost({
+            caption: args.caption,
+            platforms: args.platforms,
+            title: args.title,
+            mediaUrls: args.media_urls,
+            mediaType: args.media_type || 'image',
+            tags: args.tags,
+            thumbnailUrl: args.thumbnail_url,
+            scheduleTime: args.schedule_time,
+            sanitize: args.sanitize !== false
+          });
         } else {
           return {
             jsonrpc: '2.0',
@@ -804,6 +1372,45 @@ function createHttpServer() {
         return sendJson(res, 200, { success: true, message: report });
       }
 
+      if (pathname === '/api/prepare_dark_script' && req.method === 'POST') {
+        const body = await parseRequestBody(req);
+        if (!body.topic) {
+          return sendJson(res, 400, {
+            success: false,
+            error: 'Missing required field: topic is mandatory.'
+          });
+        }
+        const bundle = prepareDarkScript({
+          topic: body.topic,
+          format: body.format || 'all',
+          tone: body.tone || 'mystery',
+          targetAudience: body.targetAudience || body.target_audience || 'geral'
+        });
+        return sendJson(res, 200, { success: true, bundle });
+      }
+
+      if (pathname === '/api/queue_media_post' && req.method === 'POST') {
+        const body = await parseRequestBody(req);
+        if (!body.caption) {
+          return sendJson(res, 400, {
+            success: false,
+            error: 'Missing required field: caption is mandatory.'
+          });
+        }
+        const report = await queueMediaPost({
+          caption: body.caption,
+          platforms: body.platforms || ['instagram', 'x'],
+          title: body.title || null,
+          mediaUrls: body.mediaUrls || body.media_urls || [],
+          mediaType: body.mediaType || body.media_type || 'image',
+          tags: body.tags || [],
+          thumbnailUrl: body.thumbnailUrl || body.thumbnail_url || null,
+          scheduleTime: body.scheduleTime || body.schedule_time || null,
+          sanitize: body.sanitize !== false
+        });
+        return sendJson(res, 200, { success: true, message: report });
+      }
+
       if (pathname === '/api/inspect_content' && req.method === 'POST') {
         const body = await parseRequestBody(req);
         const findings = inspectSensitiveData(body.text || '');
@@ -846,6 +1453,8 @@ function startHttpServer(port = 3333, host = '0.0.0.0') {
     console.log(`🛠️ REST Actions:`);
     console.log(`   - POST /api/publish_article`);
     console.log(`   - POST /api/queue_post`);
+    console.log(`   - POST /api/queue_media_post`);
+    console.log(`   - POST /api/prepare_dark_script`);
     console.log(`   - POST /api/inspect_content`);
     console.log(`   - GET  /api/list_recent`);
     console.log(`🤖 MCP JSON-RPC 2.0: POST /mcp\n`);
@@ -901,6 +1510,11 @@ module.exports = {
   slugify,
   saveArticle,
   queuePost,
+  formatInstagramCaption,
+  segmentTwitterThread,
+  stageYouTubeVideo,
+  prepareDarkScript,
+  queueMediaPost,
   handleRpcRequest,
   TOOLS_DEFINITIONS,
   MCP_TOOL_ANNOTATIONS,
