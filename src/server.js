@@ -6,6 +6,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const os = require('node:os');
 const crypto = require('node:crypto');
 const readline = require('node:readline');
 const http = require('node:http');
@@ -676,7 +677,7 @@ function runMediaScript(args) {
   return new Promise((resolve, reject) => {
     const scriptPath = path.join(PROJECT_ROOT, 'scripts', 'generate_dark_media.py');
     const venvPython = path.join(PROJECT_ROOT, '.venv', 'bin', 'python');
-    const uvPath = '/home/ismaelsoilet/.local/bin/uv';
+    const uvPath = path.join(os.homedir(), '.local', 'bin', 'uv');
     const hasUv = fs.existsSync(uvPath) || (process.env.PATH && process.env.PATH.includes('uv'));
     let binary = 'python3';
     let execArgs = [scriptPath, ...args];

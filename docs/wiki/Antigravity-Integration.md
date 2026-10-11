@@ -13,12 +13,13 @@ Add the server to your Antigravity global MCP configuration file:
 {
   "mcpServers": {
     "omnipress": {
-      "command": "node",
+      "command": "python",
       "args": [
-        "C:/Users/Ismael/projects/omnipress-mcp/src/server.js"
+        "-m",
+        "src.server"
       ],
       "env": {
-        "ARTICLES_DIR": "C:/Users/Ismael/projects/omnipress-mcp/articles"
+        "OMNIPRESS_ACTIVE_CHANNEL": "default"
       }
     }
   }

@@ -3,10 +3,10 @@
     "omnipress": {
       "command": "node",
       "args": [
-        "C:\\Users\\Ismael\\projects\\omnipress-mcp\\src\\server.js"
+        "path/to/omnipress-mcp/src/server.js"
       ],
       "env": {
-        "ARTICLES_DIR": "C:\\Users\\Ismael\\projects\\omnipress-mcp\\articles"
+        "ARTICLES_DIR": "path/to/omnipress-mcp/articles"
       }
     }
   }

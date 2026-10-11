@@ -77,7 +77,7 @@ Canais Dark monetizam através do YouTube AdSense, Creator Rewards, marketing de
 ## 4. Integração com Coolify e Hermes Agent (Oracle VPS)
 
 ### No Coolify:
-1. Suba usando o arquivo [`docker-compose-coolify.yml`](file:///home/ismaelsoilet/omnipress-mcp/docker-compose-coolify.yml).
+1. Suba usando o arquivo [`docker-compose-coolify.yml`](docker-compose-coolify.yml).
 2. O container `omnipress_api_coolify` é automaticamente integrado à rede Docker `hermes-net` e ao proxy Traefik com SSL Let's Encrypt.
 3. Volumes persistentes:
    - `omnipress_articles`: `/app/articles`
