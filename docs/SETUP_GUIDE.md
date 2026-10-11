@@ -2,29 +2,31 @@
 
 [🇺🇸 English](SETUP_GUIDE.md) | [🇧🇷 Versão em Português](SETUP_GUIDE.pt-BR.md)
 
-This guide walks you through setting up credentials for **LinkedIn**, **X (Twitter)**, **Meta Threads**, **Reddit**, and custom **Webhooks** in OmniPress MCP.
+This document provides a comprehensive step-by-step guide to configuring publishing credentials for **Buffer** (LinkedIn, X, Threads), direct **Instagram Graph API**, **Reddit**, **Webhooks**, and the **Multi-Channel Architecture** in OmniPress MCP.
 
 ---
 
-## 1. Buffer Setup (LinkedIn, X, and Meta Threads)
+## 1. Buffer Setup (LinkedIn, X / Twitter, and Meta Threads)
 
-Buffer manages scheduling for LinkedIn, X, and Meta Threads. OmniPress always queues posts as **Drafts/Review Items**, allowing you to preview and approve them before they go live.
+Buffer manages scheduling for LinkedIn, X (Twitter), and Meta Threads. OmniPress always queues posts as **Drafts/Review Items**, allowing you to preview and approve them on your phone or web dashboard before they go live.
 
 ### Step 1.1: Connect Your Social Channels
-1. Go to [buffer.com](https://buffer.com) and create a free account.
+1. Go to [buffer.com](https://buffer.com) and log in to your account.
 2. Connect your desired channels:
    - **LinkedIn Profile or Company Page**
    - **X (Twitter) Profile**
    - **Meta Threads Profile**
+   - **Instagram Business / Creator Account** (optional, if publishing via Buffer)
 
-### Step 1.2: Obtain Your Buffer Developer Token
-1. Open the [Buffer Developer Portal](https://buffer.com/developers/apps/create).
-2. Create a new Developer Application:
-   - **Name**: `OmniPress-MCP`
-   - **Description**: `Personal Agentic Publishing Assistant`
-   - **Callback URL**: `http://localhost` (not used for personal tokens)
-3. Once created, open your app settings and locate the **Developer Access Token**.
-4. Copy this token.
+### Step 1.2: Obtain Your Buffer API Key
+OmniPress supports both Buffer's modern GraphQL API and the legacy REST API:
+1. Navigate to [publish.buffer.com/settings/api](https://publish.buffer.com/settings/api).
+2. Copy your **Personal API Key** (or create an app in the [Buffer Developer Portal](https://buffer.com/developers/apps/create)).
+3. Add to your `.env` file:
+   ```env
+   BUFFER_API_KEY=your_buffer_token_here
+   BUFFER_ACCESS_TOKEN=your_buffer_token_here
+   ```
 
 ### Step 1.3: Retrieve Channel Profile IDs
 To find the unique ID for each connected network:
@@ -34,40 +36,64 @@ To find the unique ID for each connected network:
    - `service: "linkedin"` $\rightarrow$ copy its `"id"`
    - `service: "twitter"` $\rightarrow$ copy its `"id"`
    - `service: "threads"` $\rightarrow$ copy its `"id"`
+   - `service: "instagram"` $\rightarrow$ copy its `"id"`
 
 ### Step 1.4: Add to `.env`
 ```env
-BUFFER_ACCESS_TOKEN=your_buffer_token_here
+BUFFER_API_KEY=your_token_here
+BUFFER_ACCESS_TOKEN=your_token_here
 BUFFER_LINKEDIN_PROFILE_ID=your_linkedin_profile_id
 BUFFER_X_PROFILE_ID=your_x_profile_id
 BUFFER_THREADS_PROFILE_ID=your_threads_profile_id
+BUFFER_INSTAGRAM_PROFILE_ID=your_instagram_profile_id
+```
+
+> 💡 **Multi-Channel Tip**: If you manage multiple brands, you can configure `buffer_channel_id` directly in each channel's `channels/<slug>/channel.json` file! OmniPress prioritizes the channel-specific ID before falling back to `.env`.
+
+---
+
+## 2. Direct Instagram Graph API Setup (Autonomous Publishing)
+
+If you prefer to publish single images and carousel posts directly to your Instagram Professional Account without Buffer:
+
+### Step 2.1: Prerequisites
+- An **Instagram Professional Account** (Business or Creator).
+- A **Facebook Page** linked to your Instagram Account.
+- A Meta Developer App at [developers.facebook.com](https://developers.facebook.com/) with:
+  - `instagram_basic`
+  - `instagram_content_publish` permissions.
+
+### Step 2.2: Configure in `.env`
+```env
+INSTAGRAM_ACCESS_TOKEN=your_long_lived_meta_access_token
+INSTAGRAM_ACCOUNT_ID=your_instagram_business_account_id
 ```
 
 ---
 
-## 2. Reddit API Setup (Direct Subreddit Submissions)
+## 3. Reddit API Setup (Direct Subreddit Submissions)
 
-OmniPress connects directly to Reddit's official API using a standard developer Script App. This enables publishing rich self-posts directly to targeted communities (e.g., `r/programming`, `r/webdev`, `r/SideProject`, `r/direito`).
+OmniPress connects directly to Reddit's official API using a standard developer Script App. This enables publishing rich self-posts directly to targeted communities (e.g., `r/programming`, `r/webdev`, `r/SideProject`, `r/direito`, `r/contabilidade`).
 
-### Step 2.1: Create a Reddit Developer Script App
+### Step 3.1: Create a Reddit Developer Script App
 1. Log into your Reddit account and navigate to [reddit.com/prefs/apps](https://www.reddit.com/prefs/apps).
 2. Scroll to the bottom and click **"are you a developer? create an app..."** (or **"create another app..."**).
 3. Fill in the fields:
    - **name**: `omnipress`
    - **App type**: Select the radio button for **script** (*personal use script*).
    - **description**: `OmniPress MCP Content Automation`
-   - **about url**: `https://github.com` (can be any valid URL)
+   - **about url**: `https://github.com`
    - **redirect uri**: `http://localhost:8080`
 4. Click **create app**.
 
-### Step 2.2: Retrieve Reddit Credentials
+### Step 3.2: Retrieve Reddit Credentials
 After creation:
 - **Client ID**: The string located directly underneath the text `personal use script` (approx. 14 characters, e.g., `a1B2c3D4e5F6g7`).
 - **Client Secret**: The string labeled `secret` inside the app box.
 - **Username**: Your Reddit account username (without `/u/`).
 - **Password**: Your Reddit account password.
 
-### Step 2.3: Configure in `.env`
+### Step 3.3: Configure in `.env`
 ```env
 REDDIT_CLIENT_ID=your_client_id
 REDDIT_CLIENT_SECRET=your_client_secret
@@ -76,166 +102,117 @@ REDDIT_PASSWORD=your_reddit_password
 REDDIT_DEFAULT_SUBREDDIT=SideProject
 ```
 
-### Step 2.4: How to Target Specific Subreddits
-In Antigravity chat, specify the target subreddit:
+### Step 3.4: How to Target Specific Subreddits
+In Antigravity or Claude chat, specify the target subreddit:
 > *"OmniPress: Post this technical breakdown of our database indexing architecture to Reddit r/webdev and r/programming."*
 
-Antigravity will pass `platforms: ["reddit:webdev", "reddit:programming"]` to the MCP tool.
+The agent will automatically pass `platforms: ["reddit:webdev", "reddit:programming"]` to the MCP tool!
 
 ---
 
-## 3. Webhook & n8n Pipeline Setup (Optional)
+## 4. Multi-Channel Architecture & Command-Line Interface (CLI)
 
-OmniPress can dispatch full JSON event payloads to **n8n**, Make, Slack, Telegram, or custom webhooks.
+OmniPress supports multiple isolated channels (history, tech, legal, dark channels, finance) with zero asset overlap:
 
-### Step 3.1: Configure Webhook
+### Channel Directory Structure
+```
+channels/dossie-historico/
+  ├── channel.json             # Branding metadata, color palette, handles, and buffer ID
+  ├── articles/                # Long-form archived articles organized by YYYY/MM/
+  ├── media/
+  │   ├── raw/                 # Source and reference assets
+  │   ├── carousels/           # Generated 3:4 portrait carousel decks
+  │   ├── stories/             # 9:16 vertical stories
+  │   └── highlights/          # Instagram highlight covers
+  └── scripts/                 # Channel-specific pipelines
+```
+
+### CLI Commands (`src/cli.py`)
+```bash
+# 1. List all configured channels
+python src/cli.py list-channels
+
+# 2. Scaffold a new channel workspace
+python src/cli.py create-channel fin-pro \
+  --name "Finance Pro" \
+  --handle "@finance.pro" \
+  --category "finance" \
+  --color "#10B981"
+
+# 3. View details and brand configuration of a channel
+python src/cli.py info-channel fin-pro
+
+# 4. Render a branded 3:4 carousel deck
+python src/cli.py build-carousel \
+  --channel fin-pro \
+  --post compound-interest \
+  --config path/to/slides.json \
+  --aspect-ratio 3:4
+```
+
+### Setting the Default Active Channel
+In your `.env` file:
+```env
+OMNIPRESS_ACTIVE_CHANNEL=fin-pro
+```
+
+---
+
+## 5. Webhook & n8n Pipeline Setup (Optional)
+
+OmniPress can dispatch full JSON event payloads to **n8n**, Make, Slack, Telegram, or custom webhooks:
+
 ```env
 OMNIPRESS_WEBHOOK_URL=https://your-n8n-instance.com/webhook/omnipress
 OMNIPRESS_WEBHOOK_SECRET=your_optional_hmac_secret
 ```
 
-### Step 3.2: Payload Structure
-```json
-{
-  "event": "social_post_queued",
-  "source": "omnipress-mcp",
-  "timestamp": "2026-09-22T06:30:00.000Z",
-  "data": {
-    "text": "Post content...",
-    "platforms": ["linkedin", "threads", "reddit:SideProject"],
-    "mediaUrls": [],
-    "scheduleTime": null,
-    "draft": true
-  }
-}
-```
-If `OMNIPRESS_WEBHOOK_SECRET` is set, OmniPress includes an `X-OmniPress-Signature` header computed via HMAC SHA-256.
+If `OMNIPRESS_WEBHOOK_SECRET` is set, OmniPress includes an `X-OmniPress-Signature` header in every HTTP POST request containing an HMAC SHA-256 signature for cryptographic verification.
 
 ---
 
-## 4. Local Markdown Archive Settings
+## 6. Antigravity & Claude Desktop Configuration
 
-By default, articles are stored in:
-```
-articles/
-└── YYYY/
-    └── MM/
-        └── YYYY-MM-DD-article-slug.md
-```
-
-To redirect archives to an Obsidian vault or blog repository:
-```env
-ARTICLES_DIR=C:/Users/Ismael/Documents/MyVault/Articles
-```
-
----
-
-## 5. Verification in Antigravity
-
-1. Run the test suite:
-   ```bash
-   npm test
-   ```
-2. In Antigravity chat, test multi-platform queuing:
-   > *"OmniPress: Prepare a release post for our open-source project and queue it for LinkedIn, Threads, and Reddit r/SideProject."*
-
----
-
-## 6. Claude Desktop Integration
-
-Claude Desktop natively connects to MCP servers over standard input/output (`stdio`).
-
-### Automated Setup (Recommended)
-Run the automated configuration script:
-```bash
-npm run setup:claude
-```
-This utility:
-- Detects your operating system configuration file (`%APPDATA%\Claude\claude_desktop_config.json` on Windows).
-- Backs up your existing settings.
-- Injects the `omnipress` MCP server configuration with absolute paths and environment variables.
-
-### Manual Setup
-Open `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) and add:
-
+### Google Antigravity (`~/.gemini/config/mcp_config.json`)
 ```json
 {
   "mcpServers": {
     "omnipress": {
-      "command": "node",
-      "args": ["C:\\Users\\Ismael\\projects\\omnipress-mcp\\src\\server.js"],
+      "command": "/path/to/omnipress-mcp/.venv/bin/python",
+      "args": ["-m", "src.server"],
       "env": {
-        "ARTICLES_DIR": "C:\\Users\\Ismael\\projects\\omnipress-mcp\\articles"
+        "OMNIPRESS_ACTIVE_CHANNEL": "dossie-historico"
       }
     }
   }
 }
 ```
-*Restart Claude Desktop after editing.*
+
+### Claude Desktop (`claude_desktop_config.json`)
+```json
+{
+  "mcpServers": {
+    "omnipress": {
+      "command": "python",
+      "args": ["/path/to/omnipress-mcp/src/server.py"],
+      "env": {
+        "ARTICLES_DIR": "/path/to/omnipress-mcp/articles"
+      }
+    }
+  }
+}
+```
 
 ---
 
-## 7. Google Gemini Ecosystem
+## 7. Testing & Verification
 
-### Windows Consumer App Analysis
-> [!NOTE]
-> The official Google Gemini Windows app (Microsoft Store / PWA) currently does **not** support direct local MCP servers (`stdio`). It exclusively connects to Google Workspace, YouTube, and Spotify extensions.
+To verify that all publisher adapters and channel workspace engines are functioning properly:
 
-### Working Solutions for Gemini:
-1. **Google Antigravity (Current Environment)**:
-   - Native support via `~/.gemini/config/mcp_config.json`.
-2. **Google Gemini CLI**:
-   - Add to `~/.gemini/settings.json`:
-     ```json
-     {
-       "mcpServers": {
-         "omnipress": {
-           "command": "node",
-           "args": ["C:\\Users\\Ismael\\projects\\omnipress-mcp\\src\\server.js"],
-           "env": {
-             "ARTICLES_DIR": "C:\\Users\\Ismael\\projects\\omnipress-mcp\\articles"
-           }
-         }
-       }
-     }
-     ```
-3. **Community Gemini Desktop Clients (e.g. Tome / Gemini MCP Desktop)**:
-   - Open-source desktop apps allow entering your Gemini API key and pointing directly to `C:\Users\Ismael\projects\omnipress-mcp\src\server.js`.
-
----
-
-## 8. ChatGPT Classic & Custom GPT Integration
-
-ChatGPT Web and Desktop Classic connect to external tools through **Custom GPT Actions (OpenAPI 3.1)** or remote MCP connectors.
-
-### Step 8.1: Start the OmniPress HTTP Gateway
-Launch the zero-dependency HTTP server:
 ```bash
-npm run start:http
+# Run the Python FastMCP and Channel test suite (12 tests):
+pytest
+
+# Run the Node.js test suite (15 tests):
+npm test
 ```
-OmniPress will start listening on port `3333`:
-- Health check: `http://localhost:3333/health`
-- Dynamic OpenAPI 3.1 Spec: `http://localhost:3333/openapi.json`
-- REST Actions: `POST /api/publish_article`, `POST /api/queue_post`, `POST /api/inspect_content`, `GET /api/list_recent`
-
-### Step 8.2: Expose via Tunnel (for ChatGPT Web access)
-Since ChatGPT cloud servers cannot reach `localhost`, expose the port using a tunnel:
-```bash
-npx ngrok http 3333
-# or using cloudflared:
-# cloudflared tunnel --url http://localhost:3333
-```
-Copy your public forwarding URL (e.g. `https://your-domain.ngrok-free.app`).
-
-### Step 8.3: Configure Custom GPT Action in ChatGPT
-1. In ChatGPT, click **Explore GPTs** > **Create**.
-2. Under the **Configure** tab:
-   - **Name**: `OmniPress Publishing Engine`
-   - **Instructions**: Copy instructions from `config/chatgpt_gpt_instructions.md`.
-3. Under **Actions**, click **Create new action**.
-4. In the **Schema** box, import `config/openapi.json` or fetch from `https://your-domain.ngrok-free.app/openapi.json`.
-5. Set **Authentication** to `None`.
-6. Test in the GPT preview pane:
-   > *"Inspect this text: 'No processo 0001234-56.2023.8.26.0100 analisamos o CPF 123.456.789-00'."*
-   ChatGPT will invoke the `inspectContent` action and display the masked findings!
-

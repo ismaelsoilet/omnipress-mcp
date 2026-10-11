@@ -8,11 +8,12 @@
 
 ## 🎯 The "Truly Omni" Philosophy
 
-OmniPress is built around three core dimensions of universality:
+OmniPress is built around four core dimensions of universality:
 
-1. **Omni-Domain**: It is not limited to tech or legal work. Through **Modular Niche Skills**, OmniPress can write with the exact tone, jargon, and depth of any profession—from software architecture to tax forensics, public governance, biomedical research, or financial markets.
-2. **Omni-Platform**: A single core thought is automatically syndicated into formats optimized for **LinkedIn**, **X (Twitter)**, **Meta Threads**, **Reddit** (targeted subreddits), **Webhooks** (n8n, Make, Slack), and **Markdown Archives** (Substack, Medium, Jusbrasil).
-3. **Omni-Runtime**: Runs natively on **Node.js (18+) with zero external dependencies** as well as on **Python (3.10+) FastMCP**.
+1. **Omni-Domain**: Extensible via **Modular Niche Skills** (`tech`, `tax-legal`, `govtech`, `darkchannel`), allowing AI agents to write with the exact tone and compliance constraints of any field.
+2. **Omni-Platform**: Automatically syndicates content to **LinkedIn**, **X (Twitter)**, **Meta Threads**, **Instagram** (Carousels & Reels), **Reddit** (targeted subreddits), **Webhooks** (n8n, Make), and **Markdown Archives** (Substack, Medium).
+3. **Omni-Runtime**: Dual-runtime architecture: native **Node.js (18+) with zero external dependencies** + full **Python (3.10+) FastMCP** engine with PIL carousel rendering.
+4. **Omni-Channel**: Isolated multi-tenant channel workspaces (`channels/<slug>/`) to manage multiple publications or dark channels cleanly.
 
 ---
 
@@ -20,9 +21,10 @@ OmniPress is built around three core dimensions of universality:
 
 Explore the documentation:
 
-- **[Architecture & Protocol](Architecture-&-Protocol)**: How OmniPress handles JSON-RPC 2.0, stdio transport, and publisher adapters.
+- **[Step-by-Step Hands-On Guide](Step-by-Step-Guide)**: Complete practical tutorial from setup to publishing.
+- **[Architecture & Protocol](Architecture-&-Protocol)**: How OmniPress handles JSON-RPC 2.0, stdio transport, ChannelManager, and CarouselBuilder.
 - **[Creating Niche Skills](Creating-Niche-Skills)**: Step-by-step guide to building custom skills for your specific industry.
-- **[Supported Platforms & Adapters](Supported-Platforms-&-Adapters)**: Complete configuration for LinkedIn, X, Threads, Reddit, and Webhooks.
+- **[Supported Platforms & Adapters](Supported-Platforms-&-Adapters)**: Complete configuration for Buffer, Instagram Graph API, Reddit, and Webhooks.
 - **[Privacy & De-Identification](Privacy-&-De-Identification)**: How OmniPress shields sensitive credentials, PII, and court secrecy.
 - **[Configuration & Environment Variables](Configuration-&-Environment-Variables)**: Complete reference for `.env` and account credentials.
 - **[Antigravity Integration](Antigravity-Integration)**: How to register and use OmniPress inside Google Antigravity.
@@ -31,15 +33,15 @@ Explore the documentation:
 
 ## ⚡ Quick Example
 
-In Antigravity or your AI agent:
+In Google Antigravity or Claude Desktop:
 
 ```text
-OmniPress: Analyze our newly implemented queue retry mechanism in src/workers/queue.ts.
+OmniPress: Analyze our channel architecture in src/core/channel_manager.py.
 Generate:
-1. An in-depth technical article with Markdown frontmatter.
+1. An in-depth technical article with Markdown frontmatter for Substack.
 2. A leadership lessons-learned post for LinkedIn.
-3. An engaging conversational post for Meta Threads.
+3. A 4-tweet narrative thread for X (Twitter).
 4. An authentic problem-solution breakdown for Reddit r/webdev.
 ```
 
-OmniPress will formulate all 4 assets, run an automatic privacy scan to mask credentials, and queue the drafts directly to your platforms upon confirmation.
+OmniPress will formulate all assets, run an automatic privacy scan to mask credentials, and queue the drafts directly to your channels upon confirmation.

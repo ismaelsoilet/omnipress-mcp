@@ -97,6 +97,16 @@ def test_mcp_server():
     print("✓ MCP server annotations, docstrings, and alias parity passed successfully.")
 
 
+def test_instagram_adapter():
+    from src.adapters.instagram_adapter import InstagramGraphAdapter
+    adapter = InstagramGraphAdapter()
+    assert adapter.is_configured() is False
+    res = adapter.queue_social_post("teste", ["instagram"], media_urls=[])
+    assert res["success"] is False
+    assert "not configured" in res["error"] or "requires at least one media" in res["error"]
+    print("✓ Instagram Graph adapter test passed successfully.")
+
+
 if __name__ == "__main__":
     test_sanitizer_detection()
     test_slugify()
@@ -104,4 +114,6 @@ if __name__ == "__main__":
     with tempfile.TemporaryDirectory() as tmpdir:
         test_markdown_adapter(Path(tmpdir))
     test_mcp_server()
+    test_instagram_adapter()
     print("\n🎉 ALL TESTS PASSED SUCCESSFULLY!")
+

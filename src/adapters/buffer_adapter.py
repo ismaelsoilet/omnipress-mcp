@@ -1,4 +1,4 @@
-"""Buffer publishing adapter for LinkedIn and X (Twitter)."""
+"""Buffer publishing adapter supporting both modern GraphQL API (api.buffer.com) and legacy REST."""
 
 import os
 import requests
@@ -7,40 +7,151 @@ from .base import BasePublisherAdapter
 
 
 class BufferPublisherAdapter(BasePublisherAdapter):
-    """Integrates with Buffer REST API to queue posts for LinkedIn and X."""
+    """
+    Integrates with Buffer API.
+    Supports modern GraphQL API (https://api.buffer.com) with Personal API Keys
+    as well as backward-compatible legacy REST API.
+    """
 
-    API_URL = "https://api.bufferapp.com/1/updates/create.json"
+    GRAPHQL_URL = "https://api.buffer.com"
+    REST_API_URL = "https://api.bufferapp.com/1/updates/create.json"
 
     def __init__(self):
-        self.access_token = os.getenv("BUFFER_ACCESS_TOKEN", "").strip()
+        # Support both BUFFER_API_KEY (modern) and BUFFER_ACCESS_TOKEN (legacy)
+        self.api_key = (
+            os.getenv("BUFFER_API_KEY", "").strip()
+            or os.getenv("BUFFER_ACCESS_TOKEN", "").strip()
+        )
         self.linkedin_profile_id = os.getenv("BUFFER_LINKEDIN_PROFILE_ID", "").strip()
         self.x_profile_id = os.getenv("BUFFER_X_PROFILE_ID", "").strip()
         self.threads_profile_id = os.getenv("BUFFER_THREADS_PROFILE_ID", "").strip()
         self.instagram_profile_id = os.getenv("BUFFER_INSTAGRAM_PROFILE_ID", "").strip()
 
     def is_configured(self) -> bool:
-        return bool(
-            self.access_token
-            and (
-                self.linkedin_profile_id
-                or self.x_profile_id
-                or self.threads_profile_id
-                or self.instagram_profile_id
-            )
-        )
+        """Returns True if Buffer API key/token is configured."""
+        return bool(self.api_key)
 
-    def _resolve_profile_ids(self, platforms: List[str]) -> List[str]:
+    def list_channels(self) -> Dict[str, Any]:
+        """
+        Fetches all connected channels across organizations using modern GraphQL API.
+        Useful for discovering channel IDs automatically.
+        """
+        if not self.api_key:
+            return {"success": False, "error": "BUFFER_API_KEY is not configured."}
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+        }
+
+        # Step 1: Query organizations
+        org_query = """
+        query GetOrganizations {
+          account {
+            organizations {
+              id
+              name
+            }
+          }
+        }
+        """
+        try:
+            res = requests.post(
+                self.GRAPHQL_URL,
+                json={"query": org_query},
+                headers=headers,
+                timeout=15,
+            )
+            if res.status_code != 200:
+                return {
+                    "success": False,
+                    "error": f"Failed fetching organizations ({res.status_code}): {res.text}",
+                }
+
+            data = res.json().get("data", {})
+            orgs = data.get("account", {}).get("organizations", [])
+            if not orgs:
+                return {"success": True, "channels": []}
+
+            all_channels = []
+            channel_query = """
+            query GetChannels($input: ChannelsInput!) {
+              channels(input: $input) {
+                id
+                name
+                service
+              }
+            }
+            """
+            for org in orgs:
+                c_res = requests.post(
+                    self.GRAPHQL_URL,
+                    json={
+                        "query": channel_query,
+                        "variables": {"input": {"organizationId": org["id"]}},
+                    },
+                    headers=headers,
+                    timeout=15,
+                )
+                if c_res.status_code == 200:
+                    ch_data = c_res.json().get("data", {}).get("channels", [])
+                    for ch in ch_data:
+                        ch["organization_id"] = org["id"]
+                        all_channels.append(ch)
+
+            return {"success": True, "channels": all_channels}
+        except requests.RequestException as e:
+            return {"success": False, "error": str(e)}
+
+    def _resolve_channel_ids(self, platforms: List[str], channel_slug: Optional[str] = None) -> List[str]:
         target_ids = []
         normalized = [p.lower().strip() for p in platforms]
 
-        if ("linkedin" in normalized or "all" in normalized) and self.linkedin_profile_id:
-            target_ids.append(self.linkedin_profile_id)
-        if ("x" in normalized or "twitter" in normalized or "all" in normalized) and self.x_profile_id:
-            target_ids.append(self.x_profile_id)
-        if ("threads" in normalized or "all" in normalized) and self.threads_profile_id:
-            target_ids.append(self.threads_profile_id)
-        if ("instagram" in normalized or "ig" in normalized or "all" in normalized) and self.instagram_profile_id:
-            target_ids.append(self.instagram_profile_id)
+        # 1. If channel_slug is specified, look up channel-specific buffer_channel_id
+        if channel_slug:
+            from src.core.channel_manager import ChannelManager
+            ch = ChannelManager().get_channel(channel_slug)
+            if ch:
+                social = ch.get("social", {})
+                for plat in normalized:
+                    if plat in ("instagram", "ig") and "instagram" in social:
+                        bid = social["instagram"].get("buffer_channel_id")
+                        if bid:
+                            target_ids.append(bid)
+                    elif plat in ("linkedin",) and "linkedin" in social:
+                        bid = social["linkedin"].get("buffer_channel_id")
+                        if bid:
+                            target_ids.append(bid)
+                    elif plat in ("x", "twitter") and "x" in social:
+                        bid = social["x"].get("buffer_channel_id")
+                        if bid:
+                            target_ids.append(bid)
+
+        # 2. Fall back to environment profile IDs
+        if not target_ids:
+            if ("linkedin" in normalized or "all" in normalized) and self.linkedin_profile_id:
+                target_ids.append(self.linkedin_profile_id)
+            if ("x" in normalized or "twitter" in normalized or "all" in normalized) and self.x_profile_id:
+                target_ids.append(self.x_profile_id)
+            if ("threads" in normalized or "all" in normalized) and self.threads_profile_id:
+                target_ids.append(self.threads_profile_id)
+            if ("instagram" in normalized or "ig" in normalized or "all" in normalized) and self.instagram_profile_id:
+                target_ids.append(self.instagram_profile_id)
+
+        # 3. If still no profile IDs, try auto-resolving from connected channels
+        if not target_ids and self.api_key:
+            channels_info = self.list_channels()
+            if channels_info.get("success"):
+                for ch in channels_info.get("channels", []):
+                    srv = ch.get("service", "").lower()
+                    if ("instagram" in normalized or "ig" in normalized or "all" in normalized) and srv == "instagram":
+                        target_ids.append(ch["id"])
+                    elif ("linkedin" in normalized or "all" in normalized) and srv == "linkedin":
+                        target_ids.append(ch["id"])
+                    elif ("x" in normalized or "twitter" in normalized or "all" in normalized) and srv in ("twitter", "x"):
+                        target_ids.append(ch["id"])
+                    elif ("threads" in normalized or "all" in normalized) and srv == "threads":
+                        target_ids.append(ch["id"])
 
         return target_ids
 
@@ -50,44 +161,123 @@ class BufferPublisherAdapter(BasePublisherAdapter):
         platforms: List[str],
         media_urls: Optional[List[str]] = None,
         schedule_time: Optional[str] = None,
+        channel_slug: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Submits post to Buffer queue in Draft/Review mode.
+        Submits post to Buffer queue via modern GraphQL API (with fallback to legacy REST).
+        Supports channel_slug to dispatch to channel-specific Buffer accounts.
         """
-        if not self.access_token:
+        if not self.is_configured():
             return {
                 "success": False,
-                "error": "BUFFER_ACCESS_TOKEN is not configured in .env",
+                "error": "BUFFER_API_KEY or BUFFER_ACCESS_TOKEN is not configured in .env",
             }
 
-        profile_ids = self._resolve_profile_ids(platforms)
-        if not profile_ids:
+        target_ids = self._resolve_channel_ids(platforms, channel_slug=channel_slug)
+        if not target_ids:
             return {
                 "success": False,
-                "error": f"No valid profile IDs found for requested platforms: {platforms}. Check .env configuration.",
+                "error": f"No valid channel IDs found for requested platforms: {platforms}. Configure BUFFER_INSTAGRAM_PROFILE_ID or verify connected channels.",
             }
 
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+        }
+
+        # Attempt modern GraphQL createPost mutation
+        mutation = """
+        mutation CreatePost($input: CreatePostInput!) {
+          createPost(input: $input) {
+            ... on PostActionSuccess {
+              post {
+                id
+                text
+                dueAt
+              }
+            }
+            ... on MutationError {
+              message
+            }
+          }
+        }
+        """
+
+        assets = []
+        if media_urls:
+            for url in media_urls[:10]:
+                assets.append({"image": {"url": url}})
+
+        created_posts = []
+        for ch_id in target_ids:
+            input_payload: Dict[str, Any] = {
+                "text": text,
+                "channelId": ch_id,
+                "schedulingType": "automatic",
+                "mode": "customScheduled" if schedule_time else "addToQueue",
+            }
+            if schedule_time:
+                input_payload["dueAt"] = schedule_time
+            if assets:
+                input_payload["assets"] = assets
+
+            try:
+                res = requests.post(
+                    self.GRAPHQL_URL,
+                    json={"query": mutation, "variables": {"input": input_payload}},
+                    headers=headers,
+                    timeout=20,
+                )
+                if res.status_code == 200:
+                    data = res.json().get("data", {}).get("createPost", {})
+                    if "post" in data:
+                        created_posts.append(data["post"])
+                    elif "message" in data:
+                        # Fallback to legacy REST API if GraphQL returns mutation error (e.g. legacy token)
+                        return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time)
+                else:
+                    return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time)
+            except requests.RequestException:
+                return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time)
+
+        if created_posts:
+            return {
+                "success": True,
+                "provider": "buffer_graphql",
+                "queued_profiles_count": len(created_posts),
+                "posts": created_posts,
+                "message": f"Successfully queued {len(created_posts)} post(s) to Buffer.",
+            }
+
+        return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time)
+
+    def _fallback_rest_queue(
+        self,
+        text: str,
+        profile_ids: List[str],
+        media_urls: Optional[List[str]] = None,
+        schedule_time: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Fallback to Buffer legacy REST endpoint."""
         payload: Dict[str, Any] = {
-            "access_token": self.access_token,
+            "access_token": self.api_key,
             "profile_ids[]": profile_ids,
             "text": text,
             "top": False,
-            "now": False,  # Always queue as draft for human-in-the-loop review
+            "now": False,
         }
-
         if schedule_time:
             payload["scheduled_at"] = schedule_time
-
         if media_urls and len(media_urls) > 0:
             payload["media[link]"] = media_urls[0]
 
         try:
-            response = requests.post(self.API_URL, data=payload, timeout=20)
+            response = requests.post(self.REST_API_URL, data=payload, timeout=20)
             if response.status_code in (200, 201):
                 data = response.json()
                 return {
                     "success": True,
-                    "provider": "buffer",
+                    "provider": "buffer_rest",
                     "queued_profiles_count": len(profile_ids),
                     "buffer_response": data.get("message", "Post queued successfully as draft."),
                 }

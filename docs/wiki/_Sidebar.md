@@ -1,6 +1,7 @@
 ### 🌐 [OmniPress MCP](Home)
 
 - **[Home](Home)**
+- **[Step-by-Step Guide](Step-by-Step-Guide)**
 - **[Architecture & Protocol](Architecture-&-Protocol)**
 - **[Creating Niche Skills](Creating-Niche-Skills)**
 - **[Supported Platforms & Adapters](Supported-Platforms-&-Adapters)**

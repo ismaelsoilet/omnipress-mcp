@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "id": "template-channel",
+  "name": "Nome do Canal",
+  "slug": "template-channel",
+  "description": "Descrição do propósito e foco temático do canal.",
+  "category": "general",
+  "branding": {
+    "handle": "@canal.oficial",
+    "badge_text": "CATEGORIA DO CANAL",
+    "theme_colors": {
+      "primary": "#3B82F6",
+      "background": "#0F172A",
+      "text": "#FFFFFF",
+      "secondary_text": "#E2E8F0"
+    },
+    "typography": {
+      "bold_font": "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+      "regular_font": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+    }
+  },
+  "social": {
+    "instagram": {
+      "handle": "canal.oficial",
+      "buffer_channel_id": "",
+      "default_hashtags": [
+        "#canal",
+        "#conteudo",
+        "#curiosidades"
+      ]
+    }
+  },
+  "settings": {
+    "auto_sanitize": true,
+    "default_aspect_ratio": "3:4"
+  }
+}

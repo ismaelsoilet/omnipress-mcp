@@ -22,6 +22,9 @@ from src.adapters.buffer_adapter import BufferPublisherAdapter
 from src.adapters.webhook_adapter import WebhookPublisherAdapter
 from src.adapters.reddit_adapter import RedditPublisherAdapter
 from src.adapters.youtube_adapter import YouTubeStagingAdapter
+from src.adapters.instagram_adapter import InstagramGraphAdapter
+from src.core.channel_manager import ChannelManager
+from src.engine.carousel_builder import CarouselBuilder
 from src.utils.sanitizer import sanitize_text, inspect_sensitive_data
 
 # Initialize FastMCP Server with graceful fallback
@@ -46,16 +49,43 @@ except ImportError:
 
     mcp = FastMCP("OmniPress")
 
-# Initialize Adapters
+# Initialize Core Managers & Adapters
+channel_manager = ChannelManager()
+carousel_builder = CarouselBuilder(channel_manager)
 markdown_adapter = MarkdownArchiveAdapter()
 buffer_adapter = BufferPublisherAdapter()
 webhook_adapter = WebhookPublisherAdapter()
 reddit_adapter = RedditPublisherAdapter()
 youtube_adapter = YouTubeStagingAdapter()
+instagram_adapter = InstagramGraphAdapter()
 
 
 # MCP Tool Annotations for 2026 Protocol & TDQS Standards
 MCP_TOOL_ANNOTATIONS = {
+    "omnipress_list_channels": {
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+    "omnipress_get_channel": {
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+    "omnipress_create_channel": {
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": False,
+    },
+    "omnipress_build_carousel": {
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
     "omnipress_publish_article": {
         "readOnlyHint": False,
         "destructiveHint": False,
@@ -126,11 +156,13 @@ def omnipress_publish_article(
     category: str = "technology",
     tags: Optional[List[str]] = None,
     author: Optional[str] = None,
+    channel_slug: Optional[str] = None,
     sanitize: bool = True,
 ) -> str:
     """
     Saves a complete, publication-ready long-form article to the local archive
     with YAML frontmatter (for Substack, Jusbrasil, Medium, or static blog) and optional event dispatch.
+    Supports multi-channel workspaces via channel_slug.
 
     Use when:
     - Archiving a completed markdown article with structured frontmatter metadata.
@@ -160,16 +192,18 @@ def omnipress_publish_article(
         category=category,
         tags=tags or [],
         author=author,
+        channel_slug=channel_slug,
     )
 
     # If webhook configured, notify pipeline of new article
     if webhook_adapter.is_configured():
         webhook_adapter.dispatch_event("article_saved", result)
 
+    ch_label = f" | Channel: `{channel_slug}`" if channel_slug else ""
     output = [
         f"✅ Article archived successfully: **{result['filename']}**",
         f"📁 Path: `{result['filepath']}`",
-        f"🏷️ Category: `{category}` | Tags: {tags or []}",
+        f"🏷️ Category: `{category}` | Tags: {tags or []}{ch_label}",
     ]
 
     if sanitization_notes:
@@ -185,11 +219,13 @@ def omnipress_queue_post(
     title: Optional[str] = None,
     media_urls: Optional[List[str]] = None,
     schedule_time: Optional[str] = None,
+    channel_slug: Optional[str] = None,
     sanitize: bool = True,
 ) -> str:
     """
     Queues a post, thread segment, or social announcement to distribution channels
     (LinkedIn, X/Twitter, Threads via Buffer, or Reddit) in draft/review mode.
+    Supports multi-channel dispatch via channel_slug.
 
     Use when:
     - Scheduling or queuing social media posts for human review or automated publishing.
@@ -214,13 +250,14 @@ def omnipress_queue_post(
 
     results_summary = []
 
-    # 1. Try Buffer Adapter (LinkedIn, X, Threads)
+    # 1. Try Buffer Adapter (LinkedIn, X, Threads, Instagram)
     if buffer_adapter.is_configured():
         res = buffer_adapter.queue_social_post(
             text=processed_text,
             platforms=target_platforms,
             media_urls=media_urls,
             schedule_time=schedule_time,
+            channel_slug=channel_slug,
         )
         if res.get("success"):
             results_summary.append(
@@ -297,13 +334,14 @@ def omnipress_inspect_content(text: str) -> str:
 
 
 @mcp.tool()
-def omnipress_list_articles(limit: int = 5) -> str:
+def omnipress_list_articles(limit: int = 5, channel_slug: Optional[str] = None) -> str:
     """
-    Retrieves metadata of recently archived long-form articles from the local repository directory.
+    Retrieves metadata of recently archived long-form articles from the repository.
+    Can be scoped to a specific channel via channel_slug.
 
     Use when:
     - Discovering existing articles, file paths, and modification dates.
-    - Verifying recently published drafts or checking past article slugs.
+    - Verifying recently published drafts or checking past article slugs for a specific channel.
 
     Do NOT use when:
     - Inspecting text content for privacy leaks (use omnipress_inspect_content instead).
@@ -312,13 +350,154 @@ def omnipress_list_articles(limit: int = 5) -> str:
     Returns:
     - Formatted list of recent articles including filename, file size in bytes, and ISO-8601 modification timestamp.
     """
-    articles = markdown_adapter.list_recent(limit=limit)
+    articles = markdown_adapter.list_recent(limit=limit, channel_slug=channel_slug)
     if not articles:
-        return "No articles found in the archive directory."
+        target = f"in channel `{channel_slug}`" if channel_slug else "in the archive directory"
+        return f"No articles found {target}."
 
-    lines = [f"📚 Recent Articles ({len(articles)}):"]
+    scope = f" for Channel `{channel_slug}`" if channel_slug else ""
+    lines = [f"📚 Recent Articles{scope} ({len(articles)}):"]
     for a in articles:
         lines.append(f"- **{a['name']}** ({a['size_bytes']} bytes) — Modified: {a['modified']}")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def omnipress_list_channels(include_templates: bool = False) -> str:
+    """
+    Lists all configured content channels in the OmniPress multi-channel architecture.
+
+    Use when:
+    - Discovering available channels and their active configurations.
+    - Inspecting channel slugs, handles, categories, and storage paths.
+
+    Do NOT use when:
+    - Querying individual channel brand details (use omnipress_get_channel instead).
+
+    Returns:
+    - Formatted list of channels with slug, handle, category, and workspace path.
+    """
+    channels = channel_manager.list_channels(include_templates=include_templates)
+    if not channels:
+        return "ℹ️ No channels configured yet. Use `omnipress_create_channel` to create one."
+
+    active_slug = channel_manager.get_active_channel_slug()
+    lines = [f"📡 OmniPress Channels ({len(channels)}) — Active: `{active_slug}`:\n"]
+    for ch in channels:
+        slug = ch.get("slug", "unknown")
+        name = ch.get("name", slug)
+        handle = ch.get("branding", {}).get("handle", "N/A")
+        cat = ch.get("category", "general")
+        is_active = " 🟢 (ACTIVE)" if slug == active_slug else ""
+        lines.append(f"- **{name}** (`{slug}`){is_active}")
+        lines.append(f"  • Handle: `{handle}` | Categoria: `{cat}`")
+        lines.append(f"  • Workspace: `{ch.get('path', '')}`")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def omnipress_get_channel(channel_slug: str) -> str:
+    """
+    Retrieves full configuration and brand identity for a specific channel.
+
+    Use when:
+    - Inspecting brand colors, typography, handles, and Buffer channel IDs.
+    - Verifying channel settings before generating carousels or dispatching posts.
+
+    Do NOT use when:
+    - Discovering all channels (use omnipress_list_channels instead).
+
+    Returns:
+    - Formatted JSON summary of channel parameters and status.
+    """
+    import json
+    channel = channel_manager.get_channel(channel_slug)
+    if not channel:
+        return f"⚠️ Channel `{channel_slug}` not found. Use `omnipress_list_channels` to see available channels."
+    return json.dumps(channel, indent=2, ensure_ascii=False)
+
+
+@mcp.tool()
+def omnipress_create_channel(
+    slug: str,
+    name: str,
+    handle: str,
+    category: str = "general",
+    description: str = "",
+    primary_color: str = "#D4AF37",
+    buffer_channel_id: str = "",
+) -> str:
+    """
+    Scaffolds a new isolated channel workspace with dedicated articles, media, and scripts directories.
+
+    Use when:
+    - Creating a new content channel (e.g. tech, finance, legal, dark channel).
+    - Setting up a distinct brand identity with its own handle and Buffer channel ID.
+
+    Do NOT use when:
+    - Querying or modifying an existing channel configuration.
+
+    Returns:
+    - Confirmation with created directories and channel configuration path.
+    """
+    config = channel_manager.create_channel(
+        slug=slug,
+        name=name,
+        handle=handle,
+        category=category,
+        description=description,
+        primary_color=primary_color,
+        buffer_channel_id=buffer_channel_id,
+    )
+    return (
+        f"✅ Channel **{name}** (`{config['slug']}`) created successfully!\n"
+        f"📁 Workspace: `{config['path']}`\n"
+        f"🏷️ Handle: `{config['branding']['handle']}` | Categoria: `{category}`\n"
+        f"⚙️ Config: `{config['path']}/channel.json`\n"
+        f"Diretórios prontos: `articles/`, `media/carousels/`, `media/stories/`, `media/raw/`, `scripts/`"
+    )
+
+
+@mcp.tool()
+def omnipress_build_carousel(
+    channel_slug: str,
+    post_slug: str,
+    slides_json: str,
+    aspect_ratio: str = "3:4",
+) -> str:
+    """
+    Renders a branded, high-contrast Instagram carousel deck for a channel using CarouselBuilder.
+    Dynamically applies the channel's brand colors, fonts, badge, and handle with pixel-perfect wrapping.
+
+    Use when:
+    - Generating production-ready 3:4 portrait carousel slides from an array of slide definitions.
+    - Ensuring zero text clipping and safe unicode glyphs tailored to the channel's identity.
+
+    Do NOT use when:
+    - Publishing directly to social channels without inspecting slides first.
+
+    Returns:
+    - Summary with paths of all rendered slides.
+    """
+    import json
+    try:
+        slides_data = json.loads(slides_json)
+    except Exception as e:
+        return f"⚠️ Invalid slides_json: {e}"
+
+    if not isinstance(slides_data, list) or not slides_data:
+        return "⚠️ slides_json must be a non-empty JSON list of slide objects."
+
+    generated = carousel_builder.build_carousel(
+        channel_slug=channel_slug,
+        post_slug=post_slug,
+        slides_data=slides_data,
+        aspect_ratio=aspect_ratio,
+    )
+
+    lines = [f"✅ Carousel generated for channel `{channel_slug}` ({len(generated)} slides):"]
+    for path in generated:
+        lines.append(f"- 🖼️ `{path}`")
     return "\n".join(lines)
 
 
@@ -438,7 +617,15 @@ def omnipress_queue_media_post(
     if "instagram" in normalized or "ig" in normalized or "all" in normalized:
         if not media_urls:
             results.append("⚠️ Instagram Warning: Media is required for Instagram posts.")
-        if buffer_adapter.is_configured() and buffer_adapter.instagram_profile_id:
+        if instagram_adapter.is_configured():
+            res = instagram_adapter.queue_social_post(
+                processed_caption, ["instagram"], media_urls, schedule_time
+            )
+            if res.get("success"):
+                results.append(f"✅ Published directly to Instagram via Meta Graph API: Post ID {res.get('post_id')} ({res.get('permalink')})")
+            else:
+                results.append(f"⚠️ Instagram Graph API notice: {res.get('error')}")
+        elif buffer_adapter.is_configured() and buffer_adapter.instagram_profile_id:
             res = buffer_adapter.queue_social_post(
                 processed_caption, ["instagram"], media_urls, schedule_time
             )

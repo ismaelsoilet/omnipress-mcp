@@ -2,29 +2,31 @@
 
 [🇺🇸 English Version](SETUP_GUIDE.md) | [🇧🇷 Versão em Português](SETUP_GUIDE.pt-BR.md)
 
-Este documento fornece um passo a passo completo para configurar suas contas de publicação no **LinkedIn**, **X (Twitter)**, **Meta Threads**, **Reddit** e **Webhooks** no OmniPress MCP.
+Este documento fornece um guia passo a passo completo para configurar suas contas de publicação no **Buffer** (LinkedIn, X, Threads), **Instagram Graph API**, **Reddit**, **Webhooks** e a **Arquitetura Multi-Canal** no OmniPress MCP.
 
 ---
 
 ## 1. Configuração do Buffer (LinkedIn, X e Meta Threads)
 
-O Buffer gerencia o agendamento de postagens para LinkedIn, X e Meta Threads. O OmniPress sempre envia os posts como **Rascunhos (Drafts)**, permitindo que você revise e aprove cada publicação pelo celular ou navegador antes de ir ao ar.
+O Buffer gerencia o agendamento de postagens para LinkedIn, X (Twitter) e Meta Threads. O OmniPress sempre envia os posts como **Rascunhos (Drafts)**, permitindo que você revise e aprove cada publicação pelo celular ou navegador antes de ir ao ar.
 
 ### Passo 1.1: Conectar suas Redes Sociais
-1. Acesse [buffer.com](https://buffer.com) e crie uma conta gratuita.
+1. Acesse [buffer.com](https://buffer.com) e faça login na sua conta.
 2. Conecte as redes desejadas:
    - **Perfil do LinkedIn ou Página de Empresa**
    - **Perfil do X (Twitter)**
    - **Perfil do Meta Threads**
+   - **Instagram Business / Creator** (opcional, caso queira publicar via Buffer)
 
-### Passo 1.2: Obter o Access Token de Desenvolvedor
-1. Acesse o [Portal de Desenvolvedores do Buffer](https://buffer.com/developers/apps/create).
-2. Crie uma nova aplicação:
-   - **Name**: `OmniPress-MCP`
-   - **Description**: `Assistente de Publicação Agêntica`
-   - **Callback URL**: `http://localhost`
-3. Após criar, abra as configurações da aplicação e localize o **Developer Access Token**.
-4. Copie esse token.
+### Passo 1.2: Obter seu Token de API do Buffer
+O OmniPress suporta tanto a API moderna GraphQL quanto a API REST legada do Buffer:
+1. Acesse [publish.buffer.com/settings/api](https://publish.buffer.com/settings/api).
+2. Copie sua chave de API pessoal (**Personal API Key**) ou crie uma aplicação no [Buffer Developer Portal](https://buffer.com/developers/apps/create).
+3. Adicione ao seu arquivo `.env`:
+   ```env
+   BUFFER_API_KEY=seu_token_aqui
+   BUFFER_ACCESS_TOKEN=seu_token_aqui
+   ```
 
 ### Passo 1.3: Descobrir os IDs dos Perfis Conectados
 Para descobrir os identificadores únicos de cada rede:
@@ -34,22 +36,46 @@ Para descobrir os identificadores únicos de cada rede:
    - `service: "linkedin"` $\rightarrow$ copie o `"id"` correspondente.
    - `service: "twitter"` $\rightarrow$ copie o `"id"` correspondente.
    - `service: "threads"` $\rightarrow$ copie o `"id"` correspondente.
+   - `service: "instagram"` $\rightarrow$ copie o `"id"` correspondente.
 
 ### Passo 1.4: Configurar no arquivo `.env`
 ```env
+BUFFER_API_KEY=seu_token_aqui
 BUFFER_ACCESS_TOKEN=seu_token_aqui
 BUFFER_LINKEDIN_PROFILE_ID=seu_id_do_linkedin
 BUFFER_X_PROFILE_ID=seu_id_do_x
 BUFFER_THREADS_PROFILE_ID=seu_id_do_threads
+BUFFER_INSTAGRAM_PROFILE_ID=seu_id_do_instagram
+```
+
+> 💡 **Nota Multi-Canal**: Se você gerencia vários canais, pode configurar o `buffer_channel_id` diretamente no arquivo `channels/<slug>/channel.json` de cada canal! O OmniPress prioriza o ID do canal antes de recorrer ao `.env`.
+
+---
+
+## 2. Configuração do Instagram Graph API (Publicação Direta)
+
+Caso você deseje publicar imagens e carrosséis diretamente no Instagram sem depender do Buffer, você pode usar a API oficial do Instagram Graph:
+
+### Passo 2.1: Pré-requisitos
+- Uma conta do **Instagram Profissional** (Comercial ou Criador de Conteúdo).
+- Uma **Página do Facebook** vinculada à conta do Instagram.
+- Uma aplicação no portal [Meta for Developers](https://developers.facebook.com/) com as permissões:
+  - `instagram_basic`
+  - `instagram_content_publish`
+
+### Passo 2.2: Adicionar ao `.env`
+```env
+INSTAGRAM_ACCESS_TOKEN=seu_token_de_longa_duracao_meta
+INSTAGRAM_ACCOUNT_ID=seu_instagram_business_account_id
 ```
 
 ---
 
-## 2. Configuração do Reddit (Publicação Direta em Subreddits)
+## 3. Configuração do Reddit (Publicação Direta em Subreddits)
 
 O OmniPress conecta-se diretamente à API oficial do Reddit utilizando um aplicativo do tipo Script. Isso permite publicar postagens de texto com formatação Markdown em comunidades especializadas (ex: `r/programming`, `r/webdev`, `r/SideProject`, `r/direito`, `r/contabilidade`).
 
-### Passo 2.1: Criar o Aplicativo de Desenvolvedor no Reddit
+### Passo 3.1: Criar o Aplicativo de Desenvolvedor no Reddit
 1. Entre na sua conta do Reddit e acesse [reddit.com/prefs/apps](https://www.reddit.com/prefs/apps).
 2. Role até o final da página e clique em **"are you a developer? create an app..."** (ou **"create another app..."**).
 3. Preencha os campos:
@@ -60,13 +86,13 @@ O OmniPress conecta-se diretamente à API oficial do Reddit utilizando um aplica
    - **redirect uri**: `http://localhost:8080`
 4. Clique em **create app**.
 
-### Passo 2.2: Obter as Credenciais do Reddit
+### Passo 3.2: Obter as Credenciais do Reddit
 - **Client ID**: A sequência de texto localizada logo abaixo de `personal use script` (cerca de 14 caracteres, ex: `a1B2c3D4e5F6g7`).
 - **Client Secret**: O valor do campo `secret` exibido dentro do painel do app.
 - **Username**: Seu usuário do Reddit (sem `/u/`).
 - **Password**: Sua senha do Reddit.
 
-### Passo 2.3: Configurar no arquivo `.env`
+### Passo 3.3: Configurar no arquivo `.env`
 ```env
 REDDIT_CLIENT_ID=seu_client_id
 REDDIT_CLIENT_SECRET=seu_client_secret
@@ -75,15 +101,63 @@ REDDIT_PASSWORD=sua_senha
 REDDIT_DEFAULT_SUBREDDIT=SideProject
 ```
 
-### Passo 2.4: Como Direcionar para Subreddits Específicos
-Nas conversas com o Antigravity, basta especificar a comunidade desejada:
+### Passo 3.4: Como Direcionar para Subreddits Específicos
+Nas conversas com o Antigravity ou Claude, basta especificar a comunidade desejada:
 > *"OmniPress: Publique uma análise sobre auditoria de banco de dados em perícia judicial no Reddit r/direito e r/webdev."*
 
-O Antigravity passará `platforms: ["reddit:direito", "reddit:webdev"]` automaticamente para a ferramenta!
+O agente passará `platforms: ["reddit:direito", "reddit:webdev"]` automaticamente para a ferramenta!
 
 ---
 
-## 3. Configuração de Webhooks e n8n (Opcional)
+## 4. Arquitetura Multi-Canal e Linha de Comando (CLI)
+
+O OmniPress isola completamente marcas e veículos através do diretório `channels/<slug>/`.
+
+### Estrutura de Diretórios de um Canal
+```
+channels/dossie-historico/
+  ├── channel.json             # Metadados, paleta de cores e identidades sociais
+  ├── articles/                # Artigos arquivados organizados por AAAA/MM/
+  ├── media/
+  │   ├── raw/                 # Imagens originais de referência
+  │   ├── carousels/           # Decks de carrossel 3:4 gerados
+  │   ├── stories/             # Imagens em 9:16
+  │   └── highlights/          # Capas de destaques
+  └── scripts/                 # Pipelines de produção do canal
+```
+
+### Comandos da CLI (`src/cli.py`)
+```bash
+# 1. Listar todos os canais configurados
+python src/cli.py list-channels
+
+# 2. Criar um novo canal com cores e dados da marca
+python src/cli.py create-channel fin-pro \
+  --name "Finanças Pro" \
+  --handle "@financas.pro" \
+  --category "finance" \
+  --color "#10B981"
+
+# 3. Exibir os detalhes e configurações JSON de um canal
+python src/cli.py info-channel fin-pro
+
+# 4. Renderizar carrossel de imagens 3:4 para um post
+python src/cli.py build-carousel \
+  --channel fin-pro \
+  --post juros-compostos \
+  --config caminho/para/slides.json \
+  --aspect-ratio 3:4
+```
+
+### Definindo o Canal Ativo Padrão
+No arquivo `.env`:
+```env
+OMNIPRESS_ACTIVE_CHANNEL=fin-pro
+```
+
+---
+
+## 5. Configuração de Webhooks e n8n (Opcional)
 
 O OmniPress despacha cargas JSON completas para pipelines no **n8n**, Make, Slack, Telegram ou endpoints HTTP personalizados.
 
@@ -96,128 +170,48 @@ Se `OMNIPRESS_WEBHOOK_SECRET` for definido, cada requisição incluirá o cabeç
 
 ---
 
-## 4. Pasta de Armazenamento Local (Markdown)
+## 6. Configuração no Google Antigravity e Claude Desktop
 
-Por padrão, os artigos são organizados em:
-```
-articles/
-└── AAAA/
-    └── MM/
-        └── AAAA-MM-DD-titulo-do-artigo.md
-```
-
-Para armazenar em uma pasta customizada (ex: cofre do Obsidian ou pasta de blog estático):
-```env
-ARTICLES_DIR=C:/Users/Ismael/Documents/MeuCofre/Artigos
-```
-
----
-
-## 5. Testes e Validação no Antigravity
-
-1. Execute a suíte de testes unitários:
-   ```bash
-   npm test
-   ```
-2. No chat do Antigravity, solicite uma publicação multi-canal:
-   > *"OmniPress: Prepare um post anunciando nosso novo projeto open source e coloque na fila para o LinkedIn, Threads e Reddit r/SideProject."*
-
----
-
-## 6. Integração com Claude Desktop
-
-O Claude Desktop conecta-se nativamente a servidores MCP via entrada/saída padrão (`stdio`).
-
-### Configuração Automatizada (Recomendada)
-Execute o script utilitário de configuração:
-```bash
-npm run setup:claude
-```
-Este script:
-- Localiza o arquivo de configuração oficial (`%APPDATA%\Claude\claude_desktop_config.json` no Windows).
-- Cria um backup preventivo das suas configurações existentes.
-- Injeta as credenciais e paths absolutos do `omnipress` de forma transparente.
-
-### Configuração Manual
-Abra `%APPDATA%\Claude\claude_desktop_config.json` (Windows) ou `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) e insira:
-
+### No Google Antigravity (`~/.gemini/config/mcp_config.json`)
 ```json
 {
   "mcpServers": {
     "omnipress": {
-      "command": "node",
-      "args": ["C:\\Users\\Ismael\\projects\\omnipress-mcp\\src\\server.js"],
+      "command": "/caminho/ate/omnipress-mcp/.venv/bin/python",
+      "args": ["-m", "src.server"],
       "env": {
-        "ARTICLES_DIR": "C:\\Users\\Ismael\\projects\\omnipress-mcp\\articles"
+        "OMNIPRESS_ACTIVE_CHANNEL": "dossie-historico"
       }
     }
   }
 }
 ```
-*Reinicie o Claude Desktop após salvar.*
+
+### No Claude Desktop (`claude_desktop_config.json`)
+```json
+{
+  "mcpServers": {
+    "omnipress": {
+      "command": "python",
+      "args": ["/caminho/ate/omnipress-mcp/src/server.py"],
+      "env": {
+        "ARTICLES_DIR": "/caminho/ate/omnipress-mcp/articles"
+      }
+    }
+  }
+}
+```
 
 ---
 
-## 7. Ecossistema Google Gemini
+## 7. Verificação e Testes
 
-### Análise do App Gemini para Windows (Consumidor)
-> [!NOTE]
-> O aplicativo oficial do Google Gemini para Windows (Microsoft Store / PWA) atualmente **não** possui suporte nativo direto a servidores MCP locais (`stdio`). Ele opera exclusivamente com extensões pré-definidas do Google (Workspace, YouTube, Spotify).
+Para garantir que todos os adaptadores e o motor de canais estão funcionando perfeitamente:
 
-### Soluções Funcionais com Gemini:
-1. **Google Antigravity (Ambiente Nativo Atual)**:
-   - Suporte completo e direto via `~/.gemini/config/mcp_config.json`.
-2. **Google Gemini CLI**:
-   - Adicione em `~/.gemini/settings.json`:
-     ```json
-     {
-       "mcpServers": {
-         "omnipress": {
-           "command": "node",
-           "args": ["C:\\Users\\Ismael\\projects\\omnipress-mcp\\src\\server.js"],
-           "env": {
-             "ARTICLES_DIR": "C:\\Users\\Ismael\\projects\\omnipress-mcp\\articles"
-           }
-         }
-       }
-     }
-     ```
-3. **Clientes Desktop Comunitários para Gemini (ex: Tome / Gemini MCP Desktop)**:
-   - Aplicativos open source desktop que aceitam sua Gemini API Key e conectam diretamente ao executável `server.js`.
-
----
-
-## 8. Integração com ChatGPT Classic & Custom GPTs
-
-O ChatGPT Web e Desktop Classic conectam-se a ferramentas externas por meio de **Custom GPT Actions (OpenAPI 3.1)** ou conectores remotos MCP.
-
-### Passo 8.1: Inicie o Gateway HTTP do OmniPress
-Execute o servidor HTTP embutido (zero dependências externas):
 ```bash
-npm run start:http
-```
-O gateway escutará na porta `3333`:
-- Status: `http://localhost:3333/health`
-- Especificação OpenAPI 3.1 Dinâmica: `http://localhost:3333/openapi.json`
-- Rotas REST: `POST /api/publish_article`, `POST /api/queue_post`, `POST /api/inspect_content`, `GET /api/list_recent`
+# Executar a suíte de testes em Python (12 testes):
+pytest
 
-### Passo 8.2: Exponha com Túnel (para acesso do ChatGPT Web)
-Como os servidores do ChatGPT não alcançam o `localhost`, use um túnel seguro:
-```bash
-npx ngrok http 3333
-# ou com cloudflared:
-# cloudflared tunnel --url http://localhost:3333
+# Executar a suíte de testes em Node.js (15 testes):
+npm test
 ```
-Copie a URL pública gerada (ex: `https://seu-subdominio.ngrok-free.app`).
-
-### Passo 8.3: Configure a Action no ChatGPT
-1. No ChatGPT, acesse **Explore GPTs** > **Create**.
-2. Na aba **Configure**:
-   - **Name**: `OmniPress Publishing Engine`
-   - **Instructions**: Cole o conteúdo de `config/chatgpt_gpt_instructions.md`.
-3. Na seção **Actions**, clique em **Create new action**.
-4. No campo **Schema**, importe `config/openapi.json` ou aponte para `https://seu-subdominio.ngrok-free.app/openapi.json`.
-5. Deixe **Authentication** como `None`.
-6. Teste no painel de preview:
-   > *"Inspecione este texto: 'No processo 0001234-56.2023.8.26.0100 analisamos o CPF 123.456.789-00'."*
-   O ChatGPT invocará `inspectContent` e retornará a validação com privacidade protegida!

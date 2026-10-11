@@ -6,6 +6,9 @@
       "env": {
         "ARTICLES_DIR": "./articles"
       }
+    },
+    "buffer": {
+      "serverUrl": "https://mcp.buffer.com/mcp"
     }
   }
 }

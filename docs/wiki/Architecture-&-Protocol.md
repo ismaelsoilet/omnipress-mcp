@@ -1,10 +1,10 @@
 # Architecture & Protocol 🏛️
 
-OmniPress implements the official **Model Context Protocol (MCP)** specification over standard I/O (`stdio`). This allows any MCP-compatible AI agent (such as Antigravity, Claude Desktop, or Gemini CLI) to dynamically discover and invoke its publishing tools.
+OmniPress implements the official **Model Context Protocol (MCP)** specification over standard I/O (`stdio`). This allows any MCP-compatible AI agent (such as Google Antigravity, Claude Desktop, or Gemini CLI) to dynamically discover and invoke its publishing tools.
 
 ---
 
-## 1. High-Level Flow
+## 1. High-Level Architecture Flow
 
 ```
 ┌────────────────────────────────────────────────────────┐
@@ -16,61 +16,67 @@ OmniPress implements the official **Model Context Protocol (MCP)** specification
 │                  OmniPress MCP Engine                  │
 │                                                        │
 │   ├── 1. Protocol Handler (initialize, tools/list)     │
-│   ├── 2. Privacy Sanitizer (LGPD, CNJ, PII, Secrets)   │
-│   └── 3. Modular Adapters Dispatcher                   │
+│   ├── 2. ChannelManager (channels/<slug>/ resolution)  │
+│   ├── 3. Privacy Sanitizer (LGPD, CNJ, PII, Secrets)   │
+│   ├── 4. CarouselBuilder (PIL 3:4 graphics engine)     │
+│   └── 5. Modular Publisher Adapters                    │
 └───────────────────────────┬────────────────────────────┘
                             │
-         ┌──────────────────┼──────────────────┐
-         ▼                  ▼                  ▼
-┌─────────────────┐┌─────────────────┐┌─────────────────┐
-│ Buffer Adapter  ││ Reddit Adapter  ││ Markdown Archive│
-│ (LinkedIn, X,   ││ (OAuth2 Script) ││ (Local YAML .md)│
-│     Threads)    │└─────────────────┘└─────────────────┘
+         ┌──────────────────┼─────────────────────────┐
+         ▼                  ▼                         ▼
+┌─────────────────┐┌─────────────────┐┌───────────────────────────────┐
+│ Buffer Adapter  ││ Reddit Adapter  ││ Markdown Channel Archive      │
+│ (GraphQL / REST ││ (OAuth2 Script) ││ (channels/<slug>/articles/)   │
+│  Draft Queue)   │└─────────────────┘└───────────────────────────────┘
 └────────┬────────┘
          │
-┌────────▼────────┐
-│ Webhook Adapter │
-│  (n8n / Make)   │
-└─────────────────┘
+         ├──────────────────┐
+         ▼                  ▼
+┌─────────────────┐┌─────────────────┐
+│ Instagram Graph ││ Webhook Adapter │
+│ (Direct API)    ││  (n8n / Make)   │
+└─────────────────┘└─────────────────┘
 ```
 
 ---
 
-## 2. The 4 Core Stages
+## 2. Core Architectural Components
 
-### Stage 1: Ingestion
-The agent receives the user's raw input: a git diff, meeting notes, a court ruling, or high-level thoughts.
+### 1. ChannelManager (`src/core/channel_manager.py`)
+- Discovers, reads, and scaffolds channel workspaces in `channels/<slug>/`.
+- Resolves active channel via `OMNIPRESS_ACTIVE_CHANNEL` env variable or per-request tool parameter (`channel_slug`).
+- Reads branding, typography, color palettes, and social identifiers from `channel.json`.
 
-### Stage 2: Skill-Driven Transformation
-The active niche skill guides the agent to structure the content into the tri-format or quint-format:
-- Long-form Markdown with YAML metadata.
-- LinkedIn post.
-- X/Twitter thread.
-- Meta Threads post.
-- Reddit community breakdown.
+### 2. CarouselBuilder (`src/engine/carousel_builder.py`)
+- Channel-agnostic layout engine using Python Pillow.
+- Generates 3:4 portrait (1080x1440) or 1:1 square slides.
+- Dynamic pixel-width word wrapping without clipping or hyphenation breaks.
+- Dark gradient overlay for guaranteed text legibility over any background visual.
+- Injects channel branding: primary color accents, badge pill, `@handle`, pagination (`01/05`), and swipe prompt (`Deslize →`).
 
-### Stage 3: Automated Sanitization
-Before dispatching to any external network or disk:
-- `sanitizeText()` scans for sensitive information:
-  - Brazilian CNJ court process numbers (`\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}`) $\rightarrow$ `[PROCESSO ANÔNIMO]`
-  - Tax IDs (CPF / CNPJ) $\rightarrow$ `[CPF PROTEGIDO]`, `[CNPJ PROTEGIDO]`
-  - Emails and phone numbers $\rightarrow$ `[EMAIL PROTEGIDO]`
-  - API keys and tokens.
+### 3. Privacy & De-Identification Shield (`src/utils/sanitizer.py`)
+- Scans all text before publication or queueing:
+  - Brazilian CNJ lawsuit IDs (`\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}`) $\rightarrow$ `[PROCESSO ANÔNIMO]`
+  - Brazilian CPFs and CNPJs $\rightarrow$ `[CPF PROTEGIDO]`, `[CNPJ PROTEGIDO]`
+  - Emails, phone numbers, API keys, JWTs, and private IPs.
 
-### Stage 4: Execution & Staging
-- Long-form articles are saved to `articles/YYYY/MM/YYYY-MM-DD-slug.md`.
-- Social posts are queued to Buffer or Reddit as **Drafts** for human-in-the-loop review.
+### 4. Publisher Adapters (`src/adapters/`)
+- `MarkdownArchiveAdapter`: Organizes long-form markdown by `YYYY/MM/` with YAML frontmatter.
+- `BufferAdapter`: Connects to Buffer using GraphQL `createPost` mutation with fallback to legacy REST API, always queuing as drafts for human review.
+- `InstagramAdapter`: Publishes direct images and carousels via Meta Graph API.
+- `RedditAdapter`: Submits self-posts to specific subreddits (`r/programming`, `r/direito`, etc.).
+- `WebhookAdapter`: Emits signed HMAC SHA-256 event payloads to external automation runners.
 
 ---
 
-## 3. Protocol Implementation (Dual-Runtime)
-
-### Node.js Engine (`src/server.js`)
-- Zero external dependencies.
-- Native `readline` on `process.stdin` / `process.stdout`.
-- Native `fetch` for Buffer, Reddit, and Webhooks.
-- Native `node:crypto` for HMAC SHA-256 signatures.
+## 3. Dual-Runtime Support
 
 ### Python Engine (`src/server.py`)
 - Built on `mcp.server.fastmcp.FastMCP`.
-- Implements class-based adapter hierarchy (`BasePublisherAdapter`).
+- Implements all 10 MCP tools with full channel isolation and Pillow carousel rendering.
+- Recommended for production use with Antigravity and Claude.
+
+### Node.js Engine (`src/server.js`)
+- **Zero external dependencies** (uses native `node:fs`, `node:crypto`, `readline`, `fetch`).
+- Runs immediately on Node 18+ without requiring `npm install`.
+- Ideal for lightweight environments, serverless deployment, or quick local testing.

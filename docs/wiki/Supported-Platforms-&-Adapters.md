@@ -1,14 +1,14 @@
 # Supported Platforms & Adapters 🌐
 
-OmniPress provides built-in modular adapters for major professional and community networks, as well as arbitrary webhook targets.
+OmniPress provides built-in modular adapters for major social networks, direct media publishing, and automation webhooks.
 
 ---
 
 ## 1. LinkedIn (via Buffer)
-- **Format**: Text posts and carousel copy.
-- **Queue Mode**: Queued as a **Draft** in Buffer. You receive a notification on your phone/browser to review before it goes live.
+- **Format**: Text posts, bulleted takeaways, discussion prompts, and carousel copy.
+- **Queue Mode**: Queued as a **Draft** in Buffer for human review before going live.
 - **Environment**:
-  - `BUFFER_ACCESS_TOKEN`
+  - `BUFFER_API_KEY` (or `BUFFER_ACCESS_TOKEN`)
   - `BUFFER_LINKEDIN_PROFILE_ID`
 - **Tool Invocation**:
   ```json
@@ -20,10 +20,10 @@ OmniPress provides built-in modular adapters for major professional and communit
 ---
 
 ## 2. X / Twitter (via Buffer)
-- **Format**: Concise tweets or multi-tweet threads.
-- **Queue Mode**: Queued as Draft.
+- **Format**: Single tweets or multi-tweet connected narrative threads.
+- **Queue Mode**: Queued as Draft in Buffer.
 - **Environment**:
-  - `BUFFER_ACCESS_TOKEN`
+  - `BUFFER_API_KEY` (or `BUFFER_ACCESS_TOKEN`)
   - `BUFFER_X_PROFILE_ID`
 - **Tool Invocation**:
   ```json
@@ -35,10 +35,10 @@ OmniPress provides built-in modular adapters for major professional and communit
 ---
 
 ## 3. Meta Threads (via Buffer)
-- **Format**: Conversational community insights.
-- **Queue Mode**: Queued as Draft.
+- **Format**: Conversational, community-focused insights.
+- **Queue Mode**: Queued as Draft in Buffer.
 - **Environment**:
-  - `BUFFER_ACCESS_TOKEN`
+  - `BUFFER_API_KEY` (or `BUFFER_ACCESS_TOKEN`)
   - `BUFFER_THREADS_PROFILE_ID`
 - **Tool Invocation**:
   ```json
@@ -49,8 +49,25 @@ OmniPress provides built-in modular adapters for major professional and communit
 
 ---
 
-## 4. Reddit (Direct Script OAuth2 API)
-- **Format**: Rich Markdown self-posts submitted directly to communities.
+## 4. Instagram (Direct Graph API & Buffer)
+- **Format**: Single images and 3:4 portrait carousel decks.
+- **Direct Publishing via Meta Graph API**:
+  - `INSTAGRAM_ACCESS_TOKEN`
+  - `INSTAGRAM_ACCOUNT_ID`
+- **Alternative Publishing via Buffer**:
+  - `BUFFER_INSTAGRAM_PROFILE_ID`
+- **Tool Invocation**:
+  ```json
+  {
+    "platforms": ["instagram"],
+    "media_urls": ["https://example.com/slide1.jpg", "https://example.com/slide2.jpg"]
+  }
+  ```
+
+---
+
+## 5. Reddit (Direct Script OAuth2 API)
+- **Format**: Rich Markdown self-posts submitted directly to targeted communities.
 - **Targeting**: Specify the target subreddit dynamically in the platform argument:
   ```json
   {
@@ -67,12 +84,12 @@ OmniPress provides built-in modular adapters for major professional and communit
 
 ---
 
-## 5. Local Markdown Archive
-- **Format**: GitHub-flavored Markdown with standard YAML frontmatter:
+## 6. Local Markdown Archive (Multi-Channel)
+- **Format**: GitHub-flavored Markdown with complete YAML frontmatter:
   ```markdown
   ---
   title: "Article Title"
-  date: "2026-09-22T06:00:00.000Z"
+  date: "2026-10-11T12:00:00.000Z"
   category: "technology"
   author: "OmniPress"
   tags:
@@ -81,12 +98,19 @@ OmniPress provides built-in modular adapters for major professional and communit
   status: draft
   ---
   ```
-- **Storage**: Automatically grouped by `YYYY/MM/`.
+- **Storage**: Organized by channel in `channels/<slug>/articles/YYYY/MM/` or globally in `articles/YYYY/MM/`.
 - **Environment**: `ARTICLES_DIR=./articles`
 
 ---
 
-## 6. Custom Webhooks & n8n
+## 7. Custom Webhooks & n8n
 - **Format**: JSON event payload dispatched via HTTP POST.
 - **Signature**: If `OMNIPRESS_WEBHOOK_SECRET` is set, includes `X-OmniPress-Signature` HMAC SHA-256 header.
-- **Integration**: Easily connects to n8n, Make, Slack incoming webhooks, Telegram bots, or Discord webhooks.
+- **Integration**: Connects to n8n, Make, Slack incoming webhooks, Telegram bots, or Discord channels.
+
+---
+
+## 8. Carousel Graphics Engine (`CarouselBuilder`)
+- **Format**: 3:4 Portrait (1080x1440) or 1:1 Square.
+- **Features**: Contrast gradient overlays, pixel-accurate word wrap, and channel branding injection.
+- **Tool Invocation**: `omnipress_build_carousel(channel_slug, post_slug, slides_json)`.

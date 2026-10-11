@@ -27,15 +27,26 @@ venv/
 .env
 .env.local
 
-# Generated content archives (optional, keep directory structure)
+# Generated content archives (keep only directory structure)
 articles/*
 !articles/.gitkeep
+
+# Local media assets & private historical materials
+media/assets/*
+!media/assets/.gitkeep
+media/historical/
 media/output/*
 media/staging/*
 !media/.gitkeep
-!media/assets/.gitkeep
 
-# IDE
+# Channel workspaces: custom/private channels are strictly ignored, keeping only the generic template
+channels/*
+!channels/_template/
+!channels/_template/**
+!channels/.gitkeep
+
+# IDE & OS
 .vscode/
 .idea/
 *.swp
+.DS_Store

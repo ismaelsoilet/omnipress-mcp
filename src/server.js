@@ -675,14 +675,18 @@ function brainstormChannel({
 function runMediaScript(args) {
   return new Promise((resolve, reject) => {
     const scriptPath = path.join(PROJECT_ROOT, 'scripts', 'generate_dark_media.py');
+    const venvPython = path.join(PROJECT_ROOT, '.venv', 'bin', 'python');
     const uvPath = '/home/ismaelsoilet/.local/bin/uv';
     const hasUv = fs.existsSync(uvPath) || (process.env.PATH && process.env.PATH.includes('uv'));
     let binary = 'python3';
     let execArgs = [scriptPath, ...args];
 
-    if (hasUv) {
+    if (fs.existsSync(venvPython)) {
+      binary = venvPython;
+      execArgs = [scriptPath, ...args];
+    } else if (hasUv) {
       binary = fs.existsSync(uvPath) ? uvPath : 'uv';
-      execArgs = ['run', 'python', scriptPath, ...args];
+      execArgs = ['run', '-q', 'python', scriptPath, ...args];
     }
 
     execFile(binary, execArgs, { cwd: PROJECT_ROOT, maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => {

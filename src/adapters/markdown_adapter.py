@@ -7,6 +7,8 @@ import unicodedata
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
 
 def slugify(value: str) -> str:
     """Converts a title into a URL-safe, clean filename slug."""
@@ -16,11 +18,31 @@ def slugify(value: str) -> str:
 
 
 class MarkdownArchiveAdapter:
-    """Saves long-form articles with YAML frontmatter locally."""
+    """Saves long-form articles with YAML frontmatter locally, with multi-channel support."""
 
     def __init__(self, base_dir: Optional[str] = None):
-        self.base_dir = Path(base_dir or os.getenv("ARTICLES_DIR", "./articles")).resolve()
-        self.base_dir.mkdir(parents=True, exist_ok=True)
+        self.explicit_base_dir = base_dir is not None
+        self.default_dir = Path(base_dir or os.getenv("ARTICLES_DIR", "./articles")).resolve()
+        self.default_dir.mkdir(parents=True, exist_ok=True)
+
+    def _resolve_target_dir(self, channel_slug: Optional[str] = None) -> Path:
+        """Resolves target directory, respecting channel isolation if available."""
+        if channel_slug:
+            c_dir = PROJECT_ROOT / "channels" / channel_slug / "articles"
+            c_dir.mkdir(parents=True, exist_ok=True)
+            return c_dir
+
+        if self.explicit_base_dir:
+            return self.default_dir
+
+        active_env = os.getenv("OMNIPRESS_ACTIVE_CHANNEL", "").strip()
+        if active_env:
+            c_dir = PROJECT_ROOT / "channels" / active_env / "articles"
+            if c_dir.parent.exists():
+                c_dir.mkdir(parents=True, exist_ok=True)
+                return c_dir
+
+        return self.default_dir
 
     def save_article(
         self,
@@ -29,6 +51,7 @@ class MarkdownArchiveAdapter:
         category: str = "general",
         tags: Optional[List[str]] = None,
         author: Optional[str] = None,
+        channel_slug: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Saves the article to disk with YAML frontmatter.
@@ -38,8 +61,8 @@ class MarkdownArchiveAdapter:
         iso_str = now.isoformat()
         slug = slugify(title) or f"article-{int(now.timestamp())}"
 
-        # Group articles by year/month for clean organization
-        folder = self.base_dir / now.strftime("%Y") / now.strftime("%m")
+        base_folder = self._resolve_target_dir(channel_slug)
+        folder = base_folder / now.strftime("%Y") / now.strftime("%m")
         folder.mkdir(parents=True, exist_ok=True)
 
         filename = f"{date_str}-{slug}.md"
@@ -69,11 +92,18 @@ class MarkdownArchiveAdapter:
             "filename": filename,
             "slug": slug,
             "created_at": iso_str,
+            "channel_slug": channel_slug,
         }
 
-    def list_recent(self, limit: int = 5) -> List[Dict[str, Any]]:
-        """Lists recent archived markdown articles."""
-        files = list(self.base_dir.rglob("*.md"))
+    def list_recent(self, limit: int = 5, channel_slug: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Lists recent archived markdown articles, optionally scoped to a channel."""
+        target_dir = self._resolve_target_dir(channel_slug)
+        files = list(target_dir.rglob("*.md"))
+
+        # Also search root articles dir if channel dir has none and no explicit slug
+        if not files and not channel_slug and self.default_dir.exists():
+            files = list(self.default_dir.rglob("*.md"))
+
         files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
 
         results = []
