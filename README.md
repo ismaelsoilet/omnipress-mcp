@@ -102,6 +102,17 @@ Before anything is staged or published, OmniPress automatically runs security an
 No social post goes live without human verification:
 - All posts are placed into your **Drafts / Review queue** in Buffer or Instagram, allowing you to preview and approve them on your phone or web dashboard before publication.
 
+### 5. Programmatic Video & Motion Design Engine (Remotion)
+Full React & TypeScript video engine (`src/video/`) engineered for YouTube Documentary (16:9) and Shorts/Reels (9:16):
+- **Universal Compositions**: Render broadcast-grade MP4s in seconds using `npm run remotion:render`.
+- **Cinematic Components**: Built-in military cipher decryption (`ScrambledText`), 3D floating dust motes (`DustParticles`), anamorphic golden flares (`AnamorphicFlare`), distressed official stamps with camera shake (`ClassifiedStamp`), and Ken Burns camera movements (`KenBurnsImage`).
+- **Synchronized Broadcast Soundscape**: Multi-layered 48kHz stereo audio embedded via `<Audio />` (sub-bass braam boom, typewriter clicks, stamp slam impact, golden shimmer whoosh).
+- **Interactive Live Preview**: Explore timelines, frame scrubbing, and live playback via `npm run remotion:preview`.
+
+### 6. Multi-Channel Syndication & YouTube Integration
+- **YouTube Direct Integration**: Connects seamlessly with YouTube via Buffer (`buffer_channel_id` mapped in `channel.json`).
+- **Multi-Brand Scalability**: Easily expand across multiple verticals (History, Geopolitics, Software Architecture, and Tax Law / Public Governance) with zero code duplication.
+
 ---
 
 ## 🚀 Step-by-Step Hands-On Guide
@@ -274,6 +285,26 @@ Use `omnipress_prepare_dark_script`:
 - Produces high-hook openings within the first 3 seconds.
 - Breaks down scenes with AI image generator prompts.
 - Specifies voice narration instructions and YouTube/Instagram SEO metadata.
+
+#### Workflow E: Render Programmatic Videos & Intros with Remotion
+1. Preview your compositions live in the interactive browser studio:
+```bash
+npm run remotion:preview
+```
+2. Render broadcast-quality 1080p intro bumpers (4.0s) with multi-layered audio:
+```bash
+# 16:9 Landscape for Main YouTube Episodes
+npm run remotion:render:intro
+
+# 9:16 Vertical for YouTube Shorts, Reels, and TikTok
+npm run remotion:render:intro:shorts
+```
+Rendered MP4s are saved to `media/output/intro_dossie_16x9.mp4` and `media/output/intro_dossie_9x16.mp4`.
+
+#### Workflow F: Human Voiceover + Dynamic Remotion Timing
+1. Have OmniPress draft the teleprompter script broken down by scenes (`Scene 01`, `Scene 02`...).
+2. Record your voice audio per scene using your phone or microphone (`01.mp3`, `02.mp3`...).
+3. Remotion reads audio durations dynamically, adapting visual cuts to your natural speech pace with background music ducking (-20dB under voice).
 
 ---
 

@@ -50,3 +50,8 @@ channels/*
 .idea/
 *.swp
 .DS_Store
+
+# Node & Remotion
+node_modules/
+.remotion/
+

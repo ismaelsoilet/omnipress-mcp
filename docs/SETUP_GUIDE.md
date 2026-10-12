@@ -37,6 +37,7 @@ To find the unique ID for each connected network:
    - `service: "twitter"` $\rightarrow$ copy its `"id"`
    - `service: "threads"` $\rightarrow$ copy its `"id"`
    - `service: "instagram"` $\rightarrow$ copy its `"id"`
+   - `service: "youtube"` $\rightarrow$ copy its `"id"`
 
 ### Step 1.4: Add to `.env`
 ```env
@@ -46,9 +47,10 @@ BUFFER_LINKEDIN_PROFILE_ID=your_linkedin_profile_id
 BUFFER_X_PROFILE_ID=your_x_profile_id
 BUFFER_THREADS_PROFILE_ID=your_threads_profile_id
 BUFFER_INSTAGRAM_PROFILE_ID=your_instagram_profile_id
+BUFFER_YOUTUBE_PROFILE_ID=your_youtube_channel_id
 ```
 
-> 💡 **Multi-Channel Tip**: If you manage multiple brands, you can configure `buffer_channel_id` directly in each channel's `channels/<slug>/channel.json` file! OmniPress prioritizes the channel-specific ID before falling back to `.env`.
+> 💡 **Multi-Channel Tip**: If you manage multiple brands, you can configure `buffer_channel_id` directly in each channel's `channels/<slug>/channel.json` under `social.instagram` or `social.youtube`! OmniPress prioritizes the channel-specific ID before falling back to `.env`.
 
 ---
 

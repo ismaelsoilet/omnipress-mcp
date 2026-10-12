@@ -169,3 +169,16 @@ def test_mcp_channel_tools(tmp_path: Path):
     target_clean = Path(__file__).resolve().parent.parent / "channels" / "mcp-test-channel"
     if target_clean.exists():
         shutil.rmtree(target_clean)
+
+
+def test_dossie_historico_channel_config():
+    cm = ChannelManager()
+    dossie = cm.get_channel("dossie-historico")
+    assert dossie is not None
+    assert dossie["slug"] == "dossie-historico"
+    assert "instagram" in dossie["social"]
+    assert "youtube" in dossie["social"]
+    assert "tiktok" in dossie["social"]
+    assert dossie["social"]["tiktok"]["buffer_channel_id"] == "6acd5268778b240e2fed378b"
+    assert dossie["social"]["instagram"]["buffer_channel_id"] == "6acaa9ad6a5c39ccb67710a2"
+    assert dossie["social"]["youtube"]["buffer_channel_id"] == "6acd4b28778b240e2feca987"

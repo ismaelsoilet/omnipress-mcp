@@ -63,8 +63,11 @@ class CarouselBuilder:
         swipe_str: str = "Deslize →",
         gradient_start_ratio: float = 0.46,
         aspect_ratio: str = "3:4",
+        enable_text_card: bool = True,
+        card_bg_alpha: int = 215,
+        stroke_width: Optional[int] = None,
     ) -> Path:
-        """Renders a single branded carousel slide."""
+        """Renders a single branded carousel slide with contrast and typography safety (Rule 08)."""
         channel = self.channel_manager.get_channel(channel_slug) or self.channel_manager.get_active_channel()
         branding = channel.get("branding", {})
         colors = branding.get("theme_colors", {})
@@ -97,22 +100,36 @@ class CarouselBuilder:
         overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
         draw = ImageDraw.Draw(overlay)
 
-        # 1. Dark bottom gradient
-        grad_start = int(h * gradient_start_ratio)
-        for y in range(grad_start, h):
-            alpha = int(248 * ((y - grad_start) / (h - grad_start)) ** 1.3)
-            draw.line([(0, y), (w, y)], fill=(8, 10, 14, min(248, alpha)))
-
-        # 2. Top vignette for the badge
-        for y in range(int(h * 0.13)):
-            alpha = int(180 * (1 - (y / (h * 0.13))))
-            draw.line([(0, y), (w, y)], fill=(8, 10, 14, min(180, alpha)))
-
         # Fonts
         font_badge = ImageFont.truetype(bold_font_path, size=max(20, int(w * 0.024)))
         font_head = ImageFont.truetype(bold_font_path, size=max(38, int(w * 0.046)))
         font_body = ImageFont.truetype(reg_font_path, size=max(28, int(w * 0.034)))
         font_foot = ImageFont.truetype(bold_font_path, size=max(20, int(w * 0.024)))
+
+        # Dynamic Text Layout Pre-calculation (needed for gradient & safety card placement)
+        margin_x = int(w * 0.065)
+        max_text_w = w - (margin_x * 2)
+
+        head_lines = wrap_text_by_pixel(headline, font_head, max_text_w, draw)
+        body_lines = wrap_text_by_pixel(body, font_body, max_text_w, draw) if body else []
+
+        line_h_head = int(font_head.size * 1.25)
+        line_h_body = int(font_body.size * 1.35)
+
+        total_h = len(head_lines) * line_h_head + 14 + len(body_lines) * line_h_body
+        start_y = h - total_h - int(h * 0.11)
+
+        # 1. Dark bottom gradient (starts before text begins to guarantee base contrast)
+        grad_start = min(int(h * gradient_start_ratio), max(0, start_y - int(h * 0.06)))
+        for y in range(grad_start, h):
+            progress = (y - grad_start) / max(1, (h - grad_start))
+            alpha = int(252 * (progress ** 0.85))
+            draw.line([(0, y), (w, y)], fill=(8, 10, 14, min(252, alpha)))
+
+        # 2. Top vignette for the badge
+        for y in range(int(h * 0.13)):
+            alpha = int(180 * (1 - (y / (h * 0.13))))
+            draw.line([(0, y), (w, y)], fill=(8, 10, 14, min(180, alpha)))
 
         # 3. Top Badge (Pill container)
         badge_content = f"• {badge.upper()} | {handle.upper()} •"
@@ -127,37 +144,75 @@ class CarouselBuilder:
         )
         draw.text((bx, by), badge_content, fill=(10, 12, 16, 255), font=font_badge)
 
-        # 4. Dynamic Text Wrapping
-        margin_x = int(w * 0.065)
-        max_text_w = w - (margin_x * 2)
+        # 4. Protective Opaque/Translucent Text Backdrop Card (Rule 08)
+        # Guarantees 100% legibility over pure white or busy background images
+        if enable_text_card:
+            card_pad_x = int(w * 0.035)
+            card_pad_y = int(h * 0.02)
+            card_box = [
+                margin_x - card_pad_x,
+                start_y - card_pad_y,
+                w - margin_x + card_pad_x,
+                start_y + total_h + card_pad_y,
+            ]
+            draw.rounded_rectangle(
+                card_box,
+                radius=16,
+                fill=(8, 10, 14, card_bg_alpha),
+                outline=(*primary_rgb, 60),
+                width=1,
+            )
 
-        head_lines = wrap_text_by_pixel(headline, font_head, max_text_w, draw)
-        body_lines = wrap_text_by_pixel(body, font_body, max_text_w, draw) if body else []
-
-        line_h_head = int(font_head.size * 1.25)
-        line_h_body = int(font_body.size * 1.35)
-
-        total_h = len(head_lines) * line_h_head + 14 + len(body_lines) * line_h_body
-        start_y = h - total_h - int(h * 0.11)
+        # 5. Text Rendering with Safety Stroke
+        calc_stroke_w = stroke_width if stroke_width is not None else max(2, int(w * 0.0025))
+        stroke_color = (4, 5, 8, 255)
 
         curr_y = start_y
         for line in head_lines:
-            draw.text((margin_x, curr_y), line, fill=(255, 255, 255, 255), font=font_head)
+            draw.text(
+                (margin_x, curr_y),
+                line,
+                fill=(255, 255, 255, 255),
+                font=font_head,
+                stroke_width=calc_stroke_w,
+                stroke_fill=stroke_color,
+            )
             curr_y += line_h_head
 
         curr_y += 12
         for line in body_lines:
-            draw.text((margin_x, curr_y), line, fill=(225, 230, 235, 255), font=font_body)
+            draw.text(
+                (margin_x, curr_y),
+                line,
+                fill=(225, 230, 235, 255),
+                font=font_body,
+                stroke_width=max(1, calc_stroke_w - 1),
+                stroke_fill=stroke_color,
+            )
             curr_y += line_h_body
 
-        # 5. Footer
+        # 6. Footer with Safety Stroke
         foot_y = h - int(h * 0.055)
-        draw.text((margin_x, foot_y), handle, fill=(*primary_rgb, 240), font=font_foot)
+        draw.text(
+            (margin_x, foot_y),
+            handle,
+            fill=(*primary_rgb, 240),
+            font=font_foot,
+            stroke_width=1,
+            stroke_fill=stroke_color,
+        )
 
         right_text = f"{page_str}  {swipe_str}"
         bbox_r = draw.textbbox((0, 0), right_text, font=font_foot)
         rw = bbox_r[2] - bbox_r[0]
-        draw.text((w - margin_x - rw, foot_y), right_text, fill=(200, 205, 215, 220), font=font_foot)
+        draw.text(
+            (w - margin_x - rw, foot_y),
+            right_text,
+            fill=(200, 205, 215, 220),
+            font=font_foot,
+            stroke_width=1,
+            stroke_fill=stroke_color,
+        )
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
         final = Image.alpha_composite(img, overlay).convert("RGB")
@@ -199,6 +254,9 @@ class CarouselBuilder:
                 swipe_str=swipe_text,
                 gradient_start_ratio=slide.get("gradient_start_ratio", 0.46),
                 aspect_ratio=aspect_ratio,
+                enable_text_card=slide.get("enable_text_card", True),
+                card_bg_alpha=slide.get("card_bg_alpha", 215),
+                stroke_width=slide.get("stroke_width", None),
             )
             generated_paths.append(out_file)
 

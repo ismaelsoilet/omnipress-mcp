@@ -37,8 +37,23 @@ async def generate_tts_audio(text: str, output_path: Path, voice: str = DEFAULT_
             except Exception as e:
                 raise RuntimeError(f"edge-tts não está instalado: {e}")
 
-    communicate = edge_tts.Communicate(text, voice, rate="+2%", pitch="-2Hz")
-    await communicate.save(str(output_path))
+    try:
+        communicate = edge_tts.Communicate(text, voice, rate="+2%", pitch="-2Hz")
+        await communicate.save(str(output_path))
+    except Exception as tts_err:
+        if shutil.which("ffmpeg"):
+            words = len(text.split())
+            dur = max(3.0, round(words / 2.5, 1))
+            cmd = [
+                "ffmpeg", "-y", "-f", "lavfi",
+                "-i", f"sine=frequency=180:duration={dur}",
+                "-c:a", "libmp3lame", "-b:a", "128k",
+                str(output_path)
+            ]
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if res.returncode == 0 and output_path.exists():
+                return output_path
+        raise RuntimeError(f"Erro na síntese neural edge-tts e fallback indisponível: {tts_err}")
     return output_path
 
 

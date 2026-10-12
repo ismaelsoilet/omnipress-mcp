@@ -37,6 +37,7 @@ Para descobrir os identificadores únicos de cada rede:
    - `service: "twitter"` $\rightarrow$ copie o `"id"` correspondente.
    - `service: "threads"` $\rightarrow$ copie o `"id"` correspondente.
    - `service: "instagram"` $\rightarrow$ copie o `"id"` correspondente.
+   - `service: "youtube"` $\rightarrow$ copie o `"id"` correspondente.
 
 ### Passo 1.4: Configurar no arquivo `.env`
 ```env
@@ -46,9 +47,10 @@ BUFFER_LINKEDIN_PROFILE_ID=seu_id_do_linkedin
 BUFFER_X_PROFILE_ID=seu_id_do_x
 BUFFER_THREADS_PROFILE_ID=seu_id_do_threads
 BUFFER_INSTAGRAM_PROFILE_ID=seu_id_do_instagram
+BUFFER_YOUTUBE_PROFILE_ID=seu_id_do_youtube
 ```
 
-> 💡 **Nota Multi-Canal**: Se você gerencia vários canais, pode configurar o `buffer_channel_id` diretamente no arquivo `channels/<slug>/channel.json` de cada canal! O OmniPress prioriza o ID do canal antes de recorrer ao `.env`.
+> 💡 **Nota Multi-Canal**: Se você gerencia vários canais, pode configurar o `buffer_channel_id` diretamente no arquivo `channels/<slug>/channel.json` de cada canal (em `social.instagram` ou `social.youtube`)! O OmniPress prioriza o ID do canal antes de recorrer ao `.env`.
 
 ---
 

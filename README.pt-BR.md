@@ -102,6 +102,17 @@ Antes de qualquer post ser enfileirado ou arquivado, o OmniPress executa uma var
 Nenhum post é publicado imediatamente sem supervisão humana:
 - Todas as publicações são enfileiradas na pasta de **Rascunhos (Drafts)** do Buffer ou via API do Instagram, permitindo que você visualize, ajuste e aprove pelo celular ou navegador antes do disparo definitivo.
 
+### 5. Motor de Vídeos Programáticos & Motion Design (Remotion)
+Motor de vídeo de alta fidelidade em React & TypeScript (`src/video/`) projetado para Documentários no YouTube (16:9) e Shorts/Reels (9:16):
+- **Composições Universais**: Renderize vídeos finais MP4 em 1080p em segundos via `npm run remotion:render`.
+- **Componentes Cinemáticos**: Efeito decodificador cipher militar (`ScrambledText`), partículas de poeira e brasas 3D (`DustParticles`), feixe anamórfico dourado (`AnamorphicFlare`), carimbo oficial com tremor de câmera físico (`ClassifiedStamp`) e efeito Ken Burns cinemático para fotos históricas e de IA (`KenBurnsImage`).
+- **Paisagem Sonora em 48kHz Sincronizada**: Áudio estéreo broadcast integrado via `<Audio />` (sub-bass boom profundo, cliques de teletipo, estalo de carimbo, whoosh dourado).
+- **Estúdio Visual Interativo**: Pré-visualize em tempo real no navegador a 60 FPS com controles de timeline e scrubber via `npm run remotion:preview`.
+
+### 6. Publicação Multi-Canal & Integração Direta com YouTube
+- **Integração Nativa com YouTube**: Conexão direta com canais do YouTube através do Buffer (`buffer_channel_id` configurado em `channel.json`).
+- **Escalabilidade Multi-Marcas**: Expansão instantânea para múltiplos nichos (História, Geopolítica, Engenharia de Software, Direito Tributário e Gestão Pública) sem duplicar código.
+
 ---
 
 ## 🚀 Guia Passo a Passo de Uso (Hands-on)
@@ -275,6 +286,26 @@ Use a ferramenta `omnipress_prepare_dark_script`:
 - Gera gancho magnético nos primeiros 3 segundos.
 - Divide o roteiro cena a cena com prompts detalhados para geradores de imagem com IA.
 - Especifica instruções de locução TTS e metadados de SEO (tags, descrição, título viral).
+
+#### Fluxo E: Renderizar Vídeos e Vinhetas Programáticas com Remotion
+1. Abra o estúdio interativo com timeline ao vivo no navegador:
+```bash
+npm run remotion:preview
+```
+2. Renderize as vinhetas oficiais em 1080p (4.0s) com áudio cinemático embutido:
+```bash
+# Versão 16:9 Horizontal para Episódios no YouTube
+npm run remotion:render:intro
+
+# Versão 9:16 Vertical para YouTube Shorts, Reels e TikTok
+npm run remotion:render:intro:shorts
+```
+Os arquivos finais são salvos em `media/output/intro_dossie_16x9.mp4` e `media/output/intro_dossie_9x16.mp4`.
+
+#### Fluxo F: Narração com Voz Humana + Sincronização Dinâmica
+1. Peça ao OmniPress para gerar o roteiro de teleprompter dividido por blocos de cena (`Cena 01`, `Cena 02`...).
+2. Grave sua voz por cena no celular ou microfone (`01.mp3`, `02.mp3`...).
+3. O Remotion calcula a duração real da sua fala dinamicamente, sincronizando os cortes visuais no seu ritmo natural com atenuação automática de trilha musical (ducking a -20dB sob a voz).
 
 ---
 

@@ -34,6 +34,23 @@ When an agent generates a content campaign, it must produce three synchronized a
 - **Engine vs. Channel Asset Separation**: Core layout engines, publisher adapters, and MCP tools remain in `src/` (`src/core/`, `src/engine/`, `src/adapters/`). Channel-specific generation scripts and post definitions belong in `channels/<slug>/scripts/`.
 - **Dynamic Configuration**: Publisher adapters resolve credentials and channel IDs (e.g., `buffer_channel_id`) dynamically from `channel.json` before falling back to `.env`.
 
+### 5. Visual Contrast & Carousel Legibility Standards (Rule 08)
+- **Universal Readability**: All carousel slides must comply with [`.agents/rules/08_visual_contrast_and_carousel_legibility_standards.md`](.agents/rules/08_visual_contrast_and_carousel_legibility_standards.md).
+- **Protective Backdrop Container**: Text blocks must always be rendered over a dark translucent/opaque backdrop card (`rgba(8, 10, 14, 215)`) with rounded corners and subtle brand accent borders to prevent legibility collapse over light, white, or textured background images.
+- **Safety Typography Stroke**: All text elements (headline, body, and footer) must carry a dark protective stroke (`stroke_width >= 2`, `stroke_fill=(4, 5, 8, 255)`) to guarantee crisp legibility under any lighting conditions.
+
+### 6. Single Publication & Anti-Duplicate Policy (Rule 09)
+- **Exactly-Once Publishing**: All content must be published or scheduled **EXACTLY ONCE**. Never dispatch duplicate posts or maintain redundant scheduled items for the same creative.
+- **Mandatory Pre-Publish Verification**: Agents must check the channel's recent posts and queue via `list_posts` prior to invoking `create_post`. If a post is already `sent` or `scheduled`, do not create a duplicate.
+- **Clean Replacement Overwrite**: When updating an existing scheduled post, always call `delete_post` to purge the obsolete scheduled draft before enqueueing the replacement.
+- **Rate Limit & Velocity Compliance**: Adhere to [`.agents/rules/09_single_publication_and_anti_duplicate_policy.md`](.agents/rules/09_single_publication_and_anti_duplicate_policy.md). If social APIs return velocity/spam warnings, never loop retries; clean up failed drafts and schedule the single post for the channel's official time slot.
+
+### 7. Programmatic Video & Remotion Engine (Rule 10)
+- **Universal Video Engine in `src/video/`**: All programmatic video rendering logic belongs in `src/video/` (`Root.tsx`, `compositions/`, `components/`). Channel-specific assets (media, audio voiceovers, episode configs) belong in `channels/<slug>/media/` and `channels/<slug>/scripts/`.
+- **Dual-Aspect Standard**: Every video template or bumper must support both 16:9 widescreen (1920x1080) for long-form YouTube episodes and 9:16 vertical (1080x1920) for YouTube Shorts, Reels, and TikTok.
+- **Brand Agnosticism**: Compositions must receive styling, titles, badges, and colors via props (`ChannelIntroProps`, `EpisodeConfig`), resolving defaults from `channels/<slug>/channel.json`. Never hardcode channel names into core video components.
+- **Embedded Broadcast Soundscape**: Always pair visual animations with broadcast-quality 48kHz audio (`<Audio />`), sound effects (SFX), and volume ducking (-18dB to -22dB under voiceover).
+
 ---
 
 ## 🇧🇷 Diretrizes em Português
@@ -65,3 +82,21 @@ Ao gerar campanhas de conteúdo, o agente deve produzir 3 formatos integrados:
 - **Isolamento por Canal**: Cada canal de mídia reside exclusivamente em sua pasta em `channels/<slug>/` com seu respectivo `channel.json`, `articles/`, `media/` (`raw/`, `carousels/`, `stories/`, `highlights/`) e `scripts/`.
 - **Separação Motor vs. Canal**: Motores universais de layout, adaptadores e ferramentas MCP pertencem a `src/` (`src/core/`, `src/engine/`, `src/adapters/`). Scripts e criativos específicos do canal pertencem a `channels/<slug>/scripts/`.
 - **Configuração Dinâmica**: Adaptadores de publicação resolvem IDs de canal (ex.: `buffer_channel_id`) diretamente de `channel.json` antes de consultar `.env`.
+
+### 5. Padrão de Contraste Visual e Segurança Tipográfica em Carrosséis (Regra 08)
+- **Legibilidade Universal**: Todos os slides gerados devem obedecer estritamente a [`.agents/rules/08_visual_contrast_and_carousel_legibility_standards.md`](.agents/rules/08_visual_contrast_and_carousel_legibility_standards.md).
+- **Contêiner Protetor Opaco/Translúcido**: Blocos de texto devem sempre ser renderizados sobre um card escuro translúcido (`rgba(8, 10, 14, 215)`) com cantos arredondados e borda sutil no tom da identidade visual do canal, impedindo colapso de contraste em fundos brancos, documentos ou fotos ruidosas.
+- **Contorno de Segurança nas Fontes**: Todos os textos (headline, body e rodapés) devem receber contorno de proteção escuro (`stroke_width >= 2`, `stroke_fill=(4, 5, 8, 255)`) para máxima nitidez visual em qualquer condição de iluminação.
+
+### 6. Política de Publicação Única e Anti-Duplicação (Regra 09)
+- **Publicação Estritamente Única (Exactly-Once)**: Todo post deve ser publicado ou agendado **EXATAMENTE UMA VEZ**. É expressamente proibido disparar publicações repetidas ou manter agendamentos duplicados do mesmo criativo na fila.
+- **Verificação Prévia Mandatória**: Antes de acionar qualquer ferramenta de publicação (`create_post`), o agente deve obrigatoriamente inspecionar os posts recentes e a fila do canal (`list_posts`). Se o conteúdo já foi enviado (`sent`) ou agendado (`scheduled`), interrompa novas chamadas.
+- **Substituição Limpa de Versões**: Para atualizar um post agendado, invoque `delete_post` para purgar a versão antiga antes de inserir a nova.
+- **Conformidade com Limites de Frequência**: Cumpra integralmente [`.agents/rules/09_single_publication_and_anti_duplicate_policy.md`](.agents/rules/09_single_publication_and_anti_duplicate_policy.md). Diante de restrições de velocidade de APIs, nunca repita envios em laço; limpe erros e mantenha o agendamento no horário de pico oficial.
+
+### 7. Padrão de Vídeos Programáticos & Motor Remotion (Regra 10)
+- **Motor Central em `src/video/`**: Toda a lógica de renderização em Remotion reside em `src/video/` (`Root.tsx`, `compositions/`, `components/`). Ativos específicos do canal (áudios de voz gravados, imagens de episódios) pertencem a `channels/<slug>/media/` e `channels/<slug>/scripts/`.
+- **Padrão Duplo de Resolução**: Todo template ou vinheta deve suportar nativamente 16:9 (1920x1080) para episódios longos no YouTube e 9:16 (1080x1920) para Shorts, Reels e TikTok.
+- **Agnosticismo de Marca**: As composições devem receber cores, títulos, badges e logos via propriedades (`ChannelIntroProps`, `EpisodeConfig`), resolvendo os padrões a partir do `channel.json` do canal ativo. Nunca chumbe o nome de um canal dentro dos componentes universais.
+- **Paisagem Sonora Cinemática**: Animações de vídeo devem sempre integrar áudio padrão broadcast em 48kHz (`<Audio />`), efeitos sonoros de retenção (SFX) e atenuação automática de trilha (ducking a -18dB a -22dB sob a voz humana).
+
