@@ -196,7 +196,10 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
       <SynchronizedCaptions
         introDurationFrames={enableIntro ? introDurationFrames : 0}
         isVertical={isVertical}
+        captionsData={config?.captions}
+        actTimelines={config?.actTimelines}
       />
     </AbsoluteFill>
   );
 };
+

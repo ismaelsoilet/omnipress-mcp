@@ -1,51 +1,36 @@
 #!/usr/bin/env python3
-import urllib.request
-import urllib.parse
+"""OmniPress Media Upload Utility — Uploads media files using the configured storage provider (S3/R2/Catbox)."""
+
+import sys
 from pathlib import Path
 
-files = [
-    Path("media/assets/carrossel_02_slide1.jpg"),
-    Path("media/assets/carrossel_02_slide2.jpg"),
-    Path("media/assets/carrossel_02_slide3.jpg"),
-    Path("media/assets/carrossel_02_slide4.jpg"),
-    Path("media/assets/carrossel_02_slide5.jpg"),
-    Path("media/assets/carrossel_02_slide6.jpg"),
-]
+# Add project root to sys.path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
-url = "https://catbox.moe/user/api.php"
+from src.utils.storage import get_default_storage_provider
 
-for f in files:
-    boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
-    data = []
-    data.append(f"--{boundary}".encode())
-    data.append(b'Content-Disposition: form-data; name="reqtype"')
-    data.append(b'')
-    data.append(b'fileupload')
-    
-    data.append(f"--{boundary}".encode())
-    data.append(f'Content-Disposition: form-data; name="fileToUpload"; filename="{f.name}"'.encode())
-    data.append(b'Content-Type: image/jpeg')
-    data.append(b'')
-    with open(f, 'rb') as fp:
-        data.append(fp.read())
-        
-    data.append(f"--{boundary}--".encode())
-    data.append(b'')
-    
-    body = b'\r\n'.join(data)
-    
-    req = urllib.request.Request(
-        url,
-        data=body,
-        headers={
-            'Content-Type': f'multipart/form-data; boundary={boundary}',
-            'User-Agent': 'Mozilla/5.0'
-        }
-    )
-    
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            link = resp.read().decode('utf-8').strip()
-            print(f"{f.name} => {link}")
-    except Exception as e:
-        print(f"Error uploading {f.name}: {e}")
+
+def main():
+    provider = get_default_storage_provider()
+    print(f"📦 Usando provedor de armazenamento: {provider.__class__.__name__}")
+
+    target_files = [Path(p) for p in sys.argv[1:]] if len(sys.argv) > 1 else [
+        Path("media/assets/carrossel_02_slide1.jpg"),
+        Path("media/assets/carrossel_02_slide2.jpg"),
+    ]
+
+    for f in target_files:
+        if not f.exists():
+            print(f"⚠️ Arquivo não encontrado: {f}")
+            continue
+        try:
+            url = provider.upload_file(f)
+            print(f"✅ {f.name} => {url}")
+        except Exception as e:
+            print(f"❌ Erro ao enviar {f.name}: {e}")
+
+
+if __name__ == "__main__":
+    main()

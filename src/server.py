@@ -27,27 +27,48 @@ from src.core.channel_manager import ChannelManager
 from src.engine.carousel_builder import CarouselBuilder
 from src.utils.sanitizer import sanitize_text, inspect_sensitive_data
 
-# Initialize FastMCP Server with graceful fallback
+# Initialize FastMCP Server / MCPServer with graceful fallback
 try:
-    from mcp.server.fastmcp import FastMCP
+    from mcp.server.mcpserver import MCPServer as FastMCP
     mcp = FastMCP("OmniPress")
-except ImportError:
-    class FastMCP:
-        def __init__(self, name: str):
-            self.name = name
-            self.tools = {}
+except (ImportError, ModuleNotFoundError):
+    try:
+        from mcp.server.fastmcp import FastMCP
+        mcp = FastMCP("OmniPress")
+    except (ImportError, ModuleNotFoundError):
+        class FastMCP:
+            def __init__(self, name: str):
+                self.name = name
+                self.tools = {}
 
-        def tool(self, name: Optional[str] = None, description: Optional[str] = None):
-            def decorator(func):
-                tool_name = name or func.__name__
-                self.tools[tool_name] = func
-                return func
-            return decorator
+            def tool(self, name: Optional[str] = None, description: Optional[str] = None):
+                def decorator(func):
+                    tool_name = name or func.__name__
+                    self.tools[tool_name] = func
+                    return func
+                return decorator
 
-        def run(self):
-            pass
+            def run(self, *args, **kwargs):
+                pass
 
-    mcp = FastMCP("OmniPress")
+        mcp = FastMCP("OmniPress")
+
+# Register /health endpoint for Docker container and Coolify healthchecks
+if hasattr(mcp, "custom_route"):
+    try:
+        from starlette.requests import Request
+        from starlette.responses import JSONResponse
+
+        @mcp.custom_route("/health", methods=["GET"])
+        async def health_check(request: Request) -> JSONResponse:
+            return JSONResponse({
+                "status": "healthy",
+                "service": "omnipress-mcp",
+                "version": "0.1.0",
+            })
+    except (ImportError, Exception):
+        pass
+
 
 # Initialize Core Managers & Adapters
 channel_manager = ChannelManager()
@@ -840,8 +861,27 @@ def omnipress_render_dark_video(
 
 
 def main():
-    mcp.run()
+    import argparse
+    parser = argparse.ArgumentParser(description="OmniPress MCP Server")
+    parser.add_argument("--http", type=int, default=None, help="Run HTTP/SSE server on specified port")
+    parser.add_argument("--sse", type=int, default=None, help="Run SSE transport on specified port")
+    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host interface (default: 0.0.0.0)")
+    args, _ = parser.parse_known_args()
+
+    port = args.http or args.sse
+    if not port and os.environ.get("OMNIPRESS_MODE") == "http":
+        try:
+            port = int(os.environ.get("PORT", "3333"))
+        except ValueError:
+            port = 3333
+
+    if port:
+        print(f"🚀 Iniciando OmniPress MCP Server em http://{args.host}:{port} via transporte SSE...", file=sys.stderr)
+        mcp.run(transport="sse", host=args.host, port=port)
+    else:
+        mcp.run()
 
 
 if __name__ == "__main__":
     main()
+

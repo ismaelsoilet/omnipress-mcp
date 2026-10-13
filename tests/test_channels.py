@@ -182,3 +182,9 @@ def test_dossie_historico_channel_config():
     assert dossie["social"]["tiktok"]["buffer_channel_id"] == "6acd5268778b240e2fed378b"
     assert dossie["social"]["instagram"]["buffer_channel_id"] == "6acaa9ad6a5c39ccb67710a2"
     assert dossie["social"]["youtube"]["buffer_channel_id"] == "6acd4b28778b240e2feca987"
+
+
+if __name__ == "__main__":
+    import pytest
+    import sys
+    sys.exit(pytest.main([__file__, "-v"]))

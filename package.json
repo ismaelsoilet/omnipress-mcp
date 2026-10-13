@@ -2,15 +2,13 @@
   "name": "omnipress-mcp",
   "version": "0.1.0",
   "description": "Agentic multi-channel publishing engine for Antigravity via Model Context Protocol (MCP)",
-  "main": "src/server.js",
-  "bin": {
-    "omnipress-mcp": "src/server.js"
-  },
+  "main": "src/video/index.ts",
   "scripts": {
-    "start": "node src/server.js",
-    "start:http": "node src/server.js --http 3333",
+    "start": "python src/server.py",
+    "start:http": "python src/server.py --http 3333",
     "setup:claude": "node scripts/setup_claude.js",
-    "test": "node tests/test_omnipress.js",
+    "test": "pytest",
+    "typecheck": "tsc --noEmit",
     "remotion:preview": "remotion preview src/video/index.ts",
     "remotion:render": "remotion render src/video/index.ts",
     "remotion:render:intro": "remotion render src/video/index.ts ChannelIntro-16x9 out/intro_dossie_16x9.mp4",

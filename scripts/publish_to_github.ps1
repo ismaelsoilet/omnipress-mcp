@@ -1,6 +1,8 @@
 # ==============================================================================
 # OmniPress MCP — GitHub Publication Helper Script
 # ==============================================================================
+# Ensure script runs from the repository root
+Set-Location (Resolve-Path "$PSScriptRoot\..")
 
 Write-Host "🚀 Preparing to publish OmniPress MCP to GitHub..." -ForegroundColor Cyan
 

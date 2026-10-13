@@ -1,9 +1,9 @@
 {
   "mcpServers": {
     "omnipress": {
-      "command": "node",
+      "command": "python",
       "args": [
-        "path/to/omnipress-mcp/src/server.js"
+        "path/to/omnipress-mcp/src/server.py"
       ],
       "env": {
         "ARTICLES_DIR": "path/to/omnipress-mcp/articles"

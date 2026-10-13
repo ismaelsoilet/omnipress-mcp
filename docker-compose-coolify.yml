@@ -19,6 +19,8 @@ volumes:
     driver: local
   omnipress_media:
     driver: local
+  omnipress_channels:
+    driver: local
 
 services:
   omnipress:
@@ -56,6 +58,8 @@ services:
     volumes:
       - omnipress_articles:/app/articles
       - omnipress_media:/app/media
+      - omnipress_channels:/app/channels
+
     networks:
       - default
       - hermes-net

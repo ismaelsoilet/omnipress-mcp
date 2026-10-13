@@ -17,7 +17,10 @@ class InstagramGraphAdapter(BasePublisherAdapter):
 
     def __init__(self):
         self.access_token = os.getenv("INSTAGRAM_ACCESS_TOKEN", "").strip()
-        self.account_id = os.getenv("INSTAGRAM_ACCOUNT_ID", "").strip()
+        self.account_id = (
+            os.getenv("INSTAGRAM_ACCOUNT_ID", "").strip()
+            or os.getenv("INSTAGRAM_BUSINESS_ACCOUNT_ID", "").strip()
+        )
 
     def is_configured(self) -> bool:
         """Returns True if Meta Instagram Graph API credentials are set in environment."""

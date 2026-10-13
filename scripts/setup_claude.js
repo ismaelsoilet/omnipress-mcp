@@ -43,13 +43,13 @@ function runSetup() {
   console.log('🤖 OmniPress MCP — Claude Desktop Configuration Utility\n');
 
   const projectRoot = path.resolve(__dirname, '..');
-  const serverJsPath = path.join(projectRoot, 'src', 'server.js');
+  const serverPyPath = path.join(projectRoot, 'src', 'server.py');
   const articlesDirPath = path.join(projectRoot, 'articles');
   const configPath = getClaudeConfigPath();
   const configDir = path.dirname(configPath);
 
-  if (!fs.existsSync(serverJsPath)) {
-    console.error(`❌ Error: server.js not found at ${serverJsPath}`);
+  if (!fs.existsSync(serverPyPath)) {
+    console.error(`❌ Error: server.py not found at ${serverPyPath}`);
     process.exit(1);
   }
 
@@ -95,16 +95,27 @@ function runSetup() {
   if (localEnv.OMNIPRESS_WEBHOOK_URL) serverEnv.OMNIPRESS_WEBHOOK_URL = localEnv.OMNIPRESS_WEBHOOK_URL;
   if (localEnv.OMNIPRESS_WEBHOOK_SECRET) serverEnv.OMNIPRESS_WEBHOOK_SECRET = localEnv.OMNIPRESS_WEBHOOK_SECRET;
 
+  // Auto-detect project virtual environment if present
+  const venvPythonWin = path.join(projectRoot, '.venv', 'Scripts', 'python.exe');
+  const venvPythonUnix = path.join(projectRoot, '.venv', 'bin', 'python');
+  let pythonCmd = 'python';
+  if (process.platform === 'win32' && fs.existsSync(venvPythonWin)) {
+    pythonCmd = venvPythonWin;
+  } else if (fs.existsSync(venvPythonUnix)) {
+    pythonCmd = venvPythonUnix;
+  }
+
   config.mcpServers.omnipress = {
-    command: 'node',
-    args: [serverJsPath],
+    command: pythonCmd,
+    args: [serverPyPath],
     env: serverEnv
   };
 
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
 
   console.log('\n✅ Successfully configured OmniPress MCP in Claude Desktop!');
-  console.log(`Server command: node ${serverJsPath}`);
+  console.log(`Server command: python ${serverPyPath}`);
+
   console.log('🔄 Please restart Claude Desktop to load the new tools:');
   console.log('   - omnipress_publish_article');
   console.log('   - omnipress_queue_post');

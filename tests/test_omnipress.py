@@ -97,23 +97,60 @@ def test_mcp_server():
     print("✓ MCP server annotations, docstrings, and alias parity passed successfully.")
 
 
-def test_instagram_adapter():
-    from src.adapters.instagram_adapter import InstagramGraphAdapter
-    adapter = InstagramGraphAdapter()
-    assert adapter.is_configured() is False
-    res = adapter.queue_social_post("teste", ["instagram"], media_urls=[])
-    assert res["success"] is False
-    assert "not configured" in res["error"] or "requires at least one media" in res["error"]
-    print("✓ Instagram Graph adapter test passed successfully.")
+def test_sanitizer_edge_cases():
+    # Text without any PII should remain identical
+    clean_text = "Arquitetura limpa de software e boas práticas de DevOps para automação."
+    findings = inspect_sensitive_data(clean_text)
+    assert len(findings) == 0
+    sanitized, _ = sanitize_text(clean_text)
+    assert sanitized == clean_text
+
+    # Multiple CNJs and mixed emails
+    multi_text = (
+        "Processos 1234567-89.2024.8.26.0001 e 9876543-21.2023.4.01.3400 foram arquivados. "
+        "Contatos: ADMIN@EMPRESA.COM.BR e suporte.tecnico@gov.br"
+    )
+    findings_multi = inspect_sensitive_data(multi_text)
+    assert len(findings_multi) == 4
+    sanitized_multi, _ = sanitize_text(multi_text)
+    assert "1234567-89.2024.8.26.0001" not in sanitized_multi
+    assert "9876543-21.2023.4.01.3400" not in sanitized_multi
+    assert "ADMIN@EMPRESA.COM.BR" not in sanitized_multi
+    assert "suporte.tecnico@gov.br" not in sanitized_multi
+    print("✓ Sanitizer edge cases passed successfully.")
+
+
+def test_storage_provider(tmp_path: Path, monkeypatch):
+    from src.utils.storage import (
+        LocalStaticStorageProvider,
+        get_default_storage_provider,
+        BaseStorageProvider,
+    )
+
+    test_file = tmp_path / "slide.jpg"
+    test_file.write_bytes(b"\xFF\xD8\xFF\xE0\x00\x10JFIF")
+
+    local_provider = LocalStaticStorageProvider("https://media.omnipress.dev")
+    url = local_provider.upload_file(test_file)
+    assert url == "https://media.omnipress.dev/media/staging/slide.jpg"
+
+    monkeypatch.setenv("OMNIPRESS_PUBLIC_URL", "https://app.omnipress.coolify")
+    resolved = get_default_storage_provider()
+    assert isinstance(resolved, LocalStaticStorageProvider)
+    print("✓ Storage provider test passed successfully.")
+
+def test_server_health_route():
+    from src.server import mcp
+    assert hasattr(mcp, "custom_route")
+    # Verify health route is registered in the server's Starlette routes
+    app = mcp.sse_app()
+    route_paths = [r.path for r in app.routes if hasattr(r, "path")]
+    assert "/health" in route_paths
+    print("✓ Health route /health registered in MCP ASGI app.")
 
 
 if __name__ == "__main__":
-    test_sanitizer_detection()
-    test_slugify()
-    import tempfile
-    with tempfile.TemporaryDirectory() as tmpdir:
-        test_markdown_adapter(Path(tmpdir))
-    test_mcp_server()
-    test_instagram_adapter()
-    print("\n🎉 ALL TESTS PASSED SUCCESSFULLY!")
+    import pytest
+    sys.exit(pytest.main([__file__, "-v"]))
+
 

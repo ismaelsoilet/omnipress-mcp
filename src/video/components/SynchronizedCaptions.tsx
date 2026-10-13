@@ -1,38 +1,12 @@
 import React, { useMemo } from "react";
 import { useCurrentFrame, useVideoConfig } from "remotion";
-import { captionsData } from "./captions_aligned";
-
-interface WordTiming {
-  word: string;
-  start: number;
-  end: number;
-}
-
-interface CaptionChunk {
-  text: string;
-  start: number;
-  end: number;
-  words: WordTiming[];
-}
-
-interface ActData {
-  name: string;
-  duration: number;
-  words: WordTiming[];
-  chunks: CaptionChunk[];
-}
-
-const ACT_TIMELINES = [
-  { id: "act_00", globalStart: 0.0, globalEnd: 65.78 },
-  { id: "act_01", globalStart: 69.78, globalEnd: 209.12 },
-  { id: "act_02", globalStart: 213.12, globalEnd: 355.22 },
-  { id: "act_03", globalStart: 359.22, globalEnd: 453.88 },
-  { id: "act_04", globalStart: 457.88, globalEnd: 504.25 },
-];
+import { ActData, ActTimeline } from "../types";
 
 export interface SynchronizedCaptionsProps {
   introDurationFrames?: number;
   isVertical?: boolean;
+  captionsData?: Record<string, ActData>;
+  actTimelines?: ActTimeline[];
 }
 
 /**
@@ -43,24 +17,32 @@ export interface SynchronizedCaptionsProps {
 export const SynchronizedCaptions: React.FC<SynchronizedCaptionsProps> = ({
   introDurationFrames = 120,
   isVertical = false,
+  captionsData,
+  actTimelines = [],
 }) => {
   const frame = useCurrentFrame();
   const { fps, width } = useVideoConfig();
+
+  // Se não houver dados de legenda ou timeline fornecidos, renderiza null com segurança
+  if (!captionsData || !actTimelines || actTimelines.length === 0) {
+    return null;
+  }
 
   // Tempo global em segundos após a vinheta
   const currentGlobalSec = (frame - introDurationFrames) / fps;
 
   // Encontra o ato ativo
   const activeAct = useMemo(() => {
-    return ACT_TIMELINES.find(
+    return actTimelines.find(
       (act) => currentGlobalSec >= act.globalStart && currentGlobalSec < act.globalEnd
     );
-  }, [currentGlobalSec]);
+  }, [currentGlobalSec, actTimelines]);
 
   if (!activeAct) return null;
 
-  const actInfo = (captionsData as unknown as Record<string, ActData>)[activeAct.id];
+  const actInfo = captionsData[activeAct.id];
   if (!actInfo || !actInfo.chunks) return null;
+
 
   const timeInAct = currentGlobalSec - activeAct.globalStart;
 

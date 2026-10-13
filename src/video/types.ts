@@ -42,6 +42,32 @@ export interface VoiceoverTrack {
   volume?: number;
 }
 
+export interface WordTiming {
+  word: string;
+  start: number;
+  end: number;
+}
+
+export interface CaptionChunk {
+  text: string;
+  start: number;
+  end: number;
+  words: WordTiming[];
+}
+
+export interface ActData {
+  name: string;
+  duration: number;
+  words: WordTiming[];
+  chunks: CaptionChunk[];
+}
+
+export interface ActTimeline {
+  id: string;
+  globalStart: number;
+  globalEnd: number;
+}
+
 export interface EpisodeConfig {
   id: string;
   title: string;
@@ -51,4 +77,7 @@ export interface EpisodeConfig {
   backgroundMusicVolume?: number;
   voiceovers?: VoiceoverTrack[];
   scenes: DocumentaryScene[];
+  captions?: Record<string, ActData>;
+  actTimelines?: ActTimeline[];
 }
+

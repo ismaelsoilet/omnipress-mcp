@@ -18,3 +18,5 @@ services:
     volumes:
       - ./articles:/app/articles
       - ./media:/app/media
+      - ./channels:/app/channels
+

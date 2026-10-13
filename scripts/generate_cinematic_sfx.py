@@ -181,5 +181,12 @@ def generate_intro_sfx(output_wav_path: Path):
 
 if __name__ == "__main__":
     import sys
+    import subprocess
+    import shutil
     out = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("public/intro_sfx.wav")
     generate_intro_sfx(out)
+    if shutil.which("ffmpeg") and out.suffix.lower() == ".wav":
+        mp3_out = out.with_suffix(".mp3")
+        subprocess.run(["ffmpeg", "-y", "-i", str(out), "-b:a", "192k", str(mp3_out)], check=False)
+        print(f"✅ Versão compactada para web gerada: {mp3_out}")
+
