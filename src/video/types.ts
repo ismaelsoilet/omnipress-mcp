@@ -34,6 +34,14 @@ export interface DocumentaryScene {
   notes?: string;
 }
 
+export interface VoiceoverTrack {
+  id: string;
+  src: string;
+  startInSeconds: number;
+  durationInSeconds: number;
+  volume?: number;
+}
+
 export interface EpisodeConfig {
   id: string;
   title: string;
@@ -41,5 +49,6 @@ export interface EpisodeConfig {
   language: SupportedLanguage;
   backgroundMusicSrc?: string;
   backgroundMusicVolume?: number;
+  voiceovers?: VoiceoverTrack[];
   scenes: DocumentaryScene[];
 }

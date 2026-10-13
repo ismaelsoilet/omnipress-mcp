@@ -53,7 +53,20 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
         </Sequence>
       )}
 
-      {/* 3. Sequência de Cenas e Dossiês */}
+      {/* 3. Faixas de Locução Humana Desacopladas dos Slides */}
+      {config?.voiceovers?.map((vox) => {
+        const startFrame = Math.round(
+          (vox.startInSeconds + (enableIntro ? introDurationFrames / fps : 0)) * fps
+        );
+        const durationFrames = Math.round(vox.durationInSeconds * fps);
+        return (
+          <Sequence key={vox.id} from={startFrame} durationInFrames={durationFrames}>
+            <Audio src={staticFile(vox.src)} volume={vox.volume ?? 1.0} />
+          </Sequence>
+        );
+      })}
+
+      {/* 4. Sequência de Cenas e Dossiês */}
       {scenes.map((scene, index) => {
         // Calcula o offset acumulado dos frames das cenas anteriores
         let startFrame = enableIntro ? introDurationFrames : 0;
@@ -68,7 +81,7 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
             from={startFrame}
             durationInFrames={sceneDurationFrames}
           >
-            {/* Áudio de locução da voz humana correspondente ao bloco */}
+            {/* Fallback de áudio de cena individual se especificado */}
             {scene.voiceoverAudioSrc && (
               <Audio src={staticFile(scene.voiceoverAudioSrc)} volume={1.0} />
             )}
@@ -142,8 +155,8 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
 
                   <div style={{ marginTop: 35 }}>
                     <ClassifiedStamp
-                      stampText="CONFIDENCIAL"
-                      delayFrames={15}
+                      text="CONFIDENCIAL"
+                      startFrame={15}
                       color="#B3261E"
                     />
                   </div>

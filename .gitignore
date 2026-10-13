@@ -44,6 +44,7 @@ channels/*
 !channels/_template/
 !channels/_template/**
 !channels/.gitkeep
+public/dossie/
 
 # IDE & OS
 .vscode/
