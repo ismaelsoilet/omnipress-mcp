@@ -8,6 +8,7 @@ import {
 } from "remotion";
 import { KenBurnsSceneProps } from "../types";
 import { FilmGrain } from "./FilmGrain";
+import { KineticCaption } from "./KineticCaption";
 
 export const KenBurnsImage: React.FC<KenBurnsSceneProps> = ({
   imageSrc,
@@ -83,20 +84,22 @@ export const KenBurnsImage: React.FC<KenBurnsSceneProps> = ({
       {/* 3. Granulação de Película de Época */}
       {showFilmGrain && <FilmGrain opacity={0.07} />}
 
-      {/* 4. Caixa Protetora de Texto e Metadados (Regra 08 — Alto Contraste) */}
-      {(headline || caption || badge) && (
+      {/* 4. Caixa Protetora Tática de Metadados do Arquivo (Topo Superior Esquerdo — Regra 08) */}
+      {(headline || badge) && (
         <div
           style={{
             position: "absolute",
-            bottom: isVertical ? 120 : 60,
-            left: isVertical ? 40 : 80,
-            right: isVertical ? 40 : 80,
-            backgroundColor: "rgba(8, 10, 14, 0.88)",
+            top: isVertical ? 60 : 48,
+            left: isVertical ? 40 : 64,
+            maxWidth: isVertical ? "82%" : "55%",
+            backgroundColor: "rgba(8, 10, 14, 0.85)",
             border: "1px solid rgba(212, 175, 55, 0.4)",
-            borderRadius: 16,
-            padding: isVertical ? "20px 24px" : "24px 36px",
-            backdropFilter: "blur(12px)",
-            boxShadow: "0 12px 35px rgba(0, 0, 0, 0.7)",
+            borderLeft: "4px solid #D4AF37",
+            borderRadius: 8,
+            padding: isVertical ? "14px 20px" : "14px 24px",
+            backdropFilter: "blur(10px)",
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.65)",
+            zIndex: 30,
           }}
         >
           {badge && (
@@ -104,11 +107,11 @@ export const KenBurnsImage: React.FC<KenBurnsSceneProps> = ({
               style={{
                 color: "#D4AF37",
                 fontFamily: "'Courier New', Courier, monospace",
-                fontSize: isVertical ? 13 : 15,
+                fontSize: isVertical ? 13 : 14,
                 fontWeight: 800,
-                letterSpacing: 3,
+                letterSpacing: 2.5,
                 textTransform: "uppercase",
-                marginBottom: 8,
+                marginBottom: 4,
               }}
             >
               {badge}
@@ -118,33 +121,19 @@ export const KenBurnsImage: React.FC<KenBurnsSceneProps> = ({
           {headline && (
             <h2
               style={{
-                margin: "0 0 8px 0",
+                margin: 0,
                 color: "#FFFFFF",
-                fontSize: isVertical ? 28 : 34,
-                fontWeight: 900,
+                fontSize: isVertical ? 22 : 24,
+                fontWeight: 800,
                 fontFamily: "'Cinzel', Georgia, serif",
-                letterSpacing: 2,
+                letterSpacing: 1.5,
                 textTransform: "uppercase",
-                textShadow: "0 2px 8px rgba(0,0,0,0.8)",
+                textShadow: "0 2px 6px rgba(0,0,0,0.85)",
+                lineHeight: 1.25,
               }}
             >
               {headline}
             </h2>
-          )}
-
-          {caption && (
-            <p
-              style={{
-                margin: 0,
-                color: "#E1E6EB",
-                fontSize: isVertical ? 18 : 20,
-                lineHeight: 1.45,
-                fontFamily: "system-ui, -apple-system, sans-serif",
-                fontWeight: 400,
-              }}
-            >
-              {caption}
-            </p>
           )}
         </div>
       )}

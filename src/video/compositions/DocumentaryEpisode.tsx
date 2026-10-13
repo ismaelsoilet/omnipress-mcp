@@ -12,6 +12,7 @@ import { ClassifiedStamp } from "../components/ClassifiedStamp";
 import { ScrambledText } from "../components/ScrambledText";
 import { TacticalGrid } from "../components/TacticalGrid";
 import { FilmGrain } from "../components/FilmGrain";
+import { SynchronizedCaptions } from "../components/SynchronizedCaptions";
 import { EpisodeConfig } from "../types";
 
 export interface DocumentaryEpisodeProps {
@@ -31,13 +32,27 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
   const episodeTitle = config?.title || "3 CIDADES SUBTERRÂNEAS QUE A ARQUEOLOGIA NÃO CONSEGUE EXPLICAR";
   const scenes = config?.scenes || [];
 
+  // Função de Ducking Dinâmico da Trilha Sonora
+  // Mantém a música envolvente em ~-16dB (volume 0.16) durante a fala do narrador
+  // e eleva para ~-7dB (volume 0.45) nas transições e cartelas de impacto
+  const getMusicVolume = (frame: number): number => {
+    if (frame < introDurationFrames) {
+      return 0.25;
+    }
+    const currentSec = (frame - introDurationFrames) / fps;
+    const isSpeaking = config?.voiceovers?.some((vox) => {
+      return currentSec >= vox.startInSeconds && currentSec <= (vox.startInSeconds + vox.durationInSeconds);
+    });
+    return isSpeaking ? 0.16 : 0.45;
+  };
+
   return (
     <AbsoluteFill style={{ backgroundColor: "#0A0C10" }}>
-      {/* 1. Trilha Sonora Master do Episódio (se configurada) */}
+      {/* 1. Trilha Sonora Master com Ducking Dinâmico Automático */}
       {config?.backgroundMusicSrc && (
         <Audio
           src={staticFile(config.backgroundMusicSrc)}
-          volume={config.backgroundMusicVolume ?? 0.85}
+          volume={getMusicVolume}
         />
       )}
 
@@ -53,7 +68,7 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
         </Sequence>
       )}
 
-      {/* 3. Faixas de Locução Humana Desacopladas dos Slides */}
+      {/* 3. Faixas de Locução Humana Masterizadas */}
       {config?.voiceovers?.map((vox) => {
         const startFrame = Math.round(
           (vox.startInSeconds + (enableIntro ? introDurationFrames / fps : 0)) * fps
@@ -176,6 +191,12 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
           </Sequence>
         );
       })}
+
+      {/* 5. Overlay Global de Legendas Dinâmicas Sincronizadas (Whisper Word Timestamps) */}
+      <SynchronizedCaptions
+        introDurationFrames={enableIntro ? introDurationFrames : 0}
+        isVertical={isVertical}
+      />
     </AbsoluteFill>
   );
 };

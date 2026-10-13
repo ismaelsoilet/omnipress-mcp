@@ -56,3 +56,11 @@ public/dossie/
 node_modules/
 .remotion/
 
+# Heavy audio and video media files
+*.mp4
+*.m4a
+*.wav
+*.mp3
+*.mov
+*.avi
+*.mkv
