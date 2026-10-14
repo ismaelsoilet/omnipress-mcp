@@ -162,9 +162,11 @@ class BufferPublisherAdapter(BasePublisherAdapter):
         media_urls: Optional[List[str]] = None,
         schedule_time: Optional[str] = None,
         channel_slug: Optional[str] = None,
+        mode: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Submits post to Buffer queue via modern GraphQL API (with fallback to legacy REST).
+        Submits post to Buffer via modern GraphQL API (with fallback to legacy REST).
+        When schedule_time is None (or empty), defaults to mode='shareNow' to publish immediately.
         Supports channel_slug to dispatch to channel-specific Buffer accounts.
         """
         if not self.is_configured():
@@ -184,6 +186,16 @@ class BufferPublisherAdapter(BasePublisherAdapter):
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}",
         }
+
+        # Resolve publishing mode:
+        # If mode is explicitly passed ('shareNow', 'addToQueue', 'customScheduled', 'shareNext'), use it.
+        # Otherwise: 'customScheduled' if schedule_time is given, else 'shareNow' (immediate publish).
+        if mode:
+            resolved_mode = mode
+        elif schedule_time:
+            resolved_mode = "customScheduled"
+        else:
+            resolved_mode = "shareNow"
 
         # Attempt modern GraphQL createPost mutation
         mutation = """
@@ -214,9 +226,9 @@ class BufferPublisherAdapter(BasePublisherAdapter):
                 "text": text,
                 "channelId": ch_id,
                 "schedulingType": "automatic",
-                "mode": "customScheduled" if schedule_time else "addToQueue",
+                "mode": resolved_mode,
             }
-            if schedule_time:
+            if schedule_time and resolved_mode == "customScheduled":
                 input_payload["dueAt"] = schedule_time
             if assets:
                 input_payload["assets"] = assets
@@ -234,22 +246,23 @@ class BufferPublisherAdapter(BasePublisherAdapter):
                         created_posts.append(data["post"])
                     elif "message" in data:
                         # Fallback to legacy REST API if GraphQL returns mutation error (e.g. legacy token)
-                        return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time)
+                        return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time, mode=resolved_mode)
                 else:
-                    return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time)
+                    return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time, mode=resolved_mode)
             except requests.RequestException:
-                return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time)
+                return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time, mode=resolved_mode)
 
         if created_posts:
             return {
                 "success": True,
                 "provider": "buffer_graphql",
+                "mode": resolved_mode,
                 "queued_profiles_count": len(created_posts),
                 "posts": created_posts,
-                "message": f"Successfully queued {len(created_posts)} post(s) to Buffer.",
+                "message": f"Successfully {'published' if resolved_mode == 'shareNow' else 'queued'} {len(created_posts)} post(s) via Buffer.",
             }
 
-        return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time)
+        return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time, mode=resolved_mode)
 
     def _fallback_rest_queue(
         self,
@@ -257,16 +270,18 @@ class BufferPublisherAdapter(BasePublisherAdapter):
         profile_ids: List[str],
         media_urls: Optional[List[str]] = None,
         schedule_time: Optional[str] = None,
+        mode: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Fallback to Buffer legacy REST endpoint."""
+        publish_now = (mode == "shareNow") or (not schedule_time and mode != "addToQueue")
         payload: Dict[str, Any] = {
             "access_token": self.api_key,
             "profile_ids[]": profile_ids,
             "text": text,
             "top": False,
-            "now": False,
+            "now": publish_now,
         }
-        if schedule_time:
+        if schedule_time and not publish_now:
             payload["scheduled_at"] = schedule_time
         if media_urls and len(media_urls) > 0:
             payload["media[link]"] = media_urls[0]

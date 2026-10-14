@@ -20,8 +20,9 @@ Before calling `create_post` or any publishing tool:
 - Platforms like Instagram / Meta Graph API enforce automated anti-spam velocity limiters (e.g., maximum 1 post every 30–60 minutes via third-party APIs).
 - When rapid publishing triggers `"Instagram flagged this post as potential spam"`:
   - **Do NOT execute circular immediate retries (`shareNow`).**
-  - **Clean up the failed post** immediately using `delete_post` to keep the channel clean.
-  - **Schedule the single post (`customScheduled` or `addToQueue`)** for the next optimal engagement slot.
+  - **Clean up the failed post immediately** using `delete_post` so no lingering error or unwanted scheduled posts remain in the Buffer queue.
+  - **NEVER automatically schedule the post (`customScheduled` or `addToQueue`) without explicit user command.** The user preference is strictly immediate publishing ("postar na hora"). Scheduling identical flagged content to auto-publish later will re-trigger the spam flag.
+  - **Report to the user immediately**, explaining the Instagram velocity cooldown (recommend waiting 1–2 hours) and recommending subtle caption/hashtag text variations before retrying.
 
 ---
 
@@ -41,5 +42,6 @@ Antes de invocar `create_post` ou qualquer adaptador de rede social:
 - APIs sociais aplicam barreiras de velocidade quando múltiplos posts são disparados em menos de 1 hora (*"Instagram flagged this post as potential spam"*).
 - Diante dessa resposta:
   - **Jamais realize retentativas circulares imediatas (`shareNow`).**
-  - **Exclua o post com erro** imediatamente via `delete_post` para não poluir a fila.
-  - **Agende a publicação única (`customScheduled` ou `addToQueue`)** para o próximo horário de pico oficial do canal.
+  - **Exclua o post com erro imediatamente** via `delete_post` para que a fila do Buffer permaneça 100% limpa.
+  - **NUNCA agende automaticamente o post (`customScheduled` ou `addToQueue`) sem pedido explícito do usuário.** A diretriz do usuário é estritamente publicação imediata ("postar na hora"). Agendar o mesmo texto para depois causa reincidência do bloqueio de spam pelo algoritmo da Meta.
+  - **Notifique o usuário imediatamente**, explicando a necessidade de respeitar a janela de cooldown da Meta (1 a 2 horas) e sugerindo pequenas variações na legenda/hashtags antes de tentar novamente.

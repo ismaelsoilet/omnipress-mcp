@@ -51,7 +51,46 @@ def test_buffer_adapter_queue_post(monkeypatch):
         )
         assert res["success"] is True
         assert res["provider"] == "buffer_graphql"
+        assert res["mode"] == "customScheduled"
         assert res["queued_profiles_count"] == 1
+        
+        # Verify mode passed to GraphQL variables
+        call_payload = mock_post.call_args[1]["json"]
+        assert call_payload["variables"]["input"]["mode"] == "customScheduled"
+        assert call_payload["variables"]["input"]["dueAt"] == "2026-10-15T15:00:00Z"
+
+
+def test_buffer_adapter_publish_now_by_default(monkeypatch):
+    monkeypatch.setenv("BUFFER_API_KEY", "test_key_123")
+    monkeypatch.setenv("BUFFER_LINKEDIN_PROFILE_ID", "prof_linkedin_99")
+    adapter = BufferPublisherAdapter()
+
+    with patch("requests.post") as mock_post:
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "data": {
+                "createPost": {
+                    "post": {"id": "post_buff_2", "status": "sent"}
+                }
+            }
+        }
+        mock_post.return_value = mock_resp
+
+        res = adapter.queue_social_post(
+            text="Postar na hora sem agendamento!",
+            platforms=["linkedin"],
+            schedule_time=None
+        )
+        assert res["success"] is True
+        assert res["provider"] == "buffer_graphql"
+        assert res["mode"] == "shareNow"
+        assert "published" in res["message"]
+
+        # Verify mode is shareNow and dueAt is absent
+        call_payload = mock_post.call_args[1]["json"]
+        assert call_payload["variables"]["input"]["mode"] == "shareNow"
+        assert "dueAt" not in call_payload["variables"]["input"]
 
 
 # -------------------------------------------------------------
