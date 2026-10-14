@@ -22,7 +22,7 @@ export interface DocumentaryShortProps {
 
 export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
   title,
-  badge = "DOSSIÊ HISTÓRICO // SHORTS",
+  badge = "CONTEÚDO OFICIAL // SHORTS",
   musicSrc,
   musicVolume = 0.35,
   voiceoverSrc,

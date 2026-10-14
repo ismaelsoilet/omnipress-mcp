@@ -1,7 +1,8 @@
 # AGENTS.md — Guidelines for AI Coding Agents & Pair Programmers
 
 > **Bilingual / Bilíngue**: This file provides strict operational rules for AI assistants (such as Antigravity) working on or utilizing the **OmniPress MCP** codebase.
-> **Rule Hierarchy / Hierarquia de Regras**: Foundational guidelines 1 to 6 are defined in this core document. Detailed normative standards (Rules 07 to 09) reside in [`.agents/rules/`](.agents/rules/README.md).
+> **Operational Manual**: For the complete, tool-by-tool operational guide and execution playbooks, see [`docs/AGENT_MANUAL.md`](docs/AGENT_MANUAL.md).
+> **Rule Hierarchy / Hierarquia de Regras**: Foundational guidelines 1 to 6 are defined in this core document. Detailed normative standards (Rules 07 to 10) reside in [`.agents/rules/`](.agents/rules/README.md).
 
 ---
 

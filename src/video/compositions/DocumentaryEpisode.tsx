@@ -29,7 +29,7 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
   const { fps, width, height } = useVideoConfig();
   const isVertical = height > width;
 
-  const episodeTitle = config?.title || "3 CIDADES SUBTERRÂNEAS QUE A ARQUEOLOGIA NÃO CONSEGUE EXPLICAR";
+  const episodeTitle = config?.title || "EPISÓDIO DOCUMENTAL";
   const scenes = config?.scenes || [];
 
   // Função de Ducking Dinâmico da Trilha Sonora
@@ -60,10 +60,13 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
       {enableIntro && (
         <Sequence from={0} durationInFrames={introDurationFrames}>
           <ChannelIntro
-            channelName="DOSSIÊ HISTÓRICO"
-            badgeText="ARQUIVO DESCLASSIFICADO // NÍVEL 1"
-            subText="DOCUMENTOS SECRETOS • A HISTÓRIA OCULTA"
-            classifiedCode="REF // TUR-MLT-UKR"
+            channelName={config?.introProps?.channelName || "DOCUMENTÁRIO"}
+            badgeText={config?.introProps?.badgeText || "ARQUIVO ESPECIAL"}
+            subText={config?.introProps?.subText || "PRODUÇÃO ORIGINAL"}
+            classifiedCode={config?.introProps?.classifiedCode || "REF // OFICIAL"}
+            primaryColor={config?.introProps?.primaryColor}
+            backgroundColor={config?.introProps?.backgroundColor}
+            language={config?.introProps?.language || config?.language || "pt"}
           />
         </Sequence>
       )}

@@ -100,6 +100,13 @@ export const Root: React.FC = () => {
             title: "3 Cidades Subterrâneas Que a Arqueologia Não Consegue Explicar",
             channelSlug: "dossie-historico",
             language: "pt",
+            introProps: {
+              channelName: "DOSSIÊ HISTÓRICO",
+              badgeText: "ARQUIVO DESCLASSIFICADO // NÍVEL 1",
+              subText: "DOCUMENTOS SECRETOS • A HISTÓRIA OCULTA",
+              classifiedCode: "REF // TUR-MLT-UKR",
+              primaryColor: "#D4AF37",
+            },
             backgroundMusicSrc: "dossie/ep01/soundtrack.mp3",
             backgroundMusicVolume: 1.0, // Controlado via dynamic ducking
             voiceovers: [
@@ -344,11 +351,11 @@ export const Root: React.FC = () => {
         }}
       />
 
-      {/* 6. Short Vertical 9:16 (Short 01 - Derinkuyu) */}
+      {/* 6. Short Vertical 9:16 (Short 01 - Derinkuyu Pilot) */}
       <Composition
         id="Short-Derinkuyu-9x16"
         component={DocumentaryShort as any}
-        durationInFrames={1500} // 50 segundos (1500 frames @ 30fps)
+        durationInFrames={1500}
         fps={30}
         width={1080}
         height={1920}
@@ -385,6 +392,49 @@ export const Root: React.FC = () => {
               notes: "Link fixado para o episódio completo de 8 minutos.",
             },
           ],
+        }}
+      />
+
+      {/* 7. Universal Agnostic Documentary Episode 16:9 (Render Any Channel via props) */}
+      <Composition
+        id="DocumentaryEpisode-16x9"
+        component={DocumentaryEpisode}
+        durationInFrames={15368}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          enableIntro: true,
+          introDurationFrames: 120,
+        }}
+      />
+
+      {/* 8. Universal Agnostic Documentary Episode 9:16 (Vertical Full Episode) */}
+      <Composition
+        id="DocumentaryEpisode-9x16"
+        component={DocumentaryEpisode}
+        durationInFrames={15368}
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={{
+          enableIntro: true,
+          introDurationFrames: 120,
+        }}
+      />
+
+      {/* 9. Universal Agnostic Documentary Short 9:16 (Shorts / Reels / TikTok) */}
+      <Composition
+        id="DocumentaryShort-9x16"
+        component={DocumentaryShort as any}
+        durationInFrames={1500}
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={{
+          title: "Título do Short",
+          badge: "CONTEÚDO OFICIAL // SHORTS",
+          scenes: [],
         }}
       />
     </>

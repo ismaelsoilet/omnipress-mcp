@@ -62,10 +62,15 @@ When processing a topic, generate three cohesive assets:
   - Includes clear descriptive title.
   - **Tool**: Call `omnipress_queue_post(text=..., platforms=["reddit:sub_name"], title="...")`.
 
+### Asset 5: High-Contrast Visual Carousel Deck (Instagram / LinkedIn - Rule 08)
+- 4 to 7 portrait slides (3:4 ratio) with dark protective card backdrop and high-contrast typography stroke.
+- **Tool**: Call `omnipress_build_carousel(channel_slug="...", post_slug="...", slides_json="...", aspect_ratio="3:4")`.
+
 ---
 
-## 4. Interaction Standard
+## 4. Interaction Standard & Reference Manual
 
 1. Present the draft assets clearly to the user in chat for rapid review.
 2. Ask for a quick confirmation: *"Should I archive the article and queue the drafts to LinkedIn / X / Threads / Reddit?"*
-3. Execute the corresponding MCP tools (`omnipress_publish_article`, `omnipress_queue_post`) upon user green light.
+3. Execute the corresponding MCP tools (`omnipress_publish_article`, `omnipress_queue_post`, `omnipress_build_carousel`) upon user green light.
+4. For comprehensive tool schemas, JSON payloads, and execution playbooks, see [`docs/AGENT_MANUAL.md`](file:///home/ismaelsoilet/omnipress-mcp/docs/AGENT_MANUAL.md).

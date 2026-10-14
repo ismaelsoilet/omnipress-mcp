@@ -13,18 +13,14 @@ Clone the repository and set up the Python virtual environment:
 git clone https://github.com/ismaelsoilet/omnipress-mcp.git
 cd omnipress-mcp
 
-# 2. Create virtual environment
-python3 -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-
-# 3. Install Python dependencies
-pip install -r requirements.txt
+# 2. Install Python dependencies with uv
+uv sync
 ```
 
 Verify your environment by running the test suites:
 ```bash
-pytest        # Python FastMCP & Multi-Channel tests (12 tests)
-npm test      # Node.js zero-dependency test suite (15 tests)
+uv run pytest -v     # Python test suite
+npm run typecheck    # Remotion TypeScript integrity check
 ```
 
 ---

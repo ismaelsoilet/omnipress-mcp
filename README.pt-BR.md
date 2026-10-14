@@ -1,13 +1,13 @@
 # 🌐 OmniPress MCP
 
-[🇺🇸 English](README.md) | [🇧🇷 Português](README.pt-BR.md) | [📖 GitHub Wiki](https://github.com/ismaelsoilet/omnipress-mcp/wiki)
+[🇺🇸 English](README.md) | [🇧🇷 Português](README.pt-BR.md) | [🤖 Manual para Agentes](docs/AGENT_MANUAL.md) | [📖 GitHub Wiki](https://github.com/ismaelsoilet/omnipress-mcp/wiki)
 
 > **O Protocolo Universal de Publicação Agêntica e Motor de Distribuição Multi-Canal para Agentes de IA via Model Context Protocol (MCP)**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node 18+](https://img.shields.io/badge/node-18+-green.svg)](https://nodejs.org/)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
-[![Padrão MCP](https://img.shields.io/badge/MCP-1.0-orange.svg)](https://modelcontextprotocol.io/)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
+[![Node 20+](https://img.shields.io/badge/node-20+-green.svg)](https://nodejs.org/)
+[![Padrão MCP](https://img.shields.io/badge/MCP-2.0%20%2F%20TDQS%205.0-orange.svg)](https://modelcontextprotocol.io/)
 [![Nativo Antigravity](https://img.shields.io/badge/Antigravity-Native-purple.svg)](https://deepmind.google/technologies/gemini/)
 
 O **OmniPress MCP** é um protocolo aberto e agnóstico a nichos para publicação agêntica. Ele capacita agentes de IA (como Google Antigravity, Claude ou ChatGPT) a ingerir ideias brutas, repositórios de código, decisões judiciais/tributárias, memorandos de políticas públicas, fatos históricos ou dados de mercado, transformando-os em artigos completos de alta autoridade, carrosséis visuais para redes sociais, roteiros para canais dark e campanhas estruturadas multi-plataforma.
@@ -15,7 +15,7 @@ O **OmniPress MCP** é um protocolo aberto e agnóstico a nichos para publicaç�
 O OmniPress é projetado para ser **verdadeiramente "Omni"**:
 - **Omni-Domínio**: Motor de ingestão universal expansível através de Skills modulares por nicho (`tech`, `tax-legal`, `govtech`, `darkchannel`).
 - **Omni-Plataforma**: Distribuição nativa para LinkedIn, X (Twitter), Meta Threads, Instagram (Reels & Carrosséis), Reddit, Webhooks (n8n/Make) e arquivos Markdown locais.
-- **Omni-Ambiente (Dual-Runtime)**: Motor em Node.js com **zero dependências externas** + implementação completa em Python (FastMCP) com renderizador gráfico PIL.
+- **Omni-Ambiente**: Servidor MCP unificado em Python (suportando STDIO e HTTP/SSE ASGI) + motor de vídeo Remotion em React + renderizador de carrosséis Pillow em conformidade com a Regra 08.
 - **Omni-Canal (Multi-Tenant)**: Espaço de trabalho isolado por canal (`channels/<slug>/`), permitindo gerenciar múltiplos veículos, marcas e canais sem colisão de ativos.
 
 ---
@@ -128,20 +128,13 @@ Clone o repositório e configure o ambiente Python:
 git clone https://github.com/ismaelsoilet/omnipress-mcp.git
 cd omnipress-mcp
 
-# 2. Criar e ativar ambiente virtual Python
-python3 -m venv .venv
-source .venv/bin/activate  # No Windows: .venv\Scripts\activate
-
-# 3. Instalar dependências
-pip install -r requirements.txt
-```
-
-*(Opcional: Se desejar usar o runtime em Node.js, ele não requer `npm install`, pois utiliza apenas a biblioteca padrão do Node 18+).*
+# 2. Instalar dependências com uv
+uv sync
 
 Execute a verificação para garantir que o ambiente está íntegro:
 ```bash
-pytest        # Executa a suíte de testes em Python (12 testes)
-npm test      # Executa a suíte de testes em Node.js (15 testes)
+uv run pytest -v     # Executa a suíte de testes em Python
+npm run typecheck    # Valida a tipagem estática do motor Remotion
 ```
 
 ---

@@ -1,13 +1,13 @@
 # 🌐 OmniPress MCP
 
-[🇺🇸 English](README.md) | [🇧🇷 Português](README.pt-BR.md) | [📖 GitHub Wiki](https://github.com/ismaelsoilet/omnipress-mcp/wiki)
+[🇺🇸 English](README.md) | [🇧🇷 Português](README.pt-BR.md) | [🤖 AI Agent Manual](docs/AGENT_MANUAL.md) | [📖 GitHub Wiki](https://github.com/ismaelsoilet/omnipress-mcp/wiki)
 
 > **The Universal Agentic Publishing Protocol & Distribution Engine for AI Agents via Model Context Protocol (MCP)**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node 18+](https://img.shields.io/badge/node-18+-green.svg)](https://nodejs.org/)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
-[![MCP Standard](https://img.shields.io/badge/MCP-1.0-orange.svg)](https://modelcontextprotocol.io/)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
+[![Node 20+](https://img.shields.io/badge/node-20+-green.svg)](https://nodejs.org/)
+[![MCP Standard](https://img.shields.io/badge/MCP-2.0%20%2F%20TDQS%205.0-orange.svg)](https://modelcontextprotocol.io/)
 [![Antigravity Native](https://img.shields.io/badge/Antigravity-Native-purple.svg)](https://deepmind.google/technologies/gemini/)
 
 **OmniPress MCP** is an open-source, domain-agnostic agentic publishing protocol. It empowers AI agents (like Google Antigravity, Claude, or ChatGPT) to ingest raw thoughts, codebases, research papers, court rulings, policy memos, or market data, and transform them into authoritative long-form publications, high-contrast visual social carousels, viral dark channel scripts, and multi-platform distribution campaigns.
@@ -15,7 +15,7 @@
 OmniPress is designed to be **truly "Omni"**:
 - **Omni-Domain**: Universal intake engine extensible via modular niche skills (`tech`, `tax-legal`, `govtech`, `darkchannel`).
 - **Omni-Platform**: Native distribution across LinkedIn, X (Twitter), Meta Threads, Instagram (Reels & Carousels), Reddit, Webhooks (n8n/Make), and Markdown archives.
-- **Omni-Runtime**: Dual-runtime architecture featuring a zero-dependency Node.js engine + a full Python FastMCP implementation with PIL carousel rendering.
+- **Omni-Runtime**: Unified Python MCP engine (supporting STDIO and HTTP/SSE ASGI) + Remotion React video engine + Pillow high-contrast carousel builder.
 - **Omni-Channel (Multi-Tenant)**: Isolated channel workspaces (`channels/<slug>/`) enabling seamless management of multiple brands, publications, or dark channels without asset collisions.
 
 ---
@@ -128,20 +128,12 @@ Clone the repository and set up the Python virtual environment:
 git clone https://github.com/ismaelsoilet/omnipress-mcp.git
 cd omnipress-mcp
 
-# 2. Create and activate a Python virtual environment
-python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+# 2. Install dependencies with uv
+uv sync
 
-# 3. Install dependencies
-pip install -r requirements.txt
-```
-
-*(Optional: The Node.js runtime requires no `npm install` because it uses only Node 18+ standard modules).*
-
-Verify that all test suites pass:
-```bash
-pytest        # Runs the Python FastMCP & Multi-Channel suite (12 tests)
-npm test      # Runs the Node.js zero-dependency suite (15 tests)
+# 3. Verify that all test suites pass:
+uv run pytest -v     # Runs the Python test suite
+npm run typecheck    # Verifies Remotion TypeScript integrity
 ```
 
 ---

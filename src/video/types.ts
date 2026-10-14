@@ -79,5 +79,6 @@ export interface EpisodeConfig {
   scenes: DocumentaryScene[];
   captions?: Record<string, ActData>;
   actTimelines?: ActTimeline[];
+  introProps?: ChannelIntroProps;
 }
 

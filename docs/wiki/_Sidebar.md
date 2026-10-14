@@ -8,6 +8,7 @@
 - **[Privacy & De-Identification](Privacy-&-De-Identification)**
 - **[Configuration & Environment](Configuration-&-Environment-Variables)**
 - **[Antigravity Integration](Antigravity-Integration)**
+- **[🤖 AI Agent Operational Manual](https://github.com/ismaelsoilet/omnipress-mcp/blob/main/docs/AGENT_MANUAL.md)**
 
 ---
 

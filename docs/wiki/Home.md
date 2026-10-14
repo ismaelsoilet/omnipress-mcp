@@ -12,7 +12,7 @@ OmniPress is built around four core dimensions of universality:
 
 1. **Omni-Domain**: Extensible via **Modular Niche Skills** (`tech`, `tax-legal`, `govtech`, `darkchannel`), allowing AI agents to write with the exact tone and compliance constraints of any field.
 2. **Omni-Platform**: Automatically syndicates content to **LinkedIn**, **X (Twitter)**, **Meta Threads**, **Instagram** (Carousels & Reels), **Reddit** (targeted subreddits), **Webhooks** (n8n, Make), and **Markdown Archives** (Substack, Medium).
-3. **Omni-Runtime**: Dual-runtime architecture: native **Node.js (18+) with zero external dependencies** + full **Python (3.10+) FastMCP** engine with PIL carousel rendering.
+3. **Omni-Runtime**: Unified **Python (3.12+) MCP** engine (supporting both local STDIO and containerized HTTP/SSE ASGI) + **Remotion React** video engine + **Pillow** high-contrast carousel builder.
 4. **Omni-Channel**: Isolated multi-tenant channel workspaces (`channels/<slug>/`) to manage multiple publications or dark channels cleanly.
 
 ---
@@ -21,8 +21,9 @@ OmniPress is built around four core dimensions of universality:
 
 Explore the documentation:
 
+- **[🤖 AI Agent Operational Manual](https://github.com/ismaelsoilet/omnipress-mcp/blob/main/docs/AGENT_MANUAL.md)**: Definitive step-by-step runbook for AI agents using OmniPress MCP tools.
 - **[Step-by-Step Hands-On Guide](Step-by-Step-Guide)**: Complete practical tutorial from setup to publishing.
-- **[Architecture & Protocol](Architecture-&-Protocol)**: How OmniPress handles JSON-RPC 2.0, stdio transport, ChannelManager, and CarouselBuilder.
+- **[Architecture & Protocol](Architecture-&-Protocol)**: How OmniPress handles JSON-RPC 2.0, stdio/SSE transport, ChannelManager, and CarouselBuilder.
 - **[Creating Niche Skills](Creating-Niche-Skills)**: Step-by-step guide to building custom skills for your specific industry.
 - **[Supported Platforms & Adapters](Supported-Platforms-&-Adapters)**: Complete configuration for Buffer, Instagram Graph API, Reddit, and Webhooks.
 - **[Privacy & De-Identification](Privacy-&-De-Identification)**: How OmniPress shields sensitive credentials, PII, and court secrecy.

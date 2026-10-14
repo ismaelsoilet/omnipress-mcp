@@ -212,9 +212,9 @@ If `OMNIPRESS_WEBHOOK_SECRET` is set, OmniPress includes an `X-OmniPress-Signatu
 To verify that all publisher adapters and channel workspace engines are functioning properly:
 
 ```bash
-# Run the Python FastMCP and Channel test suite (12 tests):
-pytest
+# Run the Python test suite:
+uv run pytest -v
 
-# Run the Node.js test suite (15 tests):
-npm test
+# Run the Remotion TypeScript typecheck:
+npm run typecheck
 ```

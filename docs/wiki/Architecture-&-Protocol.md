@@ -69,14 +69,17 @@ OmniPress implements the official **Model Context Protocol (MCP)** specification
 
 ---
 
-## 3. Dual-Runtime Support
+---
 
-### Python Engine (`src/server.py`)
-- Built on `mcp.server.fastmcp.FastMCP`.
-- Implements all 10 MCP tools with full channel isolation and Pillow carousel rendering.
-- Recommended for production use with Antigravity and Claude.
+## 3. Unified Runtime Architecture
 
-### Node.js Engine (`src/server.js`)
-- **Zero external dependencies** (uses native `node:fs`, `node:crypto`, `readline`, `fetch`).
-- Runs immediately on Node 18+ without requiring `npm install`.
-- Ideal for lightweight environments, serverless deployment, or quick local testing.
+### Unified Python Engine (`src/server.py`)
+- **Dual Transport Support**: Operates seamlessly over standard I/O (`stdio` mode for Claude Desktop / Gemini CLI) and HTTP/SSE ASGI mode (for Docker / Coolify / remote agent hosting).
+- **mcp 2.x & 1.x Compatibility**: Dynamically integrates with `mcp.server.mcpserver.MCPServer` (and falls back to `FastMCP` in 1.x environments).
+- **Healthcheck & Monitoring**: Provides built-in `/health` route for Docker and Coolify orchestration.
+- **Glama TDQS A+ (5.0)**: Implements all 10 MCP tools with full channel isolation, structured guidance, and mandatory protocol annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`).
+
+### Remotion Video Engine (`src/video/`)
+- Modern React/TypeScript video rendering engine powered by Remotion.
+- Supports both 16:9 widescreen and 9:16 vertical video compositions.
+- Decoupled from channel-specific data via dynamic props and configuration payloads.

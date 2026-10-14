@@ -26,14 +26,28 @@ To enable automated dispatch to LinkedIn, X, Meta Threads, Instagram, Reddit, or
 | `REDDIT_PASSWORD` | Reddit Direct Submissions | `my_secure_password` | Reddit account password. |
 | `REDDIT_DEFAULT_SUBREDDIT` | Reddit Fallback | `SideProject` | Default subreddit when not specified in prompt. |
 | `MEDIA_STAGING_DIR` | Video / Staging Assets | `./media/staging` | Staging folder for video renders, TTS audio, and dark channel scripts. |
+| `S3_BUCKET_NAME` | Cloud Media Storage | `omnipress-media` | AWS S3, Cloudflare R2, or MinIO bucket for public media assets. |
+| `S3_ENDPOINT_URL` | Cloud Media Storage | `https://<id>.r2.cloudflarestorage.com` | Custom endpoint URL for Cloudflare R2 or MinIO (omit for AWS S3). |
+| `S3_PUBLIC_URL_PREFIX` | Cloud Media Storage | `https://media.mybrand.com` | Public HTTPS CDN domain prefix for uploaded media assets. |
+| `OMNIPRESS_PUBLIC_URL` | Local Container Hosting | `https://omnipress.suitplus.com.br` | Public base URL when serving staged media directly from container. |
 | `YOUTUBE_WEBHOOK_URL` | Video Automation | `https://n8n...` | Webhook URL for YouTube upload automation. |
 | `TIKTOK_WEBHOOK_URL` | Video Automation | `https://n8n...` | Webhook URL for TikTok automation. |
 | `OMNIPRESS_WEBHOOK_URL` | Webhook Pipeline | `https://n8n.../webhook` | Endpoint URL to receive JSON events. |
 | `OMNIPRESS_WEBHOOK_SECRET` | Webhook HMAC Signature | `my_hmac_secret` | Secret key used to sign payloads. |
+| `OMNIPRESS_MODE` | Server Transport | `stdio` / `http` | Transport mode: `stdio` (local agents) or `http` (Docker/Coolify SSE). |
+| `PORT` | HTTP/SSE Server Port | `3333` | Port for the HTTP/SSE ASGI server. |
 
 ---
 
-## 2. Quick Setup Checklist
+## 2. Storage & Directory Structure Conventions
+
+OmniPress provides two layers of storage:
+1. **Multi-Channel Workspaces (`channels/<slug>/`)**: Canonical, isolated directory for each media brand, containing its own `channel.json`, `articles/`, and `media/`.
+2. **Root Fallback (`articles/` and `media/`)**: Standalone, general-purpose directories used when tools are invoked without an explicit channel slug.
+
+---
+
+## 3. Quick Setup Checklist
 
 1. Copy the template:
    ```bash
@@ -42,6 +56,6 @@ To enable automated dispatch to LinkedIn, X, Meta Threads, Instagram, Reddit, or
 2. Add the credentials for the services you wish to activate.
 3. Test the setup:
    ```bash
-   pytest
-   npm test
+   uv run pytest -v
+   npm run typecheck
    ```

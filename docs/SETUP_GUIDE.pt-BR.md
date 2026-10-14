@@ -211,9 +211,9 @@ Se `OMNIPRESS_WEBHOOK_SECRET` for definido, cada requisição incluirá o cabeç
 Para garantir que todos os adaptadores e o motor de canais estão funcionando perfeitamente:
 
 ```bash
-# Executar a suíte de testes em Python (12 testes):
-pytest
+# Executar a suíte de testes em Python:
+uv run pytest -v
 
-# Executar a suíte de testes em Node.js (15 testes):
-npm test
+# Executar a checagem de tipos do Remotion / TypeScript:
+npm run typecheck
 ```
