@@ -25,7 +25,7 @@ O servidor MCP é unificado em Python ([`src/server.py`](file:///home/ismaelsoil
 
 ## 2. Catálogo Completo de Ferramentas MCP (TDQS A+ 5.0)
 
-O OmniPress expõe **10 ferramentas canônicas** no padrão `verb_noun`, todas enriquecidas com metadados de protocolo (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`):
+O OmniPress expõe **14 ferramentas** (13 canônicas e 1 alias retrocompatível no padrão `verb_noun`), todas enriquecidas com metadados de protocolo (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`):
 
 ### 2.1. `omnipress_publish_article`
 Salva um artigo completo com metadados YAML na árvore de arquivos e emite evento webhook se configurado.
@@ -42,8 +42,12 @@ Salva um artigo completo com metadados YAML na árvore de arquivos e emite event
   | `tags` | `array[string]` | Não | Lista de tags temáticas. |
   | `author` | `string` | Não | Nome do autor ou da publicação. Padrão: `OmniPress`. |
   | `channel_slug` | `string` | Não | Slug do canal de destino (ex: `dossie-historico`). Se omitido, salva na raiz `articles/`. |
-  | `sanitize` | `boolean` | Não | Ativa o filtro LGPD e segredo de justiça. Padrão: `true`. |
-* **Exemplo de Chamada pelo Agente**:
+  | `target_platform` | `string` | Não | Destino da publicação: `"markdown"` (padrão local), `"devto"`, `"ghost"` ou `"all"`. |
+  | `canonical_url` | `string` | Não | URL canônica original para indexação SEO no Dev.to e Ghost. |
+  | `published` | `boolean` | Não | Define se o artigo será publicado imediatamente (`true`) ou criado como rascunho (`false`). Padrão: `false`. |
+  | `force_duplicate` | `boolean` | Não | Força envio ignorando o livro-razão de idempotência da Regra 09. Padrão: `false`. |
+  | `sanitize` | `boolean` | Não | Ativa o filtro LGPD, credenciais e segredo de justiça. Padrão: `true`. |
+* **Exemplo de Chamada pelo Agente (Publicando Rascunho no Dev.to e Ghost)**:
   ```json
   {
     "title": "Auditoria Forense de Bancos de Dados em Litígios Tributários",
@@ -51,6 +55,8 @@ Salva um artigo completo com metadados YAML na árvore de arquivos e emite event
     "category": "tax-legal",
     "tags": ["pericia", "sql", "tributario"],
     "channel_slug": "dossie-historico",
+    "target_platform": "all",
+    "published": false,
     "sanitize": true
   }
   ```
@@ -182,6 +188,62 @@ Envia conteúdos multimídia (carrosséis do Instagram, YouTube Shorts, vídeos 
   | `allow_test` | `boolean` | Não | Permite textos curtos de teste em ambiente de QA. Padrão: `false`. |
   | `force_duplicate` | `boolean` | Não | Permite republicação forçada ignorando a Regra 09. Padrão: `false`. |
   | `sanitize` | `boolean` | Não | Ativa o filtro LGPD e segredo de justiça. Padrão: `true`. |
+
+### 2.11. `omnipress_brainstorm_channel`
+Gera conceitos de canais de mídia, arquétipos psicológicos de retenção e 10 temas virais com ganchos de 0 a 3 segundos (curiosity loops) para YouTube, Instagram, TikTok e X.
+
+* **Anotações**: `readOnlyHint=True`, `destructiveHint=False`, `idempotentHint=True`, `openWorldHint=False`.
+* **Quando USAR**: Ao planejar o lançamento de um novo canal ou backlog de roteiros com alta taxa de clique (CTR).
+* **Parâmetros**: `niche` (string, padrão `"historia"`), `tone` (string, padrão `"mystery"`), `target_audience` (string).
+* **Retorno**: JSON com conceitos do canal, ganchos magnéticos e 10 ideias estruturadas para episódios.
+
+---
+
+### 2.12. `omnipress_generate_speech`
+Converte roteiros e narrações em arquivos de áudio estéreo broadcast MP3 utilizando vozes neurais ultra-realistas.
+
+* **Anotações**: `readOnlyHint=False`, `destructiveHint=False`, `idempotentHint=False`, `openWorldHint=False`.
+* **Quando USAR**: Para gerar narrações de alta fidelidade para vídeos curtos, carrosséis falados ou episódios documentais.
+* **Parâmetros**:
+  | Parâmetro | Tipo | Obrigatório | Descrição |
+  |---|---|---|---|
+  | `text` | `string` | Sim | Texto da narração do roteiro. |
+  | `voice` | `string` | Não | Voz neural (ex: `pt-BR-AntonioNeural`, `pt-BR-FranciscaNeural`, `en-US-ChristopherNeural`). |
+  | `output_filename` | `string` | Não | Nome personalizado do arquivo MP3 em `media/output/`. |
+* **Retorno**: JSON com `audio_path`, tamanho em bytes, modelo de voz e status de sucesso.
+
+---
+
+### 2.13. `omnipress_render_dark_video`
+Renderiza vídeos MP4 em proporção 9:16 (Shorts/Reels/TikTok) ou 16:9 (YouTube) combinando áudio neural e imagens de cenas cinematográficas com ffmpeg e Remotion.
+
+* **Anotações**: `readOnlyHint=False`, `destructiveHint=False`, `idempotentHint=False`, `openWorldHint=False`.
+* **Quando USAR**: Para produzir vídeos finais prontos para publicação a partir de imagens e narrações.
+* **Parâmetros**:
+  | Parâmetro | Tipo | Obrigatório | Descrição |
+  |---|---|---|---|
+  | `text` | `string` | Não | Texto para geração e narração direta de áudio. |
+  | `audio_path` | `string` | Não | Caminho de arquivo MP3 existente se já gravado. |
+  | `image_paths` | `array[string]` | Não | Lista de caminhos para as imagens que compõem as cenas do vídeo. |
+  | `aspect_ratio` | `string` | Não | `"9:16"` (vertical) ou `"16:9"` (widescreen). Padrão: `"9:16"`. |
+  | `voice` | `string` | Não | Voz neural se o áudio for sintetizado do texto. |
+* **Retorno**: JSON com caminho do vídeo gerado (`video_path`), proporção, áudio e diagnóstico de runtime.
+
+---
+
+### 2.14. Suíte CLI de Diagnóstico e Onboarding (`omnipress`)
+Para inspeção e configuração interativa fora do contexto de chat do MCP, utilize o comando CLI `omnipress`:
+
+```bash
+# Diagnóstico completo de runtimes (Python, Node.js, FFmpeg, Edge-TTS):
+omnipress doctor
+
+# Status do canal ativo e histórico do ledger PublishingShield:
+omnipress status
+
+# Assistente interativo de configuração de credenciais (.env):
+omnipress setup
+```
 
 ---
 

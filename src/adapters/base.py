@@ -25,3 +25,20 @@ class BasePublisherAdapter(ABC):
         Queues or publishes a short-form social post to target networks.
         """
         pass
+
+    def publish_article(
+        self,
+        title: str,
+        content_markdown: str,
+        category: str = "technology",
+        tags: Optional[List[str]] = None,
+        author: Optional[str] = None,
+        canonical_url: Optional[str] = None,
+        published: bool = False,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """
+        Publishes a long-form article to an external publication platform (Dev.to, Ghost, etc.).
+        Override in subclasses that support full article syndication.
+        """
+        raise NotImplementedError(f"{self.__class__.__name__} does not support article publishing.")

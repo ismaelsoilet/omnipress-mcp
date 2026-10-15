@@ -1,20 +1,22 @@
 # 🌐 OmniPress MCP
 
-[🇺🇸 English](README.md) | [🇧🇷 Português](README.pt-BR.md) | [🤖 Manual para Agentes](docs/AGENT_MANUAL.md) | [📖 GitHub Wiki](https://github.com/ismaelsoilet/omnipress-mcp/wiki)
+[🇺🇸 English](README.md) | [🇧🇷 Português](README.pt-BR.md) | [🤖 Manual para Agentes](docs/AGENT_MANUAL.md) | [🚀 Guia de Submissão](docs/SUBMISSION_GUIDE.md)
 
 > **O Protocolo Universal de Publicação Agêntica e Motor de Distribuição Multi-Canal para Agentes de IA via Model Context Protocol (MCP)**
 
+[![PyPI Version](https://img.shields.io/pypi/v/omnipress-mcp?color=blue)](https://pypi.org/project/omnipress-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
 [![Node 20+](https://img.shields.io/badge/node-20+-green.svg)](https://nodejs.org/)
 [![Padrão MCP](https://img.shields.io/badge/MCP-2.0%20%2F%20TDQS%205.0-orange.svg)](https://modelcontextprotocol.io/)
+[![Compatível com Smithery](https://img.shields.io/badge/Smithery-Compat%C3%ADvel-blueviolet.svg)](https://smithery.ai)
 [![Nativo Antigravity](https://img.shields.io/badge/Antigravity-Native-purple.svg)](https://deepmind.google/technologies/gemini/)
 
 O **OmniPress MCP** é um protocolo aberto e agnóstico a nichos para publicação agêntica. Ele capacita agentes de IA (como Google Antigravity, Claude ou ChatGPT) a ingerir ideias brutas, repositórios de código, decisões judiciais/tributárias, memorandos de políticas públicas, fatos históricos ou dados de mercado, transformando-os em artigos completos de alta autoridade, carrosséis visuais para redes sociais, roteiros para canais dark e campanhas estruturadas multi-plataforma.
 
 O OmniPress é projetado para ser **verdadeiramente "Omni"**:
 - **Omni-Domínio**: Motor de ingestão universal expansível através de Skills modulares por nicho (`tech`, `tax-legal`, `govtech`, `darkchannel`).
-- **Omni-Plataforma**: Distribuição nativa para LinkedIn, X (Twitter), Meta Threads, Instagram (Reels & Carrosséis), Reddit, Webhooks (n8n/Make) e arquivos Markdown locais.
+- **Omni-Plataforma**: Distribuição nativa para Dev.to, Ghost CMS, LinkedIn, X (Twitter), Meta Threads, Instagram (Reels & Carrosséis), Reddit, Webhooks (n8n/Make) e arquivos Markdown locais.
 - **Omni-Ambiente**: Servidor MCP unificado em Python (suportando STDIO e HTTP/SSE ASGI) + motor de vídeo Remotion em React + renderizador de carrosséis Pillow em conformidade com a Regra 08.
 - **Omni-Canal (Multi-Tenant)**: Espaço de trabalho isolado por canal (`channels/<slug>/`), permitindo gerenciar múltiplos veículos, marcas e canais sem colisão de ativos.
 
@@ -125,10 +127,26 @@ Motor de vídeo de alta fidelidade em React & TypeScript (`src/video/`) projetad
 
 Abaixo está o roteiro prático para configurar, conectar e operar o OmniPress do zero ao seu primeiro post publicado.
 
-### Passo 1: Instalação e Preparação do Ambiente
+### Passo 1: Início Rápido e Instalação
 
-Clone o repositório e configure o ambiente Python:
+#### Opção A: Execução Zero-Clone via `uvx` (Recomendada)
+Você pode executar o servidor MCP diretamente sem clonar o repositório nem criar ambientes virtuais:
 
+```bash
+# Executa o servidor MCP diretamente
+uvx omnipress-mcp
+
+# Executa o diagnóstico do ambiente
+uvx --from omnipress-mcp omnipress doctor
+```
+
+#### Opção B: Instalação em 1-Clique via Smithery
+Para Claude Desktop ou Cursor, instale automaticamente via Smithery:
+```bash
+npx -y @smithery/cli install omnipress-mcp --client claude
+```
+
+#### Opção C: Clonagem Local do Repositório para Desenvolvimento
 ```bash
 # 1. Clonar o repositório
 git clone https://github.com/ismaelsoilet/omnipress-mcp.git
@@ -137,36 +155,43 @@ cd omnipress-mcp
 # 2. Instalar dependências com uv
 uv sync
 
-Execute a verificação para garantir que o ambiente está íntegro:
-```bash
-uv run pytest -v     # Executa a suíte de testes em Python
-npm run typecheck    # Valida a tipagem estática do motor Remotion
+# 3. Executar a suíte de testes completa (80 testes):
+uv run pytest -v     # Suíte de testes em Python
+npm run typecheck    # Validação de tipos do Remotion
 ```
 
 ---
 
 ### Passo 2: Configuração das Credenciais (`.env`)
 
-Crie seu arquivo de variáveis de ambiente a partir do exemplo:
+Você pode configurar o OmniPress de forma interativa via terminal ou editando o arquivo `.env`:
 
 ```bash
-cp .env.example .env
-```
+# Assistente interativo de configuração:
+omnipress setup
 
-Edite o arquivo `.env` com os serviços que você deseja ativar:
+# Diagnóstico de prontidão do sistema:
+omnipress doctor
+```
 
 > 💡 **Nota**: O OmniPress funciona perfeitamente **mesmo sem nenhuma chave externa**. Se nenhuma API for configurada, os artigos são arquivados localmente em Markdown e os textos das redes sociais são exibidos na tela prontos para você copiar e colar.
 
 Principais integrações disponíveis:
-1. **Buffer (LinkedIn, X, Threads)**:
+1. **Artigos Técnicos e Engenharia (Dev.to)**:
+   - Obtenha sua chave em: [dev.to/settings/extensions](https://dev.to/settings/extensions).
+   - Configure `DEVTO_API_KEY`.
+2. **Publicações Independentes e Newsletters (Ghost CMS)**:
+   - Crie uma integração em Ghost Admin (`Settings -> Integrations`).
+   - Configure `GHOST_API_URL` (ex: `https://meublog.ghost.io`) e `GHOST_ADMIN_API_KEY` (`{id}:{secret}`).
+3. **Agendamento Multi-Redes (Buffer - LinkedIn, X, Threads, Instagram)**:
    - Obtenha seu token em: [publish.buffer.com/settings/api](https://publish.buffer.com/settings/api).
    - Configure `BUFFER_API_KEY` e os IDs de perfis (`BUFFER_LINKEDIN_PROFILE_ID`, `BUFFER_X_PROFILE_ID`, etc.).
-2. **Instagram Graph API (Direto)**:
+4. **Instagram Graph API (Direto)**:
    - Configure `INSTAGRAM_ACCESS_TOKEN` e `INSTAGRAM_ACCOUNT_ID` para postagens diretas.
-3. **Reddit (Publicação direta em subreddits)**:
+5. **Reddit (Publicação direta em subreddits)**:
    - Crie um aplicativo tipo "script" em: [reddit.com/prefs/apps](https://www.reddit.com/prefs/apps).
    - Configure `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USERNAME` e `REDDIT_PASSWORD`.
-4. **Webhooks (n8n / Make / Slack / Telegram)**:
+6. **Webhooks (n8n / Make / Slack / Telegram)**:
    - Configure `OMNIPRESS_WEBHOOK_URL` para receber o payload JSON completo de cada postagem gerada.
 
 ---
@@ -343,12 +368,16 @@ Inclua prompts para Midjourney para cada cena e as especificações de locução
 | `omnipress_get_channel` | Retorna as configurações completas de identidade visual, paleta e credenciais de um canal. | `channel_slug` (string) |
 | `omnipress_create_channel` | Cria um novo canal isolado com pastas de artigos, mídias e configuração `channel.json`. | `slug`, `name`, `handle`, `category`, `primary_color` |
 | `omnipress_build_carousel` | Renderiza lâminas de carrossel 3:4 com layout perfeito, quebra dinâmica e branding do canal. | `channel_slug`, `post_slug`, `slides_json`, `aspect_ratio` |
-| `omnipress_publish_article` | Salva artigo em Markdown estruturado por `AAAA/MM/` com frontmatter YAML e filtro LGPD. | `title`, `content_markdown`, `category`, `tags`, `author`, `channel_slug`, `sanitize` |
+| `omnipress_publish_article` | Salva artigo em Markdown ou publica no Dev.to e Ghost CMS com idempotência do PublishingShield. | `title`, `content_markdown`, `category`, `tags`, `author`, `channel_slug`, `target_platform`, `canonical_url`, `published`, `force_duplicate`, `sanitize` |
 | `omnipress_queue_post` | Envia post/thread de texto protegido pelo PublishingShield e livro-razão anti-duplicação. | `text`, `platforms`, `title`, `media_urls`, `schedule_time`, `channel_slug`, `mode`, `allow_test`, `force_duplicate` |
 | `omnipress_queue_media_post` | Enfileira mídias ricas (Carrosséis Instagram, Shorts YouTube, posts com mídia no X) com PublishingShield. | `caption`, `platforms`, `media_urls`, `title`, `media_type`, `schedule_time`, `channel_slug`, `mode`, `allow_test`, `force_duplicate` |
-| `omnipress_prepare_dark_script` | Gera roteiro dark viral de alta retenção, prompts de imagens para IA e especificações TTS. | `topic`, `niche`, `duration_target_sec`, `language` |
+| `omnipress_prepare_dark_script` | Gera roteiro dark viral de alta retenção, prompts de imagens para IA e especificações TTS. | `topic`, `format`, `tone`, `target_audience` |
+| `omnipress_brainstorm_channel` | Cria conceitos de canal de alto CTR, pilares editoriais e backlog de tópicos virais com ganchos. | `niche`, `tone`, `target_audience`, `language` |
+| `omnipress_generate_speech` | Sintetiza locução neural de alta definição (Edge-TTS) para Canais Dark, Reels e Shorts. | `text`, `voice`, `output_filename` |
+| `omnipress_render_dark_video` | Renderiza vídeo MP4 (9:16 ou 16:9) unindo áudio neural e imagens de cenas via ffmpeg. | `text`, `audio_path`, `image_paths`, `output_filename`, `aspect_ratio`, `voice` |
 | `omnipress_inspect_content` | Utilitário isolado para auditar texto em busca de vazamentos de chaves, processos CNJ e CPFs. | `text` (string) |
-| `omnipress_list_articles` | Lista os artigos arquivados recentemente no repositório ou por canal (alias: `omnipress_list_recent`). | `limit` (int), `channel_slug` (string) |
+| `omnipress_list_articles` | Lista os artigos arquivados recentemente no repositório ou por canal. | `limit` (int), `channel_slug` (string) |
+| `omnipress_list_recent` | Alias retrocompatível para `omnipress_list_articles`. | `limit` (int) |
 
 ---
 

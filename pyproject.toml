@@ -25,6 +25,7 @@ Repository = "https://github.com/ismaelsoilet/omnipress-mcp.git"
 Issues = "https://github.com/ismaelsoilet/omnipress-mcp/issues"
 
 [project.scripts]
+omnipress = "src.cli:main"
 omnipress-mcp = "src.server:main"
 
 [tool.hatch.build.targets.wheel]

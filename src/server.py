@@ -23,6 +23,8 @@ from src.adapters.webhook_adapter import WebhookPublisherAdapter
 from src.adapters.reddit_adapter import RedditPublisherAdapter
 from src.adapters.youtube_adapter import YouTubeStagingAdapter
 from src.adapters.instagram_adapter import InstagramGraphAdapter
+from src.adapters.devto_adapter import DevToPublisherAdapter
+from src.adapters.ghost_adapter import GhostPublisherAdapter
 from src.core.channel_manager import ChannelManager
 from src.engine.carousel_builder import CarouselBuilder
 from src.utils.sanitizer import sanitize_text, inspect_sensitive_data
@@ -79,6 +81,8 @@ webhook_adapter = WebhookPublisherAdapter()
 reddit_adapter = RedditPublisherAdapter()
 youtube_adapter = YouTubeStagingAdapter()
 instagram_adapter = InstagramGraphAdapter()
+devto_adapter = DevToPublisherAdapter()
+ghost_adapter = GhostPublisherAdapter()
 
 
 # MCP Tool Annotations for 2026 Protocol & TDQS Standards
@@ -189,24 +193,27 @@ def omnipress_publish_article(
     tags: Optional[List[str]] = None,
     author: Optional[str] = None,
     channel_slug: Optional[str] = None,
+    target_platform: str = "markdown",
+    canonical_url: Optional[str] = None,
+    published: bool = False,
+    force_duplicate: bool = False,
     sanitize: bool = True,
 ) -> str:
     """
-    Saves a complete, publication-ready long-form article to the local archive
-    with YAML frontmatter (for Substack, Jusbrasil, Medium, or static blog) and optional event dispatch.
-    Supports multi-channel workspaces via channel_slug.
+    Saves and syndicates long-form articles to the local Markdown archive and/or online publication platforms
+    (Dev.to, Ghost CMS) with YAML frontmatter, automated privacy sanitization, and anti-duplicate ledger (Rule 09).
 
     Use when:
     - Archiving a completed markdown article with structured frontmatter metadata.
-    - Publishing long-form thought leadership, legal tech, or tax analysis articles.
-    - Ensuring content is checked and de-identified against CNJ court process numbers, CPFs, CNPJs, and personal emails before persistence.
+    - Publishing or drafting long-form thought leadership, legal tech, or engineering articles to Dev.to or Ghost.
+    - Ensuring content is checked and de-identified against CNJ court process numbers, CPFs, CNPJs, personal emails, and API keys before publication.
 
     Do NOT use when:
     - Queuing short social media updates or micro-posts (use omnipress_queue_post instead).
-    - Only checking for sensitive PII without writing files (use omnipress_inspect_content instead).
+    - Only checking for sensitive PII without writing or publishing files (use omnipress_inspect_content instead).
 
     Returns:
-    - Formatted confirmation with filename, full storage path, category/tags, and detailed log of any sanitized privacy items.
+    - Formatted confirmation with local storage path, online publication status/URL, and audit log of any sanitized items.
     """
     sanitization_notes = []
     processed_content = content_markdown
@@ -218,6 +225,7 @@ def omnipress_publish_article(
             for f in findings:
                 sanitization_notes.append(f"  - {f['type']}: {f['match']}")
 
+    # 1. Local archive is always preserved as single source of truth
     result = markdown_adapter.save_article(
         title=title,
         content_markdown=processed_content,
@@ -233,10 +241,49 @@ def omnipress_publish_article(
 
     ch_label = f" | Channel: `{channel_slug}`" if channel_slug else ""
     output = [
-        f"✅ Article archived successfully: **{result['filename']}**",
+        f"✅ Article archived locally: **{result['filename']}**",
         f"📁 Path: `{result['filepath']}`",
         f"🏷️ Category: `{category}` | Tags: {tags or []}{ch_label}",
     ]
+
+    # 2. Multi-platform syndication (Dev.to, Ghost CMS)
+    raw_targets = [p.lower().strip() for p in (target_platform or "markdown").split(",") if p.strip()]
+    if "all" in raw_targets:
+        targets = ["devto", "ghost"]
+    else:
+        targets = raw_targets
+
+    if "devto" in targets:
+        dev_res = devto_adapter.publish_article(
+            title=title,
+            content_markdown=processed_content,
+            category=category,
+            tags=tags,
+            author=author,
+            canonical_url=canonical_url,
+            published=published,
+            force_duplicate=force_duplicate,
+        )
+        if dev_res.get("success"):
+            output.append(f"🌐 Dev.to ({dev_res.get('status')}): {dev_res.get('url')}")
+        else:
+            output.append(f"⚠️ Dev.to Notice: {dev_res.get('error')}")
+
+    if "ghost" in targets:
+        ghost_res = ghost_adapter.publish_article(
+            title=title,
+            content_markdown=processed_content,
+            category=category,
+            tags=tags,
+            author=author,
+            canonical_url=canonical_url,
+            published=published,
+            force_duplicate=force_duplicate,
+        )
+        if ghost_res.get("success"):
+            output.append(f"👻 Ghost CMS ({ghost_res.get('status')}): {ghost_res.get('url')}")
+        else:
+            output.append(f"⚠️ Ghost CMS Notice: {ghost_res.get('error')}")
 
     if sanitization_notes:
         output.append("\n" + "\n".join(sanitization_notes))

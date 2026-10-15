@@ -1,0 +1,40 @@
+# Smithery.ai configuration for OmniPress MCP
+# Enables one-click installation across Claude Desktop, Cursor, and MCP clients
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      BUFFER_API_KEY:
+        type: string
+        description: "Buffer Personal API Key for multi-network scheduling (LinkedIn, X, Threads, Instagram)"
+      DEVTO_API_KEY:
+        type: string
+        description: "Dev.to API Key for technical article publishing"
+      GHOST_ADMIN_API_KEY:
+        type: string
+        description: "Ghost CMS Admin API Key in {id}:{secret_hex} format"
+      GHOST_API_URL:
+        type: string
+        description: "Ghost CMS base URL (e.g., https://myblog.ghost.io)"
+      OMNIPRESS_ACTIVE_CHANNEL:
+        type: string
+        description: "Default active channel workspace slug"
+        default: "dossie-historico"
+      OMNIPRESS_WEBHOOK_URL:
+        type: string
+        description: "Webhook URL (n8n/Make/Slack) for publication dispatch events"
+  commandFunction: |-
+    (config) => ({
+      command: 'uvx',
+      args: ['omnipress-mcp'],
+      env: {
+        BUFFER_API_KEY: config.BUFFER_API_KEY || '',
+        DEVTO_API_KEY: config.DEVTO_API_KEY || '',
+        GHOST_ADMIN_API_KEY: config.GHOST_ADMIN_API_KEY || '',
+        GHOST_API_URL: config.GHOST_API_URL || '',
+        OMNIPRESS_ACTIVE_CHANNEL: config.OMNIPRESS_ACTIVE_CHANNEL || 'dossie-historico',
+        OMNIPRESS_WEBHOOK_URL: config.OMNIPRESS_WEBHOOK_URL || ''
+      }
+    })

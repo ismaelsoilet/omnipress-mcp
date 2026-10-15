@@ -56,6 +56,12 @@ When an agent generates a content campaign, it must produce three synchronized a
 - **Embedded Broadcast Soundscape**: Always pair visual animations with broadcast-quality 48kHz audio (`<Audio />`), sound effects (SFX), and volume ducking (-18dB to -22dB under voiceover).
 - **Cross-Platform Vertical Duration Standard (Monetization & Retention)**: Vertical cuts (9:16) for TikTok, YouTube Shorts, and Instagram Reels must adopt a standard duration between **62 and 68 seconds (target: ~65s / 1,950 frames @ 30fps)**. This satisfies the strict >60s requirement for the TikTok Creator Rewards Program (preventing disqualification from sub-minute rounding bugs), aligns with YouTube Shorts (expanded up to 180s), and fits comfortably within Instagram Reels (up to 90s).
 
+### 8. Multi-CMS Article Syndication & CLI Standards (Rule 11)
+- **Universal Article Contract**: Any long-form article adapter must inherit from `BasePublisherAdapter` and implement `publish_article(title, content_markdown, category, tags, author, canonical_url, published, force_duplicate, **kwargs)`.
+- **Pre-Flight Idempotency Shield**: All article dispatches must call `PublishingShield.check_duplicate()` before touching remote network APIs and call `PublishingShield.record_published()` upon success.
+- **Tag & Token Sanitization**: Dev.to tags must be sanitized to max 4 lowercase alphanumeric tokens. Ghost CMS tokens must be short-lived HS256 JWTs with 5-minute expiry.
+- **Diagnostic Tooling**: Runtimes and capabilities must be verifiable via `omnipress doctor`, `omnipress status`, and configured via `omnipress setup`.
+
 ---
 
 ## 🇧🇷 Diretrizes em Português
@@ -106,4 +112,10 @@ Ao gerar campanhas de conteúdo, o agente deve produzir 3 formatos integrados:
 - **Agnosticismo de Marca**: As composições devem receber cores, títulos, badges e logos via propriedades (`ChannelIntroProps`, `EpisodeConfig`), resolvendo os padrões a partir do `channel.json` do canal ativo. Nunca chumbe o nome de um canal dentro dos componentes universais.
 - **Paisagem Sonora Cinemática**: Animações de vídeo devem sempre integrar áudio padrão broadcast em 48kHz (`<Audio />`), efeitos sonoros de retenção (SFX) e atenuação automática de trilha (ducking a -18dB a -22dB sob a voz humana).
 - **Padrão de Duração de Vídeos Verticais (Monetização e Retenção)**: Vídeos verticais (9:16) para TikTok, YouTube Shorts e Instagram Reels devem adotar duração padrão entre **62 e 68 segundos (alvo: ~65s / 1.950 frames a 30fps)**. Isso cumpre o requisito de monetização obrigatória do TikTok Creator Rewards (>60s com margem de segurança contra arredondamento para 59s), enquadra-se no novo limite do YouTube Shorts (até 180s) e fica dentro do teto do Instagram Reels (90s).
+
+### 8. Padrão de Sindicação Multi-CMS & Ferramental CLI (Regra 11)
+- **Contrato Universal de Artigos**: Qualquer adaptador de artigos long-form deve herdar de `BasePublisherAdapter` e implementar `publish_article(title, content_markdown, category, tags, author, canonical_url, published, force_duplicate, **kwargs)`.
+- **Escudo Pré-Voo de Idempotência**: Todo envio de artigo deve consultar `PublishingShield.check_duplicate()` antes de atingir APIs remotas e registrar `PublishingShield.record_published()` em caso de sucesso.
+- **Sanitização de Tags e Tokens**: Tags do Dev.to devem ser restritas a no máximo 4 tokens alfanuméricos em minúsculas. Tokens do Ghost CMS devem ser JWTs HS256 de curta duração (5 minutos).
+- **Diagnóstico e Operabilidade**: Runtimes e credenciais devem ser verificáveis via `omnipress doctor`, `omnipress status`, e configuráveis via `omnipress setup`.
 
