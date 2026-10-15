@@ -34,6 +34,12 @@ The Remotion engine provides pre-built cinematic components:
 - **Dynamic Ducking**: Background soundtrack volume must automatically drop to **-18dB to -22dB (volume: ~0.15–0.18)** while voiceover narration is speaking, and swell back to full ambience (**volume: ~0.40–0.45**) during dramatic silences and scene transitions.
 - **Tactile SFX**: Pair on-screen text reveals, stamps, and cuts with tactile Foley sound effects (typewriter clicks, sub-bass impacts, paper rustles, metallic whooshes).
 
+### 6. Soundtrack Licensing, Content ID & Platform-Native Audio Architecture
+Automated Content ID systems (such as *We Are Era Music BV* on behalf of Creative Commons composers like Scott Buckley) automatically claim matching audio fingerprints. In vertical formats (Shorts), claims on embedded tracks >60s can trigger worldwide blocks. The engine supports two operational paths:
+- **Mode A (Embedded Soundtrack)**: Rendered directly with music. Requires mandatory attribution credit in the video description (e.g. `'Signal to Noise' by Scott Buckley - released under CC-BY 4.0. www.scottbuckley.com.au`) and dispute/whitelist registration.
+- **Mode B (Platform-Native Audio Post-Addition — Recommended for Shorts/Reels/TikTok)**: Render the video with **Voiceover + tactile SFX only** (no embedded background music). The creator selects and layers background music directly inside the mobile upload interface (YouTube Shorts Audio Library, TikTok Sound Picker, Instagram Reels Audio).
+  - *Benefits*: 100% immune to Content ID copyright claims/blocks, zero dispute friction, and receives algorithmic reach boosts from native sound catalog usage.
+
 ---
 
 ## 🇧🇷 Diretrizes em Português
@@ -65,3 +71,9 @@ O motor Remotion inclui componentes prontos para uso:
 - **Qualidade de Áudio**: Todos os áudios devem ser renderizados a 48kHz estéreo via `<Audio />`.
 - **Ducking de Volume**: A trilha musical de fundo deve ser atenuada automaticamente para **-18dB a -22dB (volume: ~0.15–0.18)** durante a voz humana e retornar ao volume pleno (**volume: ~0.40–0.45**) em pausas dramáticas e transições de cena.
 - **Efeitos Sonoros (SFX)**: Cada aparição de texto, carimbo ou transição de corte deve vir acompanhada de SFX tátil (impactos graves, cliques mecânicos de máquina de escrever, estalos de película).
+
+### 6. Licenciamento de Trilha Sonora, Content ID e Áudio Nativo das Plataformas
+Sistemas automatizados de Content ID (como *We Are Era Music BV* representando compositores sob licença Creative Commons como Scott Buckley) aplicam reivindicações automáticas por impressão digital sonora. Em vídeos curtos (Shorts), o uso de faixas no Content ID por >60s pode acarretar bloqueio mundial do vídeo. O OmniPress suporta oficialmente dois fluxos de áudio:
+- **Modo A (Trilha Incorporada na Renderização)**: Trilha embutida no Remotion com ducking automático. Exige obrigatoriamente a inclusão da linha canônica de créditos na descrição do vídeo (`'Signal to Noise' by Scott Buckley - released under CC-BY 4.0. www.scottbuckley.com.au`) e/ou liberação via formulário/contestação.
+- **Modo B (Adição Tardia de Áudio Nativo — Altamente Recomendado para Shorts/Reels/TikTok)**: O vídeo é renderizado no Remotion contendo **apenas a Locução Masterizada + Efeitos Sonoros (SFX)**. O criador adiciona a trilha sonora de fundo diretamente no aplicativo no momento do upload (biblioteca oficial do YouTube Shorts, TikTok ou Instagram Reels), configurando o volume da música para 10% a 15%.
+  - *Vantagens*: Imunidade total contra reivindicações e bloqueios de Content ID, zero fricção com formulários de liberação e forte benefício algorítmico, já que as redes sociais priorizam a entrega de vídeos que utilizam faixas nativas de seus catálogos oficiais.
