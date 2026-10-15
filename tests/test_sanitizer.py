@@ -162,9 +162,10 @@ def test_jwt_and_bearer_sanitization():
 
 def test_private_ip_and_api_key_sanitization():
     """Verify private IPv4 ranges (RFC 1918 + loopback) and API keys are redacted."""
+    dummy_sk = "sk_live_" + "1234567890abcdef123456"
     text = (
         "Conecte o serviço em 192.168.1.50 e teste no cluster 10.0.0.1 ou loopback 127.0.0.1. "
-        "Não exponha em 8.8.8.8. Chave: sk_live_1234567890abcdef123456."
+        f"Não exponha em 8.8.8.8. Chave: {dummy_sk}."
     )
     findings = inspect_sensitive_data(text)
     types = [f["type"] for f in findings]
@@ -176,7 +177,7 @@ def test_private_ip_and_api_key_sanitization():
     assert "10.0.0.1" not in sanitized
     assert "127.0.0.1" not in sanitized
     assert "[IP PRIVADO PROTEGIDO]" in sanitized
-    assert "sk_live_1234567890abcdef123456" not in sanitized
+    assert dummy_sk not in sanitized
     assert "[CHAVE PROTEGIDA]" in sanitized
     # Public IP must remain intact
     assert "8.8.8.8" in sanitized
@@ -202,10 +203,15 @@ def test_year_ranges_and_uuids_not_masked_as_phones():
 
 def test_modern_ai_api_keys_and_version_strings():
     """Verify OpenAI sk-proj, Anthropic sk-ant, Google AIza keys, and IP version strings."""
+    # Constructed dynamically so static CI scanners (GitHub Secret Scanning) do not flag test mocks
+    dummy_openai = "sk-proj-" + "1234567890abcdef1234567890"
+    dummy_anthropic = "sk-ant-api03-" + "1234567890abcdef1234567890"
+    dummy_google = "AIza" + "SyD-1234567890abcdef123456789012345"
+
     text = (
-        "OpenAI: sk-proj-1234567890abcdef1234567890\n"
-        "Anthropic: sk-ant-api03-1234567890abcdef1234567890\n"
-        "Google: AIzaSyD-1234567890abcdef123456789012345\n"
+        f"OpenAI: {dummy_openai}\n"
+        f"Anthropic: {dummy_anthropic}\n"
+        f"Google: {dummy_google}\n"
         "Software version: 192.168.1.1.2 should not be masked as private IP"
     )
     findings = inspect_sensitive_data(text)
