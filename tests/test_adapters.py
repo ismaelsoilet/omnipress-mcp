@@ -93,6 +93,52 @@ def test_buffer_adapter_publish_now_by_default(monkeypatch):
         assert "dueAt" not in call_payload["variables"]["input"]
 
 
+def test_buffer_adapter_instagram_metadata_and_delete(monkeypatch):
+    monkeypatch.setenv("BUFFER_API_KEY", "test_key_123")
+    monkeypatch.setenv("BUFFER_INSTAGRAM_PROFILE_ID", "prof_ig_123")
+    adapter = BufferPublisherAdapter()
+
+    # 1. Test Instagram metadata injection
+    with patch("requests.post") as mock_post:
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "data": {
+                "createPost": {
+                    "post": {"id": "post_ig_1", "status": "sent"}
+                }
+            }
+        }
+        mock_post.return_value = mock_resp
+
+        res = adapter.queue_social_post(
+            text="Carrossel Instagram!",
+            platforms=["instagram"],
+            media_urls=["https://example.com/slide1.jpg"],
+        )
+        assert res["success"] is True
+        call_payload = mock_post.call_args[1]["json"]
+        assert call_payload["variables"]["input"]["metadata"]["instagram"]["type"] == "post"
+        assert call_payload["variables"]["input"]["metadata"]["instagram"]["shouldShareToFeed"] is True
+
+    # 2. Test delete_post
+    with patch("requests.post") as mock_post:
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "data": {
+                "deletePost": {
+                    "id": "post_ig_1"
+                }
+            }
+        }
+        mock_post.return_value = mock_resp
+
+        del_res = adapter.delete_post("post_ig_1")
+        assert del_res["success"] is True
+        assert del_res["deleted_id"] == "post_ig_1"
+
+
 # -------------------------------------------------------------
 # Webhook Adapter Tests
 # -------------------------------------------------------------

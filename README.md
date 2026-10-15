@@ -98,16 +98,22 @@ Before anything is staged or published, OmniPress automatically runs security an
 - **Technical Credentials**: Masks API keys, JWT tokens, Bearer secrets, and private IPs.
 - **Legal/PII**: Masks judicial process numbers (CNJ standard `0000000-00.0000.0.00.0000`), Brazilian tax IDs (CPF/CNPJ), phone numbers, and emails.
 
-### 4. Human-in-the-Loop by Default
-No social post goes live without human verification:
-- All posts are placed into your **Drafts / Review queue** in Buffer or Instagram, allowing you to preview and approve them on your phone or web dashboard before publication.
+### 4. Publishing Shield & Anti-Duplicate Idempotency (Rule 09)
+Guarantees **zero accidental duplicates**, prevents placeholder test text leaks, and enforces strict social platform constraints before touching external network APIs:
+- **Gate 1 (Test Text Interceptor)**: Blocks dummy/test strings (`"teste"`, `"test"`, `<12 chars`) from broadcasting live on production feeds with `shareNow`.
+- **Gate 2 (Media Requirement Gate)**: Rejects text-only posts destined for Instagram before network dispatch.
+- **Gate 3 (Platform Character Limits)**: Enforces hard limits (Instagram: 2,196 chars for Buffer GraphQL, X: 280, Threads: 500, LinkedIn: 3,000) and reports exact excess length.
+- **Gate 4 (24h Idempotency Ledger)**: Stores deterministic SHA-256 fingerprints in `media/staging/publishing_ledger.json` to block duplicate posts within a 24-hour window.
+- **Gate 5 (Native API Metadata & Clean Overwrites)**: Automatically injects `metadata.instagram.type = "post"` and `shouldShareToFeed = true`, and purges obsolete drafts with atomic `delete_post` GraphQL mutations.
 
 ### 5. Programmatic Video & Motion Design Engine (Remotion)
-Full React & TypeScript video engine (`src/video/`) engineered for YouTube Documentary (16:9) and Shorts/Reels (9:16):
+Full React & TypeScript video engine (`src/video/`) engineered for YouTube Documentaries (16:9) and Shorts/Reels/TikTok (9:16):
 - **Universal Compositions**: Render broadcast-grade MP4s in seconds using `npm run remotion:render`.
-- **Cinematic Components**: Built-in military cipher decryption (`ScrambledText`), 3D floating dust motes (`DustParticles`), anamorphic golden flares (`AnamorphicFlare`), distressed official stamps with camera shake (`ClassifiedStamp`), and Ken Burns camera movements (`KenBurnsImage`).
-- **Synchronized Broadcast Soundscape**: Multi-layered 48kHz stereo audio embedded via `<Audio />` (sub-bass braam boom, typewriter clicks, stamp slam impact, golden shimmer whoosh).
-- **Interactive Live Preview**: Explore timelines, frame scrubbing, and live playback via `npm run remotion:preview`.
+- **Vertical Duration Standard for Monetization**: Standardized 62–68 second target (~65s / 1,950 frames @ 30fps) to qualify for the TikTok Creator Rewards Program (>60s requirement) without risking sub-minute rounding disqualifications, while fitting seamlessly within YouTube Shorts (up to 180s) and Instagram Reels (up to 90s).
+- **Synchronized Whisper Subtitles**: Word-by-word dynamic highlighting (`SynchronizedCaptions.tsx`) powered by Whisper JSON timestamps over frosted dark backdrop cards.
+- **Cinematic Components**: Built-in military cipher decryption (`ScrambledText`), 3D floating dust motes (`DustParticles`), anamorphic golden flares (`AnamorphicFlare`), distressed official stamps with camera shake (`ClassifiedStamp`), tactical grids (`TacticalGrid`), film grain (`FilmGrain`), and Ken Burns camera movements (`KenBurnsImage`).
+- **Synchronized Broadcast Soundscape**: Multi-layered 48kHz stereo audio embedded via `<Audio />` with dynamic audio ducking (-18dB to -22dB under speech).
+- **Programmatic Thumbnail Generator**: High-CTR 16:9 thumbnails rendered directly from React (`ThumbnailEpisode.tsx`).
 
 ### 6. Multi-Channel Syndication & YouTube Integration
 - **YouTube Direct Integration**: Connects seamlessly with YouTube via Buffer (`buffer_channel_id` mapped in `channel.json`).
@@ -335,9 +341,9 @@ Include scene-by-scene AI image prompts and TTS voice direction with a cinematic
 | `omnipress_get_channel` | Retrieves full brand identity, color palette, and credentials for a channel. | `channel_slug` (string) |
 | `omnipress_create_channel` | Scaffolds a new isolated channel workspace with dedicated subdirectories. | `slug`, `name`, `handle`, `category`, `primary_color` |
 | `omnipress_build_carousel` | Renders production-ready 3:4 portrait carousel slides with channel branding. | `channel_slug`, `post_slug`, `slides_json`, `aspect_ratio` |
-| `omnipress_publish_article` | Archives long-form Markdown article organized by `YYYY/MM/` with YAML frontmatter. | `title`, `content`, `category`, `tags`, `author`, `channel_slug` |
-| `omnipress_queue_post` | Queues short-form post/thread to LinkedIn, X, Threads, Instagram, or Reddit as draft. | `platforms`, `text`, `media_urls`, `schedule_time`, `channel_slug` |
-| `omnipress_queue_media_post` | Queues rich media content (Instagram Carousels, YouTube Shorts, X media posts). | `platforms`, `caption`, `media_urls`, `schedule_time`, `title` |
+| `omnipress_publish_article` | Archives long-form Markdown article organized by `YYYY/MM/` with YAML frontmatter. | `title`, `content_markdown`, `category`, `tags`, `author`, `channel_slug`, `sanitize` |
+| `omnipress_queue_post` | Queues short-form post/thread with PublishingShield safety checks & anti-duplicate ledger. | `text`, `platforms`, `title`, `media_urls`, `schedule_time`, `channel_slug`, `mode`, `allow_test`, `force_duplicate` |
+| `omnipress_queue_media_post` | Queues rich media content (Instagram Carousels, YouTube Shorts, X media posts) with PublishingShield. | `caption`, `platforms`, `media_urls`, `title`, `media_type`, `schedule_time`, `channel_slug`, `mode`, `allow_test`, `force_duplicate` |
 | `omnipress_prepare_dark_script` | Generates high-retention viral dark channel script, scene image prompts, and TTS specs. | `topic`, `niche`, `duration_target_sec`, `language` |
 | `omnipress_inspect_content` | Standalone utility to scan text for credentials, PII, or lawsuit IDs without publishing. | `text` (string) |
 | `omnipress_list_articles` | Lists recently archived articles and metadata (alias: `omnipress_list_recent`). | `limit` (int), `channel_slug` (string) |

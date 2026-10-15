@@ -131,12 +131,20 @@ class CarouselBuilder:
             alpha = int(180 * (1 - (y / (h * 0.13))))
             draw.line([(0, y), (w, y)], fill=(8, 10, 14, min(180, alpha)))
 
-        # 3. Top Badge (Pill container)
+        # 3. Top Badge (Pill container with dynamic font sizing)
         badge_content = f"• {badge.upper()} | {handle.upper()} •"
+        bx, by = int(w * 0.06), int(h * 0.045)
+        max_badge_w = w - (bx * 2) - 28
+        badge_size = max(20, int(w * 0.024))
+        font_badge = ImageFont.truetype(bold_font_path, size=badge_size)
         bbox_b = draw.textbbox((0, 0), badge_content, font=font_badge)
         bw, bh = bbox_b[2] - bbox_b[0], bbox_b[3] - bbox_b[1]
-        bx, by = int(w * 0.06), int(h * 0.045)
-        
+        while bw > max_badge_w and badge_size > 14:
+            badge_size -= 1
+            font_badge = ImageFont.truetype(bold_font_path, size=badge_size)
+            bbox_b = draw.textbbox((0, 0), badge_content, font=font_badge)
+            bw, bh = bbox_b[2] - bbox_b[0], bbox_b[3] - bbox_b[1]
+
         draw.rounded_rectangle(
             [bx - 14, by - 8, bx + bw + 14, by + bh + 8],
             radius=8,

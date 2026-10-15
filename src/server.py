@@ -241,12 +241,16 @@ def omnipress_queue_post(
     media_urls: Optional[List[str]] = None,
     schedule_time: Optional[str] = None,
     channel_slug: Optional[str] = None,
+    mode: Optional[str] = None,
+    allow_test: bool = False,
+    force_duplicate: bool = False,
     sanitize: bool = True,
 ) -> str:
     """
     Queues a post, thread segment, or social announcement to distribution channels
     (LinkedIn, X/Twitter, Threads via Buffer, or Reddit) in draft/review mode.
     Supports multi-channel dispatch via channel_slug.
+    Protected by PublishingShield pre-flight validation and anti-duplicate ledger (Rule 09).
 
     Use when:
     - Scheduling or queuing social media posts for human review or automated publishing.
@@ -279,6 +283,9 @@ def omnipress_queue_post(
             media_urls=media_urls,
             schedule_time=schedule_time,
             channel_slug=channel_slug,
+            mode=mode,
+            allow_test=allow_test,
+            force_duplicate=force_duplicate,
         )
         if res.get("success"):
             results_summary.append(
@@ -617,11 +624,16 @@ def omnipress_queue_media_post(
     tags: Optional[List[str]] = None,
     thumbnail_url: Optional[str] = None,
     schedule_time: Optional[str] = None,
+    channel_slug: Optional[str] = None,
+    mode: Optional[str] = None,
+    allow_test: bool = False,
+    force_duplicate: bool = False,
     sanitize: bool = True,
 ) -> str:
     """
     Queues rich media content (Images, Carousels, Video Reels, YouTube Shorts) to Instagram,
     YouTube, X/Twitter, and Threads with platform-specific formatting and asset staging.
+    Protected by PublishingShield pre-flight validation and anti-duplicate ledger (Rule 09).
     """
     processed_caption = caption
     sanitization_notes = []
@@ -640,17 +652,34 @@ def omnipress_queue_media_post(
             results.append("⚠️ Instagram Warning: Media is required for Instagram posts.")
         if instagram_adapter.is_configured():
             res = instagram_adapter.queue_social_post(
-                processed_caption, ["instagram"], media_urls, schedule_time
+                text=processed_caption,
+                platforms=["instagram"],
+                media_urls=media_urls,
+                schedule_time=schedule_time,
+                channel_slug=channel_slug,
+                mode=mode,
+                allow_test=allow_test,
+                force_duplicate=force_duplicate,
             )
             if res.get("success"):
                 results.append(f"✅ Published directly to Instagram via Meta Graph API: Post ID {res.get('post_id')} ({res.get('permalink')})")
             else:
                 results.append(f"⚠️ Instagram Graph API notice: {res.get('error')}")
-        elif buffer_adapter.is_configured() and buffer_adapter.instagram_profile_id:
+        elif buffer_adapter.is_configured():
             res = buffer_adapter.queue_social_post(
-                processed_caption, ["instagram"], media_urls, schedule_time
+                text=processed_caption,
+                platforms=["instagram"],
+                media_urls=media_urls,
+                schedule_time=schedule_time,
+                channel_slug=channel_slug,
+                mode=mode,
+                allow_test=allow_test,
+                force_duplicate=force_duplicate,
             )
-            results.append(f"✅ Queued to Instagram via Buffer: {res.get('buffer_response', 'Draft queued')}")
+            if res.get("success"):
+                results.append(f"✅ Queued to Instagram via Buffer: {res.get('message', 'Draft queued')}")
+            else:
+                results.append(f"⚠️ Buffer Instagram notice: {res.get('error')}")
         else:
             results.append(f"📷 Instagram Draft Formatted:\n```text\n{processed_caption}\n```")
 
@@ -670,11 +699,21 @@ def omnipress_queue_media_post(
 
     # X / Twitter
     if "x" in normalized or "twitter" in normalized or "all" in normalized:
-        if buffer_adapter.is_configured() and buffer_adapter.x_profile_id:
+        if buffer_adapter.is_configured():
             res = buffer_adapter.queue_social_post(
-                processed_caption, ["x"], media_urls, schedule_time
+                text=processed_caption,
+                platforms=["x"],
+                media_urls=media_urls,
+                schedule_time=schedule_time,
+                channel_slug=channel_slug,
+                mode=mode,
+                allow_test=allow_test,
+                force_duplicate=force_duplicate,
             )
-            results.append(f"✅ Queued to X via Buffer: {res.get('buffer_response', 'Draft queued')}")
+            if res.get("success"):
+                results.append(f"✅ Queued to X via Buffer: {res.get('message', 'Draft queued')}")
+            else:
+                results.append(f"⚠️ Buffer X notice: {res.get('error')}")
         else:
             results.append(f"🐦 X (Twitter) Content Formatted:\n```text\n{processed_caption}\n```")
 

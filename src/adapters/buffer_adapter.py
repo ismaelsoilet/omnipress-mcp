@@ -163,11 +163,14 @@ class BufferPublisherAdapter(BasePublisherAdapter):
         schedule_time: Optional[str] = None,
         channel_slug: Optional[str] = None,
         mode: Optional[str] = None,
+        allow_test: bool = False,
+        force_duplicate: bool = False,
     ) -> Dict[str, Any]:
         """
         Submits post to Buffer via modern GraphQL API (with fallback to legacy REST).
         When schedule_time is None (or empty), defaults to mode='shareNow' to publish immediately.
         Supports channel_slug to dispatch to channel-specific Buffer accounts.
+        Enforces PublishingShield pre-flight checks and anti-duplicate ledger (Rule 09).
         """
         if not self.is_configured():
             return {
@@ -175,6 +178,7 @@ class BufferPublisherAdapter(BasePublisherAdapter):
                 "error": "BUFFER_API_KEY or BUFFER_ACCESS_TOKEN is not configured in .env",
             }
 
+        normalized = [p.lower().strip() for p in platforms]
         target_ids = self._resolve_channel_ids(platforms, channel_slug=channel_slug)
         if not target_ids:
             return {
@@ -188,14 +192,43 @@ class BufferPublisherAdapter(BasePublisherAdapter):
         }
 
         # Resolve publishing mode:
-        # If mode is explicitly passed ('shareNow', 'addToQueue', 'customScheduled', 'shareNext'), use it.
-        # Otherwise: 'customScheduled' if schedule_time is given, else 'shareNow' (immediate publish).
         if mode:
             resolved_mode = mode
         elif schedule_time:
             resolved_mode = "customScheduled"
         else:
             resolved_mode = "shareNow"
+
+        # Gate 1 & 2 & 3: Run PublishingShield pre-flight validation (character limits, test texts, media requirements)
+        from src.core.publishing_shield import PublishingShield
+        is_valid, validation_err = PublishingShield.validate_post(
+            text=text,
+            platforms=platforms,
+            media_urls=media_urls,
+            mode=resolved_mode,
+            allow_test=allow_test,
+        )
+        if not is_valid:
+            return {
+                "success": False,
+                "provider": "publishing_shield",
+                "error": validation_err,
+            }
+
+        # Gate 4: Run Anti-Duplicate Idempotency Check (Rule 09)
+        for ch_id in target_ids:
+            is_dup, dup_err = PublishingShield.check_duplicate(
+                channel_id=ch_id,
+                text=text,
+                media_urls=media_urls,
+                force=force_duplicate,
+            )
+            if is_dup:
+                return {
+                    "success": False,
+                    "provider": "publishing_shield",
+                    "error": dup_err,
+                }
 
         # Attempt modern GraphQL createPost mutation
         mutation = """
@@ -233,6 +266,28 @@ class BufferPublisherAdapter(BasePublisherAdapter):
             if assets:
                 input_payload["assets"] = assets
 
+            # If target channel is Instagram, inject mandatory Instagram post metadata
+            is_instagram = (
+                ch_id == self.instagram_profile_id
+                or any(p in ("instagram", "ig") for p in normalized)
+            )
+            if not is_instagram and channel_slug:
+                try:
+                    from src.core.channel_manager import ChannelManager
+                    ch_conf = ChannelManager().get_channel(channel_slug)
+                    if ch_conf and ch_conf.get("social", {}).get("instagram", {}).get("buffer_channel_id") == ch_id:
+                        is_instagram = True
+                except Exception:
+                    pass
+
+            if is_instagram:
+                input_payload["metadata"] = {
+                    "instagram": {
+                        "type": "post",
+                        "shouldShareToFeed": True
+                    }
+                }
+
             try:
                 res = requests.post(
                     self.GRAPHQL_URL,
@@ -245,14 +300,28 @@ class BufferPublisherAdapter(BasePublisherAdapter):
                     if "post" in data:
                         created_posts.append(data["post"])
                     elif "message" in data:
-                        # Fallback to legacy REST API if GraphQL returns mutation error (e.g. legacy token)
-                        return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time, mode=resolved_mode)
+                        # If error is specific to GraphQL validation or account permissions, report directly
+                        msg = data.get("message", "")
+                        return {
+                            "success": False,
+                            "provider": "buffer_graphql",
+                            "error": msg,
+                        }
                 else:
                     return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time, mode=resolved_mode)
             except requests.RequestException:
                 return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time, mode=resolved_mode)
 
         if created_posts:
+            from src.core.publishing_shield import PublishingShield
+            for p in created_posts:
+                PublishingShield.record_published(
+                    channel_id=p.get("channelId") or (target_ids[0] if target_ids else ""),
+                    text=text,
+                    media_urls=media_urls,
+                    post_id=p.get("id"),
+                    provider="buffer_graphql",
+                )
             return {
                 "success": True,
                 "provider": "buffer_graphql",
@@ -272,7 +341,13 @@ class BufferPublisherAdapter(BasePublisherAdapter):
         schedule_time: Optional[str] = None,
         mode: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Fallback to Buffer legacy REST endpoint."""
+        """Fallback to Buffer legacy REST endpoint (only for legacy 1/... OAuth tokens)."""
+        if not self.api_key.startswith("1/"):
+            return {
+                "success": False,
+                "provider": "buffer_graphql",
+                "error": "Buffer GraphQL request failed and legacy REST API is deprecated/incompatible with public API keys.",
+            }
         publish_now = (mode == "shareNow") or (not schedule_time and mode != "addToQueue")
         payload: Dict[str, Any] = {
             "access_token": self.api_key,
@@ -308,3 +383,45 @@ class BufferPublisherAdapter(BasePublisherAdapter):
                 "provider": "buffer",
                 "error": f"Network exception connecting to Buffer: {str(e)}",
             }
+
+    def delete_post(self, post_id: str) -> Dict[str, Any]:
+        """
+        Deletes a post from Buffer via GraphQL deletePost mutation.
+        Enforces Rule 09 (Single Publication & Clean Replacement Overwrite).
+        """
+        if not self.api_key:
+            return {"success": False, "error": "BUFFER_API_KEY is not configured."}
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+        }
+
+        mutation = """
+        mutation DeletePost($input: DeletePostInput!) {
+          deletePost(input: $input) {
+            ... on DeletePostSuccess {
+              id
+            }
+            ... on VoidMutationError {
+              message
+            }
+          }
+        }
+        """
+        try:
+            res = requests.post(
+                self.GRAPHQL_URL,
+                json={"query": mutation, "variables": {"input": {"id": post_id}}},
+                headers=headers,
+                timeout=15,
+            )
+            if res.status_code == 200:
+                data = res.json().get("data", {}).get("deletePost", {})
+                if "id" in data:
+                    return {"success": True, "provider": "buffer_graphql", "deleted_id": data["id"]}
+                elif "message" in data:
+                    return {"success": False, "provider": "buffer_graphql", "error": data["message"]}
+            return {"success": False, "provider": "buffer_graphql", "status_code": res.status_code, "error": res.text}
+        except requests.RequestException as e:
+            return {"success": False, "provider": "buffer_graphql", "error": str(e)}

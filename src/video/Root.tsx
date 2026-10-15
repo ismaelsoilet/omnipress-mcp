@@ -3,7 +3,10 @@ import { Composition } from "remotion";
 import { ChannelIntro } from "./compositions/ChannelIntro";
 import { DocumentaryEpisode, DocumentaryEpisodeProps } from "./compositions/DocumentaryEpisode";
 import { DocumentaryShort, DocumentaryShortProps } from "./compositions/DocumentaryShort";
+import { ThumbnailEpisode, ThumbnailEpisodeProps } from "./compositions/ThumbnailEpisode";
 import { ChannelIntroProps } from "./types";
+import shortCaptions from "../../public/dossie/ep01/short_01_captions.json";
+import episodeCaptions from "../../public/dossie/ep01/captions_aligned.json";
 
 export const Root: React.FC = () => {
   return (
@@ -135,7 +138,7 @@ export const Root: React.FC = () => {
                 id: "vox-03-odessa",
                 src: "dossie/ep01/03_odessa.mp3",
                 startInSeconds: 359.22,
-                durationInSeconds: 94.66,
+                durationInSeconds: 92.5,
                 volume: 1.0,
               },
               {
@@ -347,15 +350,43 @@ export const Root: React.FC = () => {
                 subheadline: "Até o próximo dossiê.",
               },
             ],
+            captions: episodeCaptions as any,
+            actTimelines: [
+              {
+                id: "act_00",
+                globalStart: 0,
+                globalEnd: 65.78,
+              },
+              {
+                id: "act_01",
+                globalStart: 69.78,
+                globalEnd: 209.12,
+              },
+              {
+                id: "act_02",
+                globalStart: 213.12,
+                globalEnd: 355.22,
+              },
+              {
+                id: "act_03",
+                globalStart: 359.22,
+                globalEnd: 453.88,
+              },
+              {
+                id: "act_04",
+                globalStart: 457.88,
+                globalEnd: 504.25,
+              },
+            ],
           },
         }}
       />
 
-      {/* 6. Short Vertical 9:16 (Short 01 - Derinkuyu Pilot) */}
+      {/* 6. Short Vertical 9:16 (Short 01 - Derinkuyu Pilot) — Padrão Cross-Platform 65s (TikTok Monetization > 60s) */}
       <Composition
         id="Short-Derinkuyu-9x16"
         component={DocumentaryShort as any}
-        durationInFrames={1500}
+        durationInFrames={1952} // 65.07s @ 30fps (Métrica exata da locução real do usuário)
         fps={30}
         width={1080}
         height={1920}
@@ -363,33 +394,61 @@ export const Root: React.FC = () => {
           title: "A Cidade Proibida de 18 Andares no Subsolo",
           badge: "DOSSIÊ // DERINKUYU 1963",
           musicSrc: "dossie/ep01/short_01_derinkuyu_track.mp3",
+          musicVolume: 0.46,
+          voiceoverSrc: "dossie/ep01/short_01_derinkuyu.mp3",
+          captionsData: shortCaptions,
+          actTimelines: [
+            {
+              id: "short_01",
+              globalStart: 0,
+              globalEnd: 65.07,
+            },
+          ],
           scenes: [
             {
               id: "short-slide-1",
               type: "ken-burns",
               mediaSrc: "dossie/ep01/derinkuyu_slide1_capa_1791756613164.jpg",
-              durationInSeconds: 15,
-              headline: "A CIDADE NO SUBSOLO",
+              durationInSeconds: 12,
+              headline: "A DESCOBERTA NO PORÃO",
               badge: "TURQUIA, 1963",
-              notes: "Um morador quebrou a parede e achou 18 andares escavados.",
+              notes: "Galinhas desaparecendo por uma fresta escura na parede.",
             },
             {
               id: "short-slide-2",
               type: "ken-burns",
-              mediaSrc: "dossie/ep01/derinkuyu_slide5_porta_pedra_1791756724664.jpg",
-              durationInSeconds: 15,
-              headline: "PORTAS DE 500 KG",
-              badge: "LACRADAS POR DENTRO",
-              notes: "De que ameaça 20 mil pessoas estavam se protegendo?",
+              mediaSrc: "dossie/ep01/derinkuyu_slide2_descoberta_1791756631797.jpg",
+              durationInSeconds: 13,
+              headline: "ESCADARIA NA ESCURIDÃO",
+              badge: "PAREDE DEMOLIDA",
+              notes: "Um túnel vertical que descia para as profundezas da terra.",
             },
             {
               id: "short-slide-3",
               type: "ken-burns",
               mediaSrc: "dossie/ep01/derinkuyu_slide3_corte_transversal_1791756658406.jpg",
-              durationInSeconds: 20,
-              headline: "DOSSIÊ COMPLETO NO CANAL",
-              badge: "ASSISTA AGORA",
-              notes: "Link fixado para o episódio completo de 8 minutos.",
+              durationInSeconds: 15,
+              headline: "METRÓPOLE DE 18 ANDARES",
+              badge: "ENGENHARIA IMPOSSÍVEL",
+              notes: "85 metros de profundidade abrigando 20 mil pessoas.",
+            },
+            {
+              id: "short-slide-4",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep01/derinkuyu_slide5_porta_pedra_1791756724664.jpg",
+              durationInSeconds: 14,
+              headline: "PORTAS DE MEIA TONELADA",
+              badge: "LACRADAS POR DENTRO",
+              notes: "De quem ou de que eles estavam se escondendo?",
+            },
+            {
+              id: "short-slide-5",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep01/derinkuyu_slide4_ventilacao_1791756690129.jpg",
+              durationInSeconds: 11.07,
+              headline: "O ENIGMA CONTINUA",
+              badge: "DOSSIÊ HISTÓRICO",
+              notes: "Deixe sua teoria nos comentários e siga para mais arquivos.",
             },
           ],
         }}
@@ -435,6 +494,28 @@ export const Root: React.FC = () => {
           title: "Título do Short",
           badge: "CONTEÚDO OFICIAL // SHORTS",
           scenes: [],
+        }}
+      />
+
+      {/* 10. Thumbnail Oficial YouTube 16:9 — Alto Impacto & Altas Letras */}
+      <Composition
+        id="Thumbnail-Dossie-16x9"
+        component={ThumbnailEpisode as any}
+        durationInFrames={30}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          titleLine1: "18 ANDARES",
+          titleLine2: "NO SUBSOLO",
+          tagText: "ARQUIVO SECRETO // CASO REAL",
+          calloutText: "ACHOU ATRÁS DA PAREDE!",
+          depthTag: "85 METROS DE PROFUNDIDADE",
+          peopleTag: "ABRIGAVA 20.000 PESSOAS",
+          doorTag: "PORTAS DE MEIA TONELADA",
+          imageSrc: "dossie/ep01/derinkuyu_slide3_corte_transversal_1791756658406.jpg",
+          cellarSrc: "dossie/ep01/derinkuyu_slide2_descoberta_1791756631797.jpg",
+          showClassifiedStamp: true,
         }}
       />
     </>

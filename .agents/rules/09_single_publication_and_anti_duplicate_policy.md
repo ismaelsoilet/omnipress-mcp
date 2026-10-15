@@ -16,13 +16,27 @@ Before calling `create_post` or any publishing tool:
 2. **Handle Revisions Cleanly:** If a post is already scheduled and needs to be replaced with a revised version, **delete the prior post first** via `delete_post` before creating the new one. Never leave both active.
 3. **Check Live Status:** If the post is already `sent` (live on the social network), do not publish a second copy unless the user explicitly and unmistakably commands a full overwrite/repost.
 
-### 3. API Velocity & Spam Gate Handling
-- Platforms like Instagram / Meta Graph API enforce automated anti-spam velocity limiters (e.g., maximum 1 post every 30–60 minutes via third-party APIs).
-- When rapid publishing triggers `"Instagram flagged this post as potential spam"`:
-  - **Do NOT execute circular immediate retries (`shareNow`).**
-  - **Clean up the failed post immediately** using `delete_post` so no lingering error or unwanted scheduled posts remain in the Buffer queue.
-  - **NEVER automatically schedule the post (`customScheduled` or `addToQueue`) without explicit user command.** The user preference is strictly immediate publishing ("postar na hora"). Scheduling identical flagged content to auto-publish later will re-trigger the spam flag.
-  - **Report to the user immediately**, explaining the Instagram velocity cooldown (recommend waiting 1–2 hours) and recommending subtle caption/hashtag text variations before retrying.
+### 4. Automated Protection: The 5-Gate PublishingShield Engine
+To enforce Rule 09 programmatically at runtime, OmniPress implements [`PublishingShield`](../../src/core/publishing_shield.py):
+1. **Gate 1 (Dummy / Placeholder Test Interceptor)**:
+   - Blocks strings like `"teste"`, `"test"`, `"testing"`, `"asdf"`, `"hello world"`, or any text under 12 characters when dispatched live with `mode="shareNow"`.
+   - Prevents debug payloads or technical verification texts from accidentally broadcasting to real audience feeds.
+2. **Gate 2 (Media Requirement Validator for Instagram)**:
+   - Instagram strictly prohibits text-only updates. Dispatches with zero media URLs are aborted immediately before making network requests.
+3. **Gate 3 (Platform Character Limit Enforcement)**:
+   - **Instagram (Buffer GraphQL)**: Hard cutoff at **2,196 characters** (prevents upstream GraphQL mutation crashes).
+   - **X / Twitter**: Hard cutoff at **280 characters**.
+   - **Threads**: Hard cutoff at **500 characters**.
+   - **LinkedIn**: Hard cutoff at **3,000 characters**.
+   - The shield reports the exact character count and excess characters to prune.
+4. **Gate 4 (Deterministic Idempotency Ledger)**:
+   - Located at `media/staging/publishing_ledger.json`.
+   - Computes a deterministic SHA-256 fingerprint:
+     $$\text{Fingerprint} = \text{SHA256}(\text{channel\_id} \parallel \text{first\_30\_words} \parallel \text{sorted\_media\_urls})$$
+   - Duplicate dispatches within a 24-hour window are strictly rejected unless explicit bypass (`force=True`) is passed.
+5. **Gate 5 (Native API Metadata & Clean Deletion)**:
+   - Instagram posts dispatched via Buffer automatically receive required `metadata.instagram.type = "post"` and `shouldShareToFeed = true`.
+   - Obsolete scheduled posts are purged using native GraphQL `delete_post` to guarantee clean queue states.
 
 ---
 
@@ -45,3 +59,26 @@ Antes de invocar `create_post` ou qualquer adaptador de rede social:
   - **Exclua o post com erro imediatamente** via `delete_post` para que a fila do Buffer permaneça 100% limpa.
   - **NUNCA agende automaticamente o post (`customScheduled` ou `addToQueue`) sem pedido explícito do usuário.** A diretriz do usuário é estritamente publicação imediata ("postar na hora"). Agendar o mesmo texto para depois causa reincidência do bloqueio de spam pelo algoritmo da Meta.
   - **Notifique o usuário imediatamente**, explicando a necessidade de respeitar a janela de cooldown da Meta (1 a 2 horas) e sugerindo pequenas variações na legenda/hashtags antes de tentar novamente.
+
+### 4. Proteção Automatizada: Motor PublishingShield de 5 Portões
+Para assegurar o cumprimento programático da Regra 09 em tempo de execução, o OmniPress implementa o [`PublishingShield`](../../src/core/publishing_shield.py):
+1. **Portão 1 (Interceptor de Textos de Teste e Placeholders)**:
+   - Intercepta textos como `"teste"`, `"test"`, `"asdf"`, `"hello world"` ou mensagens menores que 12 caracteres enviadas ao vivo com `mode="shareNow"`.
+   - Impede que testes técnicos ou de depuração vazem no ar para contas reais.
+2. **Portão 2 (Exigência Mandatória de Mídia no Instagram)**:
+   - O Instagram não suporta posts sem imagem. Qualquer tentativa sem `media_urls` é abortada antes do disparo de rede.
+3. **Portão 3 (Trava Rígida de Limite de Caracteres por Plataforma)**:
+   - **Instagram (Buffer GraphQL)**: Teto de **2.196 caracteres** (evita falhas de mutação no GraphQL).
+   - **X / Twitter**: Teto de **280 caracteres**.
+   - **Threads**: Teto de **500 caracteres**.
+   - **LinkedIn**: Teto de **3.000 caracteres**.
+   - Retorna o número exato de caracteres em excesso a serem enxugados.
+4. **Portão 4 (Livro-Razão de Idempotência Anti-Duplicação)**:
+   - Armazenado em `media/staging/publishing_ledger.json`.
+   - Gera um fingerprint SHA-256 único:
+     $$\text{Fingerprint} = \text{SHA256}(\text{channel\_id} \parallel \text{primeiras\_30\_palavras} \parallel \text{urls\_ordenadas})$$
+   - Bloqueia automaticamente disparos idênticos no mesmo canal num intervalo de 24 horas.
+5. **Portão 5 (Metadados Nativos e Exclusão Limpa de Rascunhos)**:
+   - Injeção obrigatória de `metadata.instagram.type = "post"` e `shouldShareToFeed = true` nos envios de carrossel.
+   - Purgamento atômico de rascunhos obsoletos via mutação GraphQL `delete_post`.
+

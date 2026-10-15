@@ -50,17 +50,26 @@ OmniPress provides built-in modular adapters for major social networks, direct m
 ---
 
 ## 4. Instagram (Direct Graph API & Buffer)
-- **Format**: Single images and 3:4 portrait carousel decks.
+- **Format**: Single images and 3:4 portrait carousel decks (up to 10 slides).
 - **Direct Publishing via Meta Graph API**:
   - `INSTAGRAM_ACCESS_TOKEN`
   - `INSTAGRAM_ACCOUNT_ID`
-- **Alternative Publishing via Buffer**:
-  - `BUFFER_INSTAGRAM_PROFILE_ID`
+- **Alternative Publishing via Buffer GraphQL**:
+  - `BUFFER_API_KEY` (or `BUFFER_ACCESS_TOKEN`)
+  - `BUFFER_INSTAGRAM_PROFILE_ID` (or dynamic `buffer_channel_id` mapped in `channels/<slug>/channel.json`)
+  - Automatically injects required `metadata.instagram.type = "post"` and `shouldShareToFeed = true`.
+- **Publishing Shield Safeguards**:
+  - **Character limit**: Strict cutoff at **2,196 characters** (Buffer GraphQL limit).
+  - **Media requirement**: Rejects text-only posts without media URLs.
+  - **Anti-duplicate**: Blocks duplicate submissions within 24 hours.
+  - **Test interceptor**: Blocks dummy `"teste"` texts on live `shareNow`.
 - **Tool Invocation**:
   ```json
   {
     "platforms": ["instagram"],
-    "media_urls": ["https://example.com/slide1.jpg", "https://example.com/slide2.jpg"]
+    "media_urls": ["https://example.com/slide1.jpg", "https://example.com/slide2.jpg"],
+    "channel_slug": "dossie-historico",
+    "mode": "shareNow"
   }
   ```
 

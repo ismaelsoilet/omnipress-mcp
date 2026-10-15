@@ -32,9 +32,14 @@ class InstagramGraphAdapter(BasePublisherAdapter):
         platforms: List[str],
         media_urls: Optional[List[str]] = None,
         schedule_time: Optional[str] = None,
+        channel_slug: Optional[str] = None,
+        mode: Optional[str] = None,
+        allow_test: bool = False,
+        force_duplicate: bool = False,
     ) -> Dict[str, Any]:
         """
         Publishes a single image or multi-slide carousel to Instagram via Meta Graph API.
+        Protected by PublishingShield pre-flight validation and anti-duplicate ledger (Rule 09).
         """
         if not self.is_configured():
             return {
@@ -42,10 +47,36 @@ class InstagramGraphAdapter(BasePublisherAdapter):
                 "error": "INSTAGRAM_ACCESS_TOKEN or INSTAGRAM_ACCOUNT_ID is not configured in .env",
             }
 
-        if not media_urls or len(media_urls) == 0:
+        resolved_mode = mode or ("customScheduled" if schedule_time else "shareNow")
+
+        # Gate 1, 2, 3: Pre-flight validation (character limits, placeholder text, media required)
+        from src.core.publishing_shield import PublishingShield
+        is_valid, validation_err = PublishingShield.validate_post(
+            text=text,
+            platforms=platforms or ["instagram"],
+            media_urls=media_urls,
+            mode=resolved_mode,
+            allow_test=allow_test,
+        )
+        if not is_valid:
             return {
                 "success": False,
-                "error": "Instagram requires at least one media URL or public image endpoint.",
+                "provider": "publishing_shield",
+                "error": validation_err,
+            }
+
+        # Gate 4: Anti-Duplicate Idempotency Check (Rule 09)
+        is_dup, dup_err = PublishingShield.check_duplicate(
+            channel_id=self.account_id,
+            text=text,
+            media_urls=media_urls,
+            force=force_duplicate,
+        )
+        if is_dup:
+            return {
+                "success": False,
+                "provider": "publishing_shield",
+                "error": dup_err,
             }
 
         headers = {"Authorization": f"Bearer {self.access_token}"}
@@ -118,6 +149,14 @@ class InstagramGraphAdapter(BasePublisherAdapter):
             )
             if pub_res.status_code in (200, 201):
                 post_id = pub_res.json().get("id")
+                from src.core.publishing_shield import PublishingShield
+                PublishingShield.record_published(
+                    channel_id=self.account_id,
+                    text=text,
+                    media_urls=media_urls,
+                    post_id=post_id,
+                    provider="instagram_graph_api",
+                )
                 return {
                     "success": True,
                     "provider": "instagram_graph_api",

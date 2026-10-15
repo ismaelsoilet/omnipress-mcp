@@ -89,16 +89,16 @@ export const KenBurnsImage: React.FC<KenBurnsSceneProps> = ({
         <div
           style={{
             position: "absolute",
-            top: isVertical ? 60 : 48,
+            top: isVertical ? 150 : 48,
             left: isVertical ? 40 : 64,
-            maxWidth: isVertical ? "82%" : "55%",
-            backgroundColor: "rgba(8, 10, 14, 0.85)",
-            border: "1px solid rgba(212, 175, 55, 0.4)",
-            borderLeft: "4px solid #D4AF37",
-            borderRadius: 8,
-            padding: isVertical ? "14px 20px" : "14px 24px",
-            backdropFilter: "blur(10px)",
-            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.65)",
+            maxWidth: isVertical ? "88%" : "55%",
+            backgroundColor: "rgba(8, 10, 14, 0.88)",
+            border: "1.5px solid rgba(212, 175, 55, 0.45)",
+            borderLeft: "6px solid #D4AF37",
+            borderRadius: isVertical ? 14 : 10,
+            padding: isVertical ? "18px 26px" : "18px 28px",
+            backdropFilter: "blur(12px)",
+            boxShadow: "0 8px 28px rgba(0, 0, 0, 0.75)",
             zIndex: 30,
           }}
         >
@@ -107,11 +107,11 @@ export const KenBurnsImage: React.FC<KenBurnsSceneProps> = ({
               style={{
                 color: "#D4AF37",
                 fontFamily: "'Courier New', Courier, monospace",
-                fontSize: isVertical ? 13 : 14,
+                fontSize: isVertical ? 18 : 18,
                 fontWeight: 800,
-                letterSpacing: 2.5,
+                letterSpacing: isVertical ? 2.5 : 3,
                 textTransform: "uppercase",
-                marginBottom: 4,
+                marginBottom: isVertical ? 6 : 6,
               }}
             >
               {badge}
@@ -123,13 +123,13 @@ export const KenBurnsImage: React.FC<KenBurnsSceneProps> = ({
               style={{
                 margin: 0,
                 color: "#FFFFFF",
-                fontSize: isVertical ? 22 : 24,
-                fontWeight: 800,
+                fontSize: isVertical ? 36 : 34,
+                fontWeight: 900,
                 fontFamily: "'Cinzel', Georgia, serif",
-                letterSpacing: 1.5,
+                letterSpacing: 2,
                 textTransform: "uppercase",
-                textShadow: "0 2px 6px rgba(0,0,0,0.85)",
-                lineHeight: 1.25,
+                textShadow: "0 3px 8px rgba(0,0,0,0.95)",
+                lineHeight: 1.22,
               }}
             >
               {headline}

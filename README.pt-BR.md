@@ -98,16 +98,22 @@ Antes de qualquer post ser enfileirado ou arquivado, o OmniPress executa uma var
 - **Segredos técnicos**: Mascara chaves de API, tokens JWT/Bearer e senhas de ambiente.
 - **Dados Pessoais e Jurídicos**: Mascara processos judiciais no padrão CNJ (`0000000-00.0000.0.00.0000`), CPFs, CNPJs, e-mails e telefones.
 
-### 4. Modo Human-in-the-Loop por Padrão
-Nenhum post é publicado imediatamente sem supervisão humana:
-- Todas as publicações são enfileiradas na pasta de **Rascunhos (Drafts)** do Buffer ou via API do Instagram, permitindo que você visualize, ajuste e aprove pelo celular ou navegador antes do disparo definitivo.
+### 4. Blindagem de Publicação & Idempotência Anti-Duplicação (Regra 09)
+Garante **zero postagens duplicadas**, intercepta vazamentos de textos de teste e valida as restrições estritas de cada rede social antes de chamar qualquer API externa:
+- **Portão 1 (Interceptor de Testes)**: Bloqueia textos de placeholder (`"teste"`, `"test"`, `<12 caracteres`) enviados ao vivo no modo `shareNow`.
+- **Portão 2 (Exigência Mandatória de Mídia)**: Rejeita tentativas de postar apenas texto no feed do Instagram antes do disparo de rede.
+- **Portão 3 (Limites Rígidos de Caracteres)**: Aplica cortes estritos (Instagram: 2.196 caracteres no GraphQL do Buffer, X: 280, Threads: 500, LinkedIn: 3.000) e reporta o excesso exato.
+- **Portão 4 (Livro-Razão de Idempotência em 24h)**: Registra a impressão digital SHA-256 em `media/staging/publishing_ledger.json` e barra automaticamente qualquer republicação do mesmo criativo em 24 horas.
+- **Portão 5 (Metadados Nativos e Exclusão Limpa)**: Injeta automaticamente `metadata.instagram.type = "post"` e `shouldShareToFeed = true`, eliminando agendamentos obsoletos via mutação GraphQL `delete_post`.
 
 ### 5. Motor de Vídeos Programáticos & Motion Design (Remotion)
-Motor de vídeo de alta fidelidade em React & TypeScript (`src/video/`) projetado para Documentários no YouTube (16:9) e Shorts/Reels (9:16):
+Motor de vídeo de alta fidelidade em React & TypeScript (`src/video/`) projetado para Documentários no YouTube (16:9) e Shorts/Reels/TikTok (9:16):
 - **Composições Universais**: Renderize vídeos finais MP4 em 1080p em segundos via `npm run remotion:render`.
-- **Componentes Cinemáticos**: Efeito decodificador cipher militar (`ScrambledText`), partículas de poeira e brasas 3D (`DustParticles`), feixe anamórfico dourado (`AnamorphicFlare`), carimbo oficial com tremor de câmera físico (`ClassifiedStamp`) e efeito Ken Burns cinemático para fotos históricas e de IA (`KenBurnsImage`).
-- **Paisagem Sonora em 48kHz Sincronizada**: Áudio estéreo broadcast integrado via `<Audio />` (sub-bass boom profundo, cliques de teletipo, estalo de carimbo, whoosh dourado).
-- **Estúdio Visual Interativo**: Pré-visualize em tempo real no navegador a 60 FPS com controles de timeline e scrubber via `npm run remotion:preview`.
+- **Padrão de Duração Vertical para Monetização**: Duração padronizada de 62 a 68 segundos (alvo: ~65s / 1.950 frames a 30fps) para qualificação obrigatória no TikTok Creator Rewards Program (>60s sem risco de arredondamento para 59s), respeitando o teto de 180s do YouTube Shorts e 90s do Reels.
+- **Legendas Dinâmicas Sincronizadas (Whisper)**: Destacamento palavra por palavra em ouro (`#FFD700`) via `SynchronizedCaptions.tsx` sobre card translúcido escuro protetor.
+- **Componentes Cinemáticos**: Decodificador militar (`ScrambledText`), partículas de poeira 3D (`DustParticles`), flare anamórfico dourado (`AnamorphicFlare`), carimbo oficial (`ClassifiedStamp`), grade tática (`TacticalGrid`), grão de película (`FilmGrain`) e zoom suave Ken Burns (`KenBurnsImage`).
+- **Paisagem Sonora em 48kHz Sincronizada**: Áudio estéreo broadcast integrado via `<Audio />` com ducking dinâmico automático (-18dB a -22dB durante a voz).
+- **Gerador Programático de Miniaturas (Thumbnails)**: Criação de capas 16:9 de alto CTR via código React (`ThumbnailEpisode.tsx`).
 
 ### 6. Publicação Multi-Canal & Integração Direta com YouTube
 - **Integração Nativa com YouTube**: Conexão direta com canais do YouTube através do Buffer (`buffer_channel_id` configurado em `channel.json`).
@@ -337,9 +343,9 @@ Inclua prompts para Midjourney para cada cena e as especificações de locução
 | `omnipress_get_channel` | Retorna as configurações completas de identidade visual, paleta e credenciais de um canal. | `channel_slug` (string) |
 | `omnipress_create_channel` | Cria um novo canal isolado com pastas de artigos, mídias e configuração `channel.json`. | `slug`, `name`, `handle`, `category`, `primary_color` |
 | `omnipress_build_carousel` | Renderiza lâminas de carrossel 3:4 com layout perfeito, quebra dinâmica e branding do canal. | `channel_slug`, `post_slug`, `slides_json`, `aspect_ratio` |
-| `omnipress_publish_article` | Salva artigo em Markdown estruturado por `AAAA/MM/` com frontmatter YAML e filtro LGPD. | `title`, `content`, `category`, `tags`, `author`, `channel_slug` |
-| `omnipress_queue_post` | Envia post/thread de texto para LinkedIn, X, Threads, Instagram ou Reddit na fila de rascunhos. | `platforms`, `text`, `media_urls`, `schedule_time`, `channel_slug` |
-| `omnipress_queue_media_post` | Enfileira mídias ricas (Carrosséis Instagram, Shorts YouTube, posts com mídia no X). | `platforms`, `caption`, `media_urls`, `schedule_time`, `title` |
+| `omnipress_publish_article` | Salva artigo em Markdown estruturado por `AAAA/MM/` com frontmatter YAML e filtro LGPD. | `title`, `content_markdown`, `category`, `tags`, `author`, `channel_slug`, `sanitize` |
+| `omnipress_queue_post` | Envia post/thread de texto protegido pelo PublishingShield e livro-razão anti-duplicação. | `text`, `platforms`, `title`, `media_urls`, `schedule_time`, `channel_slug`, `mode`, `allow_test`, `force_duplicate` |
+| `omnipress_queue_media_post` | Enfileira mídias ricas (Carrosséis Instagram, Shorts YouTube, posts com mídia no X) com PublishingShield. | `caption`, `platforms`, `media_urls`, `title`, `media_type`, `schedule_time`, `channel_slug`, `mode`, `allow_test`, `force_duplicate` |
 | `omnipress_prepare_dark_script` | Gera roteiro dark viral de alta retenção, prompts de imagens para IA e especificações TTS. | `topic`, `niche`, `duration_target_sec`, `language` |
 | `omnipress_inspect_content` | Utilitário isolado para auditar texto em busca de vazamentos de chaves, processos CNJ e CPFs. | `text` (string) |
 | `omnipress_list_articles` | Lista os artigos arquivados recentemente no repositório ou por canal (alias: `omnipress_list_recent`). | `limit` (int), `channel_slug` (string) |

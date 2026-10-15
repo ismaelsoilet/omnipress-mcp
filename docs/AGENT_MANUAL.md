@@ -72,6 +72,9 @@ Envia publicações sociais para a fila de agendamento (Buffer, Reddit, Instagra
   | `media_urls` | `array[string]` | Não | URLs públicas HTTPS de imagens (obrigatório para carrossel no Instagram). |
   | `schedule_time` | `string` | Não | Data/hora ISO 8601 para agendamento programado. |
   | `channel_slug` | `string` | Não | Canal de origem para resolver IDs do Buffer dinamicamente. |
+  | `mode` | `string` | Não | Modo de envio do Buffer: `"shareNow"` (imediato), `"customScheduled"` (agendado) ou `"addToQueue"`. |
+  | `allow_test` | `boolean` | Não | Permite bypass do interceptor de strings de teste para testes unitários controlados. Padrão: `false`. |
+  | `force_duplicate` | `boolean` | Não | Força envio ignorando o livro-razão de idempotência da Regra 09. Padrão: `false`. |
   | `sanitize` | `boolean` | Não | Ativa a desidentificação de dados sensíveis. Padrão: `true`. |
 
 ---
@@ -160,6 +163,28 @@ Lista artigos arquivados recentemente no repositório com suporte a paginação 
 
 ---
 
+### 2.10. `omnipress_queue_media_post`
+Envia conteúdos multimídia (carrosséis do Instagram, YouTube Shorts, vídeos e posts com imagem no X/Twitter) com roteamento inteligente e proteção de 5 portões via `PublishingShield`.
+
+* **Anotações**: `readOnlyHint=False`, `destructiveHint=False`, `idempotentHint=False`, `openWorldHint=True`.
+* **Quando USAR**: Para publicar carrosséis prontos no Instagram, agendar Shorts no YouTube ou disparar tweets com imagens no X.
+* **Parâmetros**:
+  | Parâmetro | Tipo | Obrigatório | Descrição |
+  |---|---|---|---|
+  | `caption` | `string` | Sim | Legenda ou descrição completa do post. |
+  | `platforms` | `array[string]` | Sim | Plataformas alvo (`["instagram"]`, `["youtube"]`, `["x"]`, `["all"]`). |
+  | `media_urls` | `array[string]` | Não | Lista de URLs públicas HTTPS das imagens ou vídeos. |
+  | `title` | `string` | Não | Título do vídeo no YouTube ou do criativo. |
+  | `media_type` | `string` | Não | Tipo de mídia (`"image"`, `"carousel"`, `"short"`, `"video"`). |
+  | `channel_slug` | `string` | Não | Canal proprietário para resolução de IDs de publicação. |
+  | `mode` | `string` | Não | Modo de envio (`"shareNow"`, `"customScheduled"`, `"addToQueue"`). |
+  | `schedule_time` | `string` | Não | Horário de agendamento ISO 8601 se não for imediato. |
+  | `allow_test` | `boolean` | Não | Permite textos curtos de teste em ambiente de QA. Padrão: `false`. |
+  | `force_duplicate` | `boolean` | Não | Permite republicação forçada ignorando a Regra 09. Padrão: `false`. |
+  | `sanitize` | `boolean` | Não | Ativa o filtro LGPD e segredo de justiça. Padrão: `true`. |
+
+---
+
 ## 3. Playbooks Operacionais Passo a Passo para Agentes
 
 ### Playbook 1: Criação de Campanha Tri-Formato Completa
@@ -203,16 +228,21 @@ Quando o usuário pedir: *"Renderize a vinheta ou o episódio de vídeo do canal
 1. **Respeitar os Padrões de Resolução**:
    - 16:9 widescreen (`1920x1080` a 30fps) para YouTube principal (`ChannelIntro-16x9`, `DocumentaryEpisode-16x9`).
    - 9:16 vertical (`1080x1920` a 30fps) para Shorts, Reels e TikTok (`ChannelIntro-9x16`, `DocumentaryShort-9x16`).
-2. **Agnosticismo de Marca**:
+2. **Padrão de Duração de Vídeos Verticais (Monetização e Retenção)**:
+   - Vídeos verticais (9:16) para TikTok, YouTube Shorts e Instagram Reels devem adotar duração padrão entre **62 e 68 segundos (alvo: ~65s / 1.950 frames a 30fps)**.
+   - Isso cumpre o requisito de monetização obrigatória do TikTok Creator Rewards (>60s com margem contra arredondamento para 59s), enquadra-se no novo limite do YouTube Shorts (até 180s) e fica dentro do teto do Instagram Reels (90s).
+3. **Legendas Dinâmicas Sincronizadas (Whisper)**:
+   - Utilize [`SynchronizedCaptions`](../src/video/components/SynchronizedCaptions.tsx) com transcrição palavra por palavra alimentada por timestamps JSON do Whisper. As palavras ativas recebem destaque em ouro (`#FFD700`) e animação de escala (`1.08x`), encapsuladas em card protetor escuro (`rgba(8, 10, 14, 0.90)`).
+4. **Agnosticismo de Marca**:
    - Nunca altere o código em `src/video/` para colocar o nome de um canal específico.
    - Passe os dados da marca via propriedades (`props`):
      ```bash
      npx remotion render src/video/index.ts DocumentaryEpisode-16x9 out/video.mp4 \
        --props='{"config": {"channelSlug": "meu-canal", "title": "Título do Episódio", "introProps": {"channelName": "MEU CANAL", "primaryColor": "#3B82F6"}}}'
      ```
-3. **Trilha Sonora & Ducking de Áudio**:
+5. **Trilha Sonora & Ducking de Áudio**:
    - Sempre utilize áudio estéreo em 48kHz.
-   - A trilha de fundo sofre ducking automático de volume (reduz para volume `0.16` durante a locução e sobe para `0.45` em transições silenciosas).
+   - A trilha de fundo sofre ducking automático de volume (reduz para volume `0.15–0.18` / -20dB durante a locução e sobe para `0.40–0.45` em transições silenciosas).
 
 ---
 
@@ -235,12 +265,19 @@ Quando gerenciar múltiplos canais ou marcas:
 
 ---
 
-### Playbook 5: Política de Publicação Única e Anti-Duplicação (Regra 09)
-Para evitar envios acidentais repetidos:
+### Playbook 5: Política de Publicação Única & Blindagem do PublishingShield (Regra 09)
+Para evitar envios acidentais repetidos, vazamento de testes e estouro de limites de API:
 
-1. **Verificação Prévia**: Antes de disparar `omnipress_queue_post`, inspecione se o criativo já foi enviado ou agendado.
-2. **Atualização Limpa**: Se for necessário atualizar o texto ou imagem de um post já agendado, exclua o rascunho anterior antes de enfileirar o novo.
-3. **Respeito a Rate Limits**: Se uma rede social retornar erro de limite de frequência (velocidade/spam), não faça retentativas imediatas em loop.
+1. **Portões Automáticos do `PublishingShield`**:
+   - O adaptador rejeitará automaticamente qualquer post contendo palavras de teste (`"teste"`, `"test"`, `"asdf"`, `<12 caracteres`) disparado ao vivo com `mode="shareNow"`.
+   - O adaptador rejeitará qualquer envio para Instagram sem URLs de mídia válidas.
+   - O adaptador rejeitará textos acima do limite estrito de cada plataforma (Instagram: **2.196 caracteres**, X: **280 caracteres**, Threads: **500 caracteres**, LinkedIn: **3.000 caracteres**).
+2. **Idempotência por Livro-Razão (24 Horas)**:
+   - Todo post publicado é registrado em `media/staging/publishing_ledger.json` com hash SHA-256 do canal, texto e mídias. Disparos idênticos no período de 24h são bloqueados automaticamente com aviso da Regra 09.
+3. **Atualização Limpa & Exclusão**:
+   - Para substituir um agendamento ou post em rascunho, utilize `delete_post` para remover o registro no Buffer antes de enfileirar a nova versão.
+4. **Respeito aos Limites de Velocidade da Meta**:
+   - Se a API retornar erro de velocidade/spam, não realize retentativas em loop e nunca converta publicação imediata em agendamento automático. Avise o usuário e respeite o cooldown de 1 a 2 horas.
 
 ---
 
@@ -259,6 +296,9 @@ A API oficial do Instagram exige URLs públicas HTTPS acessíveis pela Meta. O O
 | Cenário de Erro | Causa Provável | Ação Recomendada para o Agente |
 |---|---|---|
 | Buffer retorna `No channel found for service` | Canal do LinkedIn/X não conectado ou ID incorreto no `channel.json` / `.env`. | O agente deve avisar o usuário de forma transparente, exibir o texto formatado no chat para cópia manual e indicar o arquivo `docs/SETUP_GUIDE.md`. |
+| Shield bloqueia com `Placeholder/test text` | Texto contém `"teste"` ou é muito curto para envio imediato ao vivo. | O agente deve usar conteúdo editorial real ou passar `allow_test=True` se for teste de integração controlado. |
+| Shield bloqueia com `exceeds maximum allowed length` | Legenda do Instagram ultrapassou 2.196 caracteres ou tweet ultrapassou 280 caracteres. | Enxugar o texto pelo número exato de caracteres informado pelo Shield antes de disparar. |
+| Shield bloqueia com `Rule 09 Exactly-Once` | Criativo idêntico já foi disparado para este canal nas últimas 24 horas. | Não reenviar duplicata. Se o usuário requisitar expressamente um repost, usar `force_duplicate=True`. |
 | Instagram retorna `requires at least one media` | Tentativa de postar apenas texto no Instagram sem passar `media_urls`. | Gerar o carrossel primeiro via `omnipress_build_carousel`, obter as URLs e repassar para `media_urls`. |
 | PII detectado no texto | Presença de CNJ, CPF, CNPJ ou e-mail pessoal. | O agente deve manter `sanitize=True` (comportamento padrão) para que os dados sejam automaticamente mascarados antes da persistência. |
 | Imagem de fundo não encontrada para carrossel | O caminho em `bg_image_path` não existe no disco. | Verificar o caminho com antecedência ou gerar uma imagem base limpa antes de chamar a renderização. |
@@ -268,7 +308,7 @@ A API oficial do Instagram exige URLs públicas HTTPS acessíveis pela Meta. O O
 ## 6. Comandos de Manutenção e Testes Rápidos
 
 ```bash
-# Executar toda a suíte de testes unitários em Python (25+ testes):
+# Executar toda a suíte de testes unitários em Python (50+ testes):
 uv run pytest -v
 
 # Executar checagem estática de tipos do Remotion (TypeScript):

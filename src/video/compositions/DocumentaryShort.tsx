@@ -9,7 +9,8 @@ import {
 import { KenBurnsImage } from "../components/KenBurnsImage";
 import { TacticalGrid } from "../components/TacticalGrid";
 import { FilmGrain } from "../components/FilmGrain";
-import { DocumentaryScene } from "../types";
+import { ActData, ActTimeline, DocumentaryScene } from "../types";
+import { SynchronizedCaptions } from "../components/SynchronizedCaptions";
 
 export interface DocumentaryShortProps {
   title: string;
@@ -18,6 +19,8 @@ export interface DocumentaryShortProps {
   musicVolume?: number;
   voiceoverSrc?: string;
   scenes: DocumentaryScene[];
+  captionsData?: Record<string, ActData>;
+  actTimelines?: ActTimeline[];
 }
 
 export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
@@ -27,6 +30,8 @@ export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
   musicVolume = 0.35,
   voiceoverSrc,
   scenes = [],
+  captionsData,
+  actTimelines,
 }) => {
   const { fps } = useVideoConfig();
 
@@ -78,11 +83,12 @@ export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          backgroundColor: "rgba(8, 10, 14, 0.85)",
-          border: "1px solid rgba(212, 175, 55, 0.4)",
-          borderRadius: 12,
-          padding: "12px 20px",
-          backdropFilter: "blur(10px)",
+          backgroundColor: "rgba(8, 10, 14, 0.88)",
+          border: "1.5px solid rgba(212, 175, 55, 0.5)",
+          borderRadius: 14,
+          padding: "16px 28px",
+          backdropFilter: "blur(12px)",
+          boxShadow: "0 6px 20px rgba(0, 0, 0, 0.6)",
           zIndex: 50,
         }}
       >
@@ -90,7 +96,7 @@ export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
           style={{
             color: "#D4AF37",
             fontFamily: "'Courier New', Courier, monospace",
-            fontSize: 14,
+            fontSize: 22,
             fontWeight: 800,
             letterSpacing: 2,
           }}
@@ -101,26 +107,41 @@ export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
           style={{
             color: "#FF4D4D",
             fontFamily: "'Courier New', Courier, monospace",
-            fontSize: 12,
+            fontSize: 20,
             fontWeight: 900,
             letterSpacing: 2,
             display: "flex",
             alignItems: "center",
-            gap: 6,
+            gap: 10,
           }}
         >
           <span
             style={{
-              width: 8,
-              height: 8,
+              width: 14,
+              height: 14,
               backgroundColor: "#FF4D4D",
               borderRadius: "50%",
               display: "inline-block",
+              boxShadow: "0 0 10px rgba(255, 77, 77, 0.8)",
             }}
           />
           REC
         </div>
       </div>
+
+      {/* 5. Grade Tática Sutil & Grão de Filme */}
+      <TacticalGrid opacity={0.12} />
+      <FilmGrain opacity={0.06} />
+
+      {/* 6. Legendas Dinâmicas Sincronizadas (Whisper) */}
+      {captionsData && actTimelines && (
+        <SynchronizedCaptions
+          introDurationFrames={0}
+          isVertical={true}
+          captionsData={captionsData}
+          actTimelines={actTimelines}
+        />
+      )}
     </AbsoluteFill>
   );
 };
