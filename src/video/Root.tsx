@@ -5,8 +5,7 @@ import { DocumentaryEpisode, DocumentaryEpisodeProps } from "./compositions/Docu
 import { DocumentaryShort, DocumentaryShortProps } from "./compositions/DocumentaryShort";
 import { ThumbnailEpisode, ThumbnailEpisodeProps } from "./compositions/ThumbnailEpisode";
 import { ChannelIntroProps } from "./types";
-import shortCaptions from "../../public/dossie/ep01/short_01_captions.json";
-import episodeCaptions from "../../public/dossie/ep01/captions_aligned.json";
+import { sampleShortCaptions, sampleEpisodeCaptions } from "./fixtures/sampleCaptions";
 
 export const Root: React.FC = () => {
   return (
@@ -350,7 +349,7 @@ export const Root: React.FC = () => {
                 subheadline: "Até o próximo dossiê.",
               },
             ],
-            captions: episodeCaptions as any,
+            captions: sampleEpisodeCaptions as any,
             actTimelines: [
               {
                 id: "act_00",
@@ -396,7 +395,7 @@ export const Root: React.FC = () => {
           musicSrc: "dossie/ep01/short_01_derinkuyu_track.mp3",
           musicVolume: 0.46,
           voiceoverSrc: "dossie/ep01/short_01_derinkuyu.mp3",
-          captionsData: shortCaptions,
+          captionsData: sampleShortCaptions,
           actTimelines: [
             {
               id: "short_01",
