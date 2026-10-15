@@ -5,7 +5,7 @@ import { DocumentaryEpisode, DocumentaryEpisodeProps } from "./compositions/Docu
 import { DocumentaryShort, DocumentaryShortProps } from "./compositions/DocumentaryShort";
 import { ThumbnailEpisode, ThumbnailEpisodeProps } from "./compositions/ThumbnailEpisode";
 import { ChannelIntroProps } from "./types";
-import { sampleShortCaptions, sampleEpisodeCaptions } from "./fixtures/sampleCaptions";
+import { sampleShortCaptions, sampleEpisodeCaptions, short02Captions } from "./fixtures/sampleCaptions";
 
 export const Root: React.FC = () => {
   return (
@@ -448,6 +448,87 @@ export const Root: React.FC = () => {
               headline: "O ENIGMA CONTINUA",
               badge: "DOSSIÊ HISTÓRICO",
               notes: "Deixe sua teoria nos comentários e siga para mais arquivos.",
+            },
+          ],
+        }}
+      />
+
+      {/* 7. Short Vertical 9:16 (Short 02 - O Exército de Borracha) — Locução Real do Usuário (78.26s / 2348 frames @ 30fps) */}
+      <Composition
+        id="Short-Exercito-Borracha-9x16"
+        component={DocumentaryShort as any}
+        durationInFrames={2348} // 78.26s @ 30fps (Métrica exata da locução real gravada)
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={{
+          title: "O Exército de Borracha: A Maior Farsa da 2ª Guerra",
+          badge: "DOSSIÊ // EXÉRCITO FANTASMA 1944",
+          musicSrc: "dossie/ep02/short_02_soundtrack.mp3",
+          musicVolume: 0.15, // Volume seguro: 0.12-0.18 para garantir inteligibilidade absoluta da voz em mobile
+          voiceoverSrc: "dossie/ep02/short_02_exercito_borracha.mp3",
+          captionsData: short02Captions,
+          actTimelines: [
+            {
+              id: "short_02",
+              globalStart: 0,
+              globalEnd: 78.26,
+            },
+          ],
+          scenes: [
+            {
+              id: "short2-slide-1",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep02/ghost_army_scene.jpg",
+              durationInSeconds: 9.0,
+              headline: "O TANQUE DE 30 TONELADAS",
+              badge: "FRANÇA, 1944",
+              notes: "Quatro soldados erguendo um blindado com as próprias mãos.",
+            },
+            {
+              id: "short2-slide-2",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep02/scene_artistas.jpg",
+              durationInSeconds: 12.0,
+              headline: "ARTISTAS CONVOCADOS",
+              badge: "HOLLYWOOD & NOVA YORK",
+              notes: "Designers e ilustradores convocados para enganar Hitler.",
+            },
+            {
+              id: "short2-slide-3",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep02/scene_som.jpg",
+              durationInSeconds: 15.0,
+              headline: "O EXÉRCITO FANTASMA",
+              badge: "ARMA SECRETA",
+              notes: "Vencer divisões inteiras sem disparar uma única bala real.",
+            },
+            {
+              id: "short2-slide-4",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep02/scene_tanque_floresta.jpg",
+              durationInSeconds: 17.5,
+              headline: "TANQUES DE 42 QUILOS",
+              badge: "ALTO-FALANTES A 25 KM",
+              notes: "Tanques infláveis de borracha e rugidos de 500W.",
+            },
+            {
+              id: "short2-slide-5",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep02/scene_rio_reno.jpg",
+              durationInSeconds: 11.0,
+              headline: "A FARSA DO RIO RENO",
+              badge: "30.000 VIDAS SALVAS",
+              notes: "Simularam 40 mil homens e desviaram as defesas alemãs.",
+            },
+            {
+              id: "short2-slide-6",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep02/scene_dossie_final.jpg",
+              durationInSeconds: 13.76,
+              headline: "SIGILO ATÉ 1996",
+              badge: "DOSSIÊ HISTÓRICO",
+              notes: "Deixe seu comentário e siga o canal para mais arquivos.",
             },
           ],
         }}

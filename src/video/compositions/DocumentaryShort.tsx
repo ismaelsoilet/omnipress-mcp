@@ -1,10 +1,11 @@
-import React from "react";
 import {
   AbsoluteFill,
   Audio,
   Sequence,
   staticFile,
+  useCurrentFrame,
   useVideoConfig,
+  interpolate,
 } from "remotion";
 import { KenBurnsImage } from "../components/KenBurnsImage";
 import { TacticalGrid } from "../components/TacticalGrid";
@@ -33,13 +34,25 @@ export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
   captionsData,
   actTimelines,
 }) => {
-  const { fps } = useVideoConfig();
+  const frame = useCurrentFrame();
+  const { fps, durationInFrames } = useVideoConfig();
+
+  // Fade out suave da música nos últimos 2.5 segundos
+  const fadeOutFrames = Math.round(2.5 * fps);
+  const fadeStart = Math.max(0, durationInFrames - fadeOutFrames);
+  const effectiveMusicVolume =
+    typeof musicVolume === "number"
+      ? interpolate(frame, [fadeStart, durationInFrames], [musicVolume, 0], {
+          extrapolateLeft: "clamp",
+          extrapolateRight: "clamp",
+        })
+      : musicVolume;
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#0A0C10" }}>
-      {/* 1. Trilha Sonora do Short */}
+      {/* 1. Trilha Sonora do Short (com fade-out automático no encerramento) */}
       {musicSrc && (
-        <Audio src={staticFile(musicSrc)} volume={musicVolume} />
+        <Audio src={staticFile(musicSrc)} volume={effectiveMusicVolume} />
       )}
 
       {/* 2. Locução Principal */}

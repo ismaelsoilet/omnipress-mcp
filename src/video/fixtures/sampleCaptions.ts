@@ -1,9 +1,11 @@
-import { ActData } from "../types";
+import short02Json from "./short_02_captions.json";
 
 /**
  * Universal caption fixtures for Remotion video compositions.
  * Used for development previews and CI builds when channel-specific media is not mounted.
  */
+export const short02Captions: Record<string, ActData> = short02Json as unknown as Record<string, ActData>;
+
 export const sampleShortCaptions: Record<string, ActData> = {
   short_01: {
     name: "A Cidade Proibida de 18 Andares no Subsolo",
