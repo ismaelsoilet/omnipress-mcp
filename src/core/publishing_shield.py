@@ -1,10 +1,19 @@
-"""OmniPress Publishing Shield - Pre-flight safety gates, anti-duplicate ledger, and platform limits."""
-
+import os
+import tempfile
 import hashlib
 import json
 import time
+import threading
+from contextlib import contextmanager
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
+
+try:
+    import fcntl
+except ImportError:
+    fcntl = None
+
+_thread_lock = threading.RLock()
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_LEDGER_PATH = PROJECT_ROOT / "media" / "staging" / "publishing_ledger.json"
@@ -47,7 +56,36 @@ class PublishingShield:
         return ledger
 
     @classmethod
-    def load_ledger(cls) -> List[Dict[str, Any]]:
+    @contextmanager
+    def _lock(cls, exclusive: bool = False):
+        with _thread_lock:
+            path = cls.get_ledger_path()
+            lock_path = path.with_name(path.name + ".lock")
+            f = None
+            try:
+                lock_path.parent.mkdir(parents=True, exist_ok=True)
+                f = open(lock_path, "a+", encoding="utf-8")
+                if fcntl:
+                    mode = fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH
+                    try:
+                        fcntl.flock(f.fileno(), mode)
+                    except OSError:
+                        pass
+                yield
+            finally:
+                if f:
+                    if fcntl:
+                        try:
+                            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+                        except OSError:
+                            pass
+                    try:
+                        f.close()
+                    except Exception:
+                        pass
+
+    @classmethod
+    def _load_ledger_unlocked(cls) -> List[Dict[str, Any]]:
         path = cls.get_ledger_path()
         if not path.exists():
             return []
@@ -59,13 +97,34 @@ class PublishingShield:
             return []
 
     @classmethod
-    def save_ledger(cls, entries: List[Dict[str, Any]]) -> None:
+    def _save_ledger_unlocked(cls, entries: List[Dict[str, Any]]) -> None:
         path = cls.get_ledger_path()
+        temp_name = None
         try:
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(entries, f, indent=2, ensure_ascii=False)
+            parent = path.parent
+            parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile("w", dir=parent, delete=False, encoding="utf-8") as tf:
+                temp_name = tf.name
+                json.dump(entries, tf, indent=2, ensure_ascii=False)
+                tf.flush()
+                os.fsync(tf.fileno())
+            os.replace(temp_name, path)
         except Exception:
-            pass
+            if temp_name and os.path.exists(temp_name):
+                try:
+                    os.unlink(temp_name)
+                except OSError:
+                    pass
+
+    @classmethod
+    def load_ledger(cls) -> List[Dict[str, Any]]:
+        with cls._lock(exclusive=False):
+            return cls._load_ledger_unlocked()
+
+    @classmethod
+    def save_ledger(cls, entries: List[Dict[str, Any]]) -> None:
+        with cls._lock(exclusive=True):
+            cls._save_ledger_unlocked(entries)
 
     @staticmethod
     def generate_fingerprint(channel_id: str, text: str, media_urls: Optional[List[str]] = None) -> str:
@@ -164,27 +223,29 @@ class PublishingShield:
     ) -> None:
         """Records a successful publication in the persistent idempotency ledger."""
         fingerprint = cls.generate_fingerprint(channel_id, text, media_urls)
-        ledger = cls.load_ledger()
-        
-        # Purge entries older than 7 days to keep file light
-        cutoff = time.time() - (7 * 86400)
-        clean_ledger = [e for e in ledger if e.get("timestamp", 0) > cutoff and e.get("fingerprint") != fingerprint]
+        with cls._lock(exclusive=True):
+            ledger = cls._load_ledger_unlocked()
 
-        clean_ledger.append({
-            "fingerprint": fingerprint,
-            "channel_id": channel_id,
-            "post_id": post_id,
-            "provider": provider,
-            "timestamp": time.time(),
-            "text_preview": text[:80].replace("\n", " "),
-            "media_count": len(media_urls) if media_urls else 0,
-        })
-        cls.save_ledger(clean_ledger)
+            # Purge entries older than 7 days to keep file light
+            cutoff = time.time() - (7 * 86400)
+            clean_ledger = [e for e in ledger if e.get("timestamp", 0) > cutoff and e.get("fingerprint") != fingerprint]
+
+            clean_ledger.append({
+                "fingerprint": fingerprint,
+                "channel_id": channel_id,
+                "post_id": post_id,
+                "provider": provider,
+                "timestamp": time.time(),
+                "text_preview": text[:80].replace("\n", " "),
+                "media_count": len(media_urls) if media_urls else 0,
+            })
+            cls._save_ledger_unlocked(clean_ledger)
 
     @classmethod
     def remove_entry(cls, post_id: str) -> None:
         """Removes an entry from the ledger if a post is deleted via delete_post."""
-        ledger = cls.load_ledger()
-        updated = [e for e in ledger if e.get("post_id") != post_id]
-        if len(updated) != len(ledger):
-            cls.save_ledger(updated)
+        with cls._lock(exclusive=True):
+            ledger = cls._load_ledger_unlocked()
+            updated = [e for e in ledger if e.get("post_id") != post_id]
+            if len(updated) != len(ledger):
+                cls._save_ledger_unlocked(updated)

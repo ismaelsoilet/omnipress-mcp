@@ -25,6 +25,7 @@ class WebhookPublisherAdapter(BasePublisherAdapter):
         platforms: List[str],
         media_urls: Optional[List[str]] = None,
         schedule_time: Optional[str] = None,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """
         Dispatches social post event to webhook.

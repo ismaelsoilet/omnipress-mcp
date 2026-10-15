@@ -192,6 +192,24 @@ class TestPublishingShieldLedger:
         is_dup, err = PublishingShield.check_duplicate(ch, text, media)
         assert not is_dup
 
+    def test_ledger_concurrency_race_condition(self, temp_ledger):
+        """Verify that concurrent threads recording posts do not lose ledger entries."""
+        import concurrent.futures
+
+        def worker(i):
+            PublishingShield.record_published(
+                channel_id=f"channel_{i}",
+                text=f"Unique publication text {i} for concurrent stress testing.",
+                media_urls=[f"https://example.com/image_{i}.jpg"],
+                post_id=f"post_concurrency_{i}",
+            )
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
+            list(ex.map(worker, range(20)))
+
+        ledger = PublishingShield.load_ledger()
+        assert len(ledger) == 20, f"Expected 20 entries under concurrency, got {len(ledger)}"
+
 
 class TestAdapterShieldIntegration:
     """Verifies that adapters invoke PublishingShield and reject forbidden posts before network calls."""

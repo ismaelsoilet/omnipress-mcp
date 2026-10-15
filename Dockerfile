@@ -1,13 +1,14 @@
 # OmniPress MCP Server — Multi-arch Container (Node.js + Python + ffmpeg + uv)
 FROM node:20-bookworm-slim
 
-# Install system dependencies: ffmpeg for video rendering, Python 3, curl
+# Install system dependencies: ffmpeg for video rendering, Python 3, curl, truetype fonts
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     python3 \
     python3-pip \
     python3-venv \
     curl \
+    fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv from official astral-sh binary
@@ -16,6 +17,9 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 WORKDIR /app
 
 # Copy dependency files first for layer caching
+COPY package.json package-lock.json ./
+RUN npm ci
+
 COPY pyproject.toml uv.lock ./
 
 # Install Python dependencies using frozen lockfile

@@ -8,6 +8,11 @@ from pathlib import Path
 from typing import Optional
 
 
+import shutil
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+
 class BaseStorageProvider(ABC):
     """Abstract interface for media asset storage providers."""
 
@@ -64,15 +69,25 @@ class LocalStaticStorageProvider(BaseStorageProvider):
     Serves files from media/staging/ via the application container's public URL.
     """
 
-    def __init__(self, public_base_url: str):
+    def __init__(self, public_base_url: str, staging_dir: Optional[Path] = None):
         self.public_base_url = public_base_url.rstrip("/")
+        if staging_dir:
+            self.staging_dir = Path(staging_dir).resolve()
+        else:
+            default_dir = PROJECT_ROOT / "media" / "staging"
+            self.staging_dir = Path(os.getenv("MEDIA_STAGING_DIR", str(default_dir))).resolve()
+        self.staging_dir.mkdir(parents=True, exist_ok=True)
 
     def upload_file(self, file_path: Path, remote_name: Optional[str] = None) -> str:
-        file_path = Path(file_path)
+        file_path = Path(file_path).resolve()
         if not file_path.exists():
             raise FileNotFoundError(f"Media file not found: {file_path}")
 
         filename = remote_name or file_path.name
+        dest_path = self.staging_dir / filename
+        if file_path != dest_path.resolve():
+            shutil.copy2(file_path, dest_path)
+
         return f"{self.public_base_url}/media/staging/{filename}"
 
 

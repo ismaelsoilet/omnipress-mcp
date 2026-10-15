@@ -29,3 +29,6 @@ omnipress-mcp = "src.server:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

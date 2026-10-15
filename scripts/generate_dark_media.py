@@ -27,15 +27,9 @@ async def generate_tts_audio(text: str, output_path: Path, voice: str = DEFAULT_
     try:
         import edge_tts
     except ImportError:
-        if shutil.which("uv"):
-            subprocess.check_call(["uv", "pip", "install", "edge-tts"])
-            import edge_tts
-        else:
-            try:
-                subprocess.check_call([sys.executable, "-m", "pip", "install", "edge-tts"])
-                import edge_tts
-            except Exception as e:
-                raise RuntimeError(f"edge-tts não está instalado: {e}")
+        raise RuntimeError(
+            "edge-tts não está instalado no ambiente. Instale com: uv add edge-tts ou pip install edge-tts"
+        )
 
     try:
         communicate = edge_tts.Communicate(text, voice, rate="+2%", pitch="-2Hz")
@@ -91,27 +85,32 @@ def render_video_with_ffmpeg(
 
     # If multiple images, create slideshow
     if len(image_paths) > 1:
-        concat_list_file = output_path.parent / f"images_concat_{os.getpid()}.txt"
-        with open(concat_list_file, "w", encoding="utf-8") as f:
-            for p in image_paths:
-                f.write(f"file '{p.resolve()}'\n")
-                f.write("duration 6\n")
-            f.write(f"file '{image_paths[-1].resolve()}'\n")
+        import uuid
+        concat_list_file = output_path.parent / f"images_concat_{uuid.uuid4().hex}.txt"
+        try:
+            with open(concat_list_file, "w", encoding="utf-8") as f:
+                for p in image_paths:
+                    escaped_p = str(p.resolve()).replace("'", "'\\''")
+                    f.write(f"file '{escaped_p}'\n")
+                    f.write("duration 6\n")
+                escaped_last = str(image_paths[-1].resolve()).replace("'", "'\\''")
+                f.write(f"file '{escaped_last}'\n")
 
-        cmd = [
-            "ffmpeg", "-y",
-            "-f", "concat", "-safe", "0", "-i", str(concat_list_file),
-            "-i", str(audio_path),
-            "-vf", f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h}",
-            "-c:v", "libx264", "-c:a", "aac", "-b:a", "192k",
-            "-pix_fmt", "yuv420p",
-            "-shortest",
-            str(output_path)
-        ]
-        subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        if concat_list_file.exists():
-            concat_list_file.unlink()
-        return output_path
+            cmd = [
+                "ffmpeg", "-y",
+                "-f", "concat", "-safe", "0", "-i", str(concat_list_file),
+                "-i", str(audio_path),
+                "-vf", f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h}",
+                "-c:v", "libx264", "-c:a", "aac", "-b:a", "192k",
+                "-pix_fmt", "yuv420p",
+                "-shortest",
+                str(output_path)
+            ]
+            subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return output_path
+        finally:
+            if concat_list_file.exists():
+                concat_list_file.unlink()
 
     # Fallback if no images provided: create dark atmospheric background with audio
     cmd = [

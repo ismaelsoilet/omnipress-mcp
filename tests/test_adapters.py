@@ -139,6 +139,59 @@ def test_buffer_adapter_instagram_metadata_and_delete(monkeypatch):
         assert del_res["deleted_id"] == "post_ig_1"
 
 
+def test_buffer_adapter_multi_platform_resolution_and_no_contamination(monkeypatch):
+    """Verify per-platform resolution from channel.json + .env and prevent metadata contamination."""
+    monkeypatch.setenv("BUFFER_API_KEY", "test_key_123")
+    monkeypatch.setenv("BUFFER_X_PROFILE_ID", "prof_x_99")
+    monkeypatch.setenv("BUFFER_INSTAGRAM_PROFILE_ID", "prof_ig_123")
+    adapter = BufferPublisherAdapter()
+
+    # Suppose channel_manager returns a channel that only has instagram
+    mock_channel = {
+        "slug": "custom-brand",
+        "social": {
+            "instagram": {"buffer_channel_id": "ch_custom_ig"}
+        }
+    }
+    with patch("src.core.channel_manager.ChannelManager.get_channel", return_value=mock_channel):
+        ids = adapter._resolve_channel_ids(["instagram", "x"], channel_slug="custom-brand")
+        assert "ch_custom_ig" in ids
+        assert "prof_x_99" in ids
+
+    # Verify queueing with both platforms does NOT inject instagram metadata into the X post
+    with patch("requests.post") as mock_post:
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "data": {
+                "createPost": {
+                    "post": {"id": "post_multi_1", "status": "sent"}
+                }
+            }
+        }
+        mock_post.return_value = mock_resp
+
+        res = adapter.queue_social_post(
+            text="Post simultâneo Instagram e Twitter sem contaminação!",
+            platforms=["instagram", "x"],
+            media_urls=["https://example.com/image.jpg"],
+        )
+        assert res["success"] is True
+        calls = mock_post.call_args_list
+        assert len(calls) == 2
+        payload_1 = calls[0][1]["json"]["variables"]["input"]
+        payload_2 = calls[1][1]["json"]["variables"]["input"]
+
+        ch_payloads = {p["channelId"]: p for p in [payload_1, payload_2]}
+        assert "prof_ig_123" in ch_payloads
+        assert "prof_x_99" in ch_payloads
+
+        assert "metadata" in ch_payloads["prof_ig_123"]
+        assert "instagram" in ch_payloads["prof_ig_123"]["metadata"]
+
+        assert "metadata" not in ch_payloads["prof_x_99"] or "instagram" not in ch_payloads["prof_x_99"].get("metadata", {})
+
+
 # -------------------------------------------------------------
 # Webhook Adapter Tests
 # -------------------------------------------------------------

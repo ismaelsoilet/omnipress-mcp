@@ -46,6 +46,7 @@ class RedditPublisherAdapter(BasePublisherAdapter):
         media_urls: Optional[List[str]] = None,
         schedule_time: Optional[str] = None,
         title: Optional[str] = None,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """
         Submits text post to Reddit.

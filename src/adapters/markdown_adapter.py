@@ -68,22 +68,33 @@ class MarkdownArchiveAdapter:
         filename = f"{date_str}-{slug}.md"
         filepath = folder / filename
 
+        escaped_title = title.replace("\r", " ").replace("\n", " ").replace('"', '\\"')
+        escaped_category = category.replace('"', '\\"')
+        escaped_author = (author or "OmniPress").replace('"', '\\"')
+
+        # Strip pre-existing frontmatter to avoid duplicate YAML blocks
+        cleaned_content = content_markdown.strip()
+        if cleaned_content.startswith("---"):
+            parts = re.split(r"^---\s*$", cleaned_content, maxsplit=2, flags=re.MULTILINE)
+            if len(parts) >= 3:
+                cleaned_content = parts[2].strip()
+
         tags_list = tags or []
         yaml_tags = "\n".join([f"  - {t}" for t in tags_list])
 
         frontmatter = (
             "---\n"
-            f'title: "{title}"\n'
+            f'title: "{escaped_title}"\n'
             f'date: "{iso_str}"\n'
-            f'category: "{category}"\n'
-            f'author: "{author or "OmniPress"}"\n'
+            f'category: "{escaped_category}"\n'
+            f'author: "{escaped_author}"\n'
             "tags:\n"
             f"{yaml_tags}\n"
             "status: draft\n"
             "---\n\n"
         )
 
-        full_content = frontmatter + content_markdown.strip() + "\n"
+        full_content = frontmatter + cleaned_content + "\n"
         filepath.write_text(full_content, encoding="utf-8")
 
         return {

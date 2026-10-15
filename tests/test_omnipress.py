@@ -59,6 +59,29 @@ def test_markdown_adapter(tmp_path: Path):
     print("✓ Markdown adapter test passed successfully.")
 
 
+def test_markdown_adapter_quotes_and_frontmatter_strip(tmp_path: Path):
+    adapter = MarkdownArchiveAdapter(base_dir=str(tmp_path))
+    content_with_existing_fm = (
+        "---\n"
+        "title: \"Old Title\"\n"
+        "status: published\n"
+        "---\n\n"
+        "# Main Heading\n\nBody content with important details."
+    )
+    res = adapter.save_article(
+        title='O que é "Zero-Trust" e "DevSecOps"?',
+        content_markdown=content_with_existing_fm,
+        category="security",
+        tags=["security", "cloud"],
+    )
+    saved_file = Path(res["filepath"])
+    content = saved_file.read_text(encoding="utf-8")
+    assert 'title: "O que é \\"Zero-Trust\\" e \\"DevSecOps\\"?"' in content
+    assert content.count("---") == 2
+    assert "Old Title" not in content
+    assert "# Main Heading" in content
+
+
 def test_mcp_server():
     from src.server import (
         MCP_TOOL_ANNOTATIONS,
@@ -67,28 +90,46 @@ def test_mcp_server():
         omnipress_inspect_content,
         omnipress_list_articles,
         omnipress_list_recent,
+        omnipress_list_channels,
+        omnipress_get_channel,
+        omnipress_create_channel,
+        omnipress_build_carousel,
+        omnipress_prepare_dark_script,
+        omnipress_queue_media_post,
+        omnipress_brainstorm_channel,
+        omnipress_generate_speech,
+        omnipress_render_dark_video,
     )
 
-    required_tools = [
-        "omnipress_publish_article",
-        "omnipress_queue_post",
-        "omnipress_inspect_content",
-        "omnipress_list_articles",
-        "omnipress_list_recent",
+    all_tools = [
+        omnipress_publish_article,
+        omnipress_queue_post,
+        omnipress_inspect_content,
+        omnipress_list_articles,
+        omnipress_list_recent,
+        omnipress_list_channels,
+        omnipress_get_channel,
+        omnipress_create_channel,
+        omnipress_build_carousel,
+        omnipress_prepare_dark_script,
+        omnipress_queue_media_post,
+        omnipress_brainstorm_channel,
+        omnipress_generate_speech,
+        omnipress_render_dark_video,
     ]
 
-    for tool_name in required_tools:
+    for func in all_tools:
+        tool_name = func.__name__
         assert tool_name in MCP_TOOL_ANNOTATIONS, f"Missing annotation for {tool_name}"
         annot = MCP_TOOL_ANNOTATIONS[tool_name]
         for key in ("readOnlyHint", "destructiveHint", "idempotentHint", "openWorldHint"):
             assert isinstance(annot.get(key), bool), f"{key} in {tool_name} must be a boolean"
 
-    # Verify structured docstrings
-    for func in (omnipress_publish_article, omnipress_queue_post, omnipress_inspect_content, omnipress_list_articles):
+        # Verify structured docstrings for all tools
         doc = func.__doc__ or ""
-        assert "Use when:" in doc, f"{func.__name__} docstring missing 'Use when:'"
-        assert "Do NOT use when:" in doc, f"{func.__name__} docstring missing 'Do NOT use when:'"
-        assert "Returns:" in doc, f"{func.__name__} docstring missing 'Returns:'"
+        assert "Use when:" in doc, f"{tool_name} docstring missing 'Use when:'"
+        assert "Do NOT use when:" in doc, f"{tool_name} docstring missing 'Do NOT use when:'"
+        assert "Returns:" in doc, f"{tool_name} docstring missing 'Returns:'"
 
     # Verify alias parity
     canonical_res = omnipress_list_articles(limit=5)

@@ -36,6 +36,7 @@ class InstagramGraphAdapter(BasePublisherAdapter):
         mode: Optional[str] = None,
         allow_test: bool = False,
         force_duplicate: bool = False,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """
         Publishes a single image or multi-slide carousel to Instagram via Meta Graph API.

@@ -41,7 +41,7 @@ except (ImportError, ModuleNotFoundError):
                 self.name = name
                 self.tools = {}
 
-            def tool(self, name: Optional[str] = None, description: Optional[str] = None):
+            def tool(self, name: Optional[str] = None, description: Optional[str] = None, annotations: Optional[Any] = None, **kwargs):
                 def decorator(func):
                     tool_name = name or func.__name__
                     self.tools[tool_name] = func
@@ -170,7 +170,18 @@ MCP_TOOL_ANNOTATIONS = {
 }
 
 
-@mcp.tool()
+def get_tool_annotations(name: str):
+    ann = MCP_TOOL_ANNOTATIONS.get(name)
+    if not ann:
+        return None
+    try:
+        from mcp.types import ToolAnnotations
+        return ToolAnnotations(**ann)
+    except Exception:
+        return ann
+
+
+@mcp.tool(annotations=get_tool_annotations("omnipress_publish_article"))
 def omnipress_publish_article(
     title: str,
     content_markdown: str,
@@ -233,7 +244,7 @@ def omnipress_publish_article(
     return "\n".join(output)
 
 
-@mcp.tool()
+@mcp.tool(annotations=get_tool_annotations("omnipress_queue_post"))
 def omnipress_queue_post(
     text: str,
     platforms: Optional[List[str]] = None,
@@ -334,7 +345,7 @@ def omnipress_queue_post(
     return "\n".join(results_summary)
 
 
-@mcp.tool()
+@mcp.tool(annotations=get_tool_annotations("omnipress_inspect_content"))
 def omnipress_inspect_content(text: str) -> str:
     """
     Pre-flight compliance scan that analyzes draft content for Brazilian lawsuit numbers (CNJ),
@@ -361,7 +372,7 @@ def omnipress_inspect_content(text: str) -> str:
     return "\n".join(lines)
 
 
-@mcp.tool()
+@mcp.tool(annotations=get_tool_annotations("omnipress_list_articles"))
 def omnipress_list_articles(limit: int = 5, channel_slug: Optional[str] = None) -> str:
     """
     Retrieves metadata of recently archived long-form articles from the repository.
@@ -390,7 +401,7 @@ def omnipress_list_articles(limit: int = 5, channel_slug: Optional[str] = None) 
     return "\n".join(lines)
 
 
-@mcp.tool()
+@mcp.tool(annotations=get_tool_annotations("omnipress_list_channels"))
 def omnipress_list_channels(include_templates: bool = False) -> str:
     """
     Lists all configured content channels in the OmniPress multi-channel architecture.
@@ -423,7 +434,7 @@ def omnipress_list_channels(include_templates: bool = False) -> str:
     return "\n".join(lines)
 
 
-@mcp.tool()
+@mcp.tool(annotations=get_tool_annotations("omnipress_get_channel"))
 def omnipress_get_channel(channel_slug: str) -> str:
     """
     Retrieves full configuration and brand identity for a specific channel.
@@ -445,7 +456,7 @@ def omnipress_get_channel(channel_slug: str) -> str:
     return json.dumps(channel, indent=2, ensure_ascii=False)
 
 
-@mcp.tool()
+@mcp.tool(annotations=get_tool_annotations("omnipress_create_channel"))
 def omnipress_create_channel(
     slug: str,
     name: str,
@@ -486,7 +497,7 @@ def omnipress_create_channel(
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=get_tool_annotations("omnipress_build_carousel"))
 def omnipress_build_carousel(
     channel_slug: str,
     post_slug: str,
@@ -529,16 +540,27 @@ def omnipress_build_carousel(
     return "\n".join(lines)
 
 
-@mcp.tool()
+@mcp.tool(annotations=get_tool_annotations("omnipress_list_recent"))
 def omnipress_list_recent(limit: int = 5) -> str:
     """
     Backward-compatible alias for omnipress_list_articles.
     Retrieves metadata of recently archived long-form articles from the local repository directory.
+
+    Use when:
+    - Querying recent articles using legacy integrations or scripts expecting omnipress_list_recent.
+    - Inspecting recently published content drafts and titles.
+
+    Do NOT use when:
+    - Writing new agent workflows (prefer the canonical omnipress_list_articles instead).
+    - Querying configured channels (use omnipress_list_channels instead).
+
+    Returns:
+    - Formatted list of recently saved articles with filenames, sizes, and modification dates.
     """
     return omnipress_list_articles(limit=limit)
 
 
-@mcp.tool()
+@mcp.tool(annotations=get_tool_annotations("omnipress_prepare_dark_script"))
 def omnipress_prepare_dark_script(
     topic: str,
     format: str = "all",
@@ -553,6 +575,13 @@ def omnipress_prepare_dark_script(
     - Creating a complete production bundle for dark channels across YouTube, Instagram, X (Twitter), and TikTok.
     - Generating scene-by-scene visual image prompts for AI generators.
     - Formatting YouTube SEO tags, descriptions with timestamps, and Instagram carousel copy.
+
+    Do NOT use when:
+    - You want to render final audio or video files directly (use omnipress_generate_speech or omnipress_render_dark_video instead).
+    - Publishing or queuing finished posts to social networks (use omnipress_queue_media_post or omnipress_queue_post instead).
+
+    Returns:
+    - JSON string containing audioDirection, shortScript, visualScenePrompts, instagramCarousel, and youtubeMetadata.
     """
     import json
     clean_topic = topic.strip()
@@ -614,7 +643,7 @@ def omnipress_prepare_dark_script(
     return json.dumps(bundle, indent=2, ensure_ascii=False)
 
 
-@mcp.tool()
+@mcp.tool(annotations=get_tool_annotations("omnipress_queue_media_post"))
 def omnipress_queue_media_post(
     caption: str,
     platforms: List[str],
@@ -634,6 +663,17 @@ def omnipress_queue_media_post(
     Queues rich media content (Images, Carousels, Video Reels, YouTube Shorts) to Instagram,
     YouTube, X/Twitter, and Threads with platform-specific formatting and asset staging.
     Protected by PublishingShield pre-flight validation and anti-duplicate ledger (Rule 09).
+
+    Use when:
+    - Publishing or staging rich visual media (Instagram single image, carousel, video reel, or YouTube Short).
+    - Dispatching media campaigns to social networks with automated privacy masking.
+
+    Do NOT use when:
+    - Publishing text-only long-form markdown articles (use omnipress_publish_article instead).
+    - Queuing standard text-only social posts or threads without media files (use omnipress_queue_post instead).
+
+    Returns:
+    - Status message summarizing publishing, staging, or queue results across all target platforms.
     """
     processed_caption = caption
     sanitization_notes = []
@@ -723,7 +763,7 @@ def omnipress_queue_media_post(
     return "\n\n".join(results)
 
 
-@mcp.tool()
+@mcp.tool(annotations=get_tool_annotations("omnipress_brainstorm_channel"))
 def omnipress_brainstorm_channel(
     niche: str = "historia",
     tone: str = "mystery",
@@ -737,6 +777,13 @@ def omnipress_brainstorm_channel(
     Use when:
     - Brainstorming a new content channel on YouTube, Instagram, TikTok, or X.
     - Creating viral backlog topics with tested 0-3s curiosity loops.
+
+    Do NOT use when:
+    - Scaffolding the channel workspace directory on disk (use omnipress_create_channel instead).
+    - Writing full production scripts for an episode (use omnipress_prepare_dark_script instead).
+
+    Returns:
+    - JSON string with channel concepts, psychological CTR angles, and 10 viral video topics with hooks.
     """
     import json
     clean_niche = niche.lower().strip()
@@ -814,8 +861,8 @@ def omnipress_brainstorm_channel(
     return json.dumps(bundle, indent=2, ensure_ascii=False)
 
 
-@mcp.tool()
-def omnipress_generate_speech(
+@mcp.tool(annotations=get_tool_annotations("omnipress_generate_speech"))
+async def omnipress_generate_speech(
     text: str,
     voice: str = "pt-BR-AntonioNeural",
     output_filename: Optional[str] = None,
@@ -825,8 +872,14 @@ def omnipress_generate_speech(
 
     Use when:
     - Converting script narrations into immersive MP3 voice files.
+
+    Do NOT use when:
+    - Full video rendering is required (use omnipress_render_dark_video instead).
+    - Text-only content archiving without voiceover generation.
+
+    Returns:
+    - JSON string with audio file path, file size in bytes, voice identifier, and operation status.
     """
-    import asyncio
     import json
     import time
     from pathlib import Path
@@ -836,7 +889,7 @@ def omnipress_generate_speech(
     out_path = PROJECT_ROOT / "media" / "output" / filename
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    asyncio.run(generate_tts_audio(text, out_path, voice=voice))
+    await generate_tts_audio(text, out_path, voice=voice)
     result = {
         "success": True,
         "audio_path": str(out_path.resolve()),
@@ -846,8 +899,8 @@ def omnipress_generate_speech(
     return json.dumps(result, indent=2, ensure_ascii=False)
 
 
-@mcp.tool()
-def omnipress_render_dark_video(
+@mcp.tool(annotations=get_tool_annotations("omnipress_render_dark_video"))
+async def omnipress_render_dark_video(
     text: Optional[str] = None,
     audio_path: Optional[str] = None,
     image_paths: Optional[List[str]] = None,
@@ -860,8 +913,14 @@ def omnipress_render_dark_video(
 
     Use when:
     - Producing ready-to-publish MP4 video files from script narrations and scene images.
+
+    Do NOT use when:
+    - Only voiceover audio is required (use omnipress_generate_speech instead).
+    - Generating static image carousels without video animation (use omnipress_build_carousel instead).
+
+    Returns:
+    - JSON string containing audio path, rendered video path, aspect ratio, voice model, and status.
     """
-    import asyncio
     import json
     import time
     import shutil
@@ -876,7 +935,7 @@ def omnipress_render_dark_video(
     if audio_path and Path(audio_path).exists():
         audio_file = Path(audio_path).resolve()
     elif text:
-        asyncio.run(generate_tts_audio(text, audio_file, voice=voice))
+        await generate_tts_audio(text, audio_file, voice=voice)
     else:
         return json.dumps({"success": False, "error": "Forneça text ou audio_path válido."})
 

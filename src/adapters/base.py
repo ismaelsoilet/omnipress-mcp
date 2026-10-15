@@ -19,6 +19,7 @@ class BasePublisherAdapter(ABC):
         platforms: List[str],
         media_urls: Optional[List[str]] = None,
         schedule_time: Optional[str] = None,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """
         Queues or publishes a short-form social post to target networks.

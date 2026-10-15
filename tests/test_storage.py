@@ -22,7 +22,8 @@ from src.utils.storage import (
 
 def test_local_static_storage_provider(tmp_path: Path):
     """Verify local container web-server storage generates expected public URLs."""
-    provider = LocalStaticStorageProvider("https://omnipress.suitplus.com.br/")
+    staging_dir = tmp_path / "staging"
+    provider = LocalStaticStorageProvider("https://omnipress.suitplus.com.br/", staging_dir=staging_dir)
     assert provider.public_base_url == "https://omnipress.suitplus.com.br"
 
     sample_file = tmp_path / "slide_01.jpg"
@@ -31,10 +32,12 @@ def test_local_static_storage_provider(tmp_path: Path):
     # Standard upload
     url = provider.upload_file(sample_file)
     assert url == "https://omnipress.suitplus.com.br/media/staging/slide_01.jpg"
+    assert (provider.staging_dir / "slide_01.jpg").exists()
 
     # Custom remote name
     url_custom = provider.upload_file(sample_file, remote_name="custom_hero.jpg")
     assert url_custom == "https://omnipress.suitplus.com.br/media/staging/custom_hero.jpg"
+    assert (provider.staging_dir / "custom_hero.jpg").exists()
 
     # Missing file raises FileNotFoundError
     with pytest.raises(FileNotFoundError):

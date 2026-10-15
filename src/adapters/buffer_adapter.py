@@ -26,6 +26,7 @@ class BufferPublisherAdapter(BasePublisherAdapter):
         self.x_profile_id = os.getenv("BUFFER_X_PROFILE_ID", "").strip()
         self.threads_profile_id = os.getenv("BUFFER_THREADS_PROFILE_ID", "").strip()
         self.instagram_profile_id = os.getenv("BUFFER_INSTAGRAM_PROFILE_ID", "").strip()
+        self._channel_services: Dict[str, str] = {}
 
     def is_configured(self) -> bool:
         """Returns True if Buffer API key/token is configured."""
@@ -103,55 +104,83 @@ class BufferPublisherAdapter(BasePublisherAdapter):
         except requests.RequestException as e:
             return {"success": False, "error": str(e)}
 
+    @staticmethod
+    def _canonical_platform(plat: str) -> str:
+        plat_lower = plat.lower().strip()
+        if plat_lower in ("instagram", "ig"):
+            return "instagram"
+        if plat_lower in ("x", "twitter"):
+            return "x"
+        if plat_lower in ("linkedin",):
+            return "linkedin"
+        if plat_lower in ("threads",):
+            return "threads"
+        return plat_lower
+
     def _resolve_channel_ids(self, platforms: List[str], channel_slug: Optional[str] = None) -> List[str]:
         target_ids = []
         normalized = [p.lower().strip() for p in platforms]
+        if "all" in normalized:
+            requested_platforms = ["linkedin", "x", "threads", "instagram"]
+        else:
+            requested_platforms = [self._canonical_platform(p) for p in normalized]
+
+        if not hasattr(self, "_channel_services"):
+            self._channel_services = {}
 
         # 1. If channel_slug is specified, look up channel-specific buffer_channel_id
+        ch_social = {}
         if channel_slug:
             from src.core.channel_manager import ChannelManager
             ch = ChannelManager().get_channel(channel_slug)
             if ch:
-                social = ch.get("social", {})
-                for plat in normalized:
-                    if plat in ("instagram", "ig") and "instagram" in social:
-                        bid = social["instagram"].get("buffer_channel_id")
-                        if bid:
-                            target_ids.append(bid)
-                    elif plat in ("linkedin",) and "linkedin" in social:
-                        bid = social["linkedin"].get("buffer_channel_id")
-                        if bid:
-                            target_ids.append(bid)
-                    elif plat in ("x", "twitter") and "x" in social:
-                        bid = social["x"].get("buffer_channel_id")
-                        if bid:
-                            target_ids.append(bid)
+                ch_social = ch.get("social", {})
 
-        # 2. Fall back to environment profile IDs
-        if not target_ids:
-            if ("linkedin" in normalized or "all" in normalized) and self.linkedin_profile_id:
-                target_ids.append(self.linkedin_profile_id)
-            if ("x" in normalized or "twitter" in normalized or "all" in normalized) and self.x_profile_id:
-                target_ids.append(self.x_profile_id)
-            if ("threads" in normalized or "all" in normalized) and self.threads_profile_id:
-                target_ids.append(self.threads_profile_id)
-            if ("instagram" in normalized or "ig" in normalized or "all" in normalized) and self.instagram_profile_id:
-                target_ids.append(self.instagram_profile_id)
+        cached_remote_channels = None
 
-        # 3. If still no profile IDs, try auto-resolving from connected channels
-        if not target_ids and self.api_key:
-            channels_info = self.list_channels()
-            if channels_info.get("success"):
-                for ch in channels_info.get("channels", []):
-                    srv = ch.get("service", "").lower()
-                    if ("instagram" in normalized or "ig" in normalized or "all" in normalized) and srv == "instagram":
-                        target_ids.append(ch["id"])
-                    elif ("linkedin" in normalized or "all" in normalized) and srv == "linkedin":
-                        target_ids.append(ch["id"])
-                    elif ("x" in normalized or "twitter" in normalized or "all" in normalized) and srv in ("twitter", "x"):
-                        target_ids.append(ch["id"])
-                    elif ("threads" in normalized or "all" in normalized) and srv == "threads":
-                        target_ids.append(ch["id"])
+        for plat in requested_platforms:
+            resolved_id = None
+
+            # Step 1: check channel.json
+            if plat in ch_social:
+                resolved_id = ch_social[plat].get("buffer_channel_id")
+
+            # Step 2: fall back to environment profile ID for this specific platform
+            if not resolved_id:
+                if plat == "linkedin" and self.linkedin_profile_id:
+                    resolved_id = self.linkedin_profile_id
+                elif plat == "x" and self.x_profile_id:
+                    resolved_id = self.x_profile_id
+                elif plat == "threads" and self.threads_profile_id:
+                    resolved_id = self.threads_profile_id
+                elif plat == "instagram" and self.instagram_profile_id:
+                    resolved_id = self.instagram_profile_id
+
+            # Step 3: if still not found, auto-discover from connected channels in Buffer
+            if not resolved_id and self.api_key:
+                if cached_remote_channels is None:
+                    channels_info = self.list_channels()
+                    cached_remote_channels = (
+                        channels_info.get("channels", []) if channels_info.get("success") else []
+                    )
+                for remote_ch in cached_remote_channels:
+                    srv = remote_ch.get("service", "").lower()
+                    if plat == "instagram" and srv == "instagram":
+                        resolved_id = remote_ch["id"]
+                        break
+                    elif plat == "linkedin" and srv == "linkedin":
+                        resolved_id = remote_ch["id"]
+                        break
+                    elif plat == "x" and srv in ("twitter", "x"):
+                        resolved_id = remote_ch["id"]
+                        break
+                    elif plat == "threads" and srv == "threads":
+                        resolved_id = remote_ch["id"]
+                        break
+
+            if resolved_id and resolved_id not in target_ids:
+                target_ids.append(resolved_id)
+                self._channel_services[resolved_id] = plat
 
         return target_ids
 
@@ -165,6 +194,7 @@ class BufferPublisherAdapter(BasePublisherAdapter):
         mode: Optional[str] = None,
         allow_test: bool = False,
         force_duplicate: bool = False,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """
         Submits post to Buffer via modern GraphQL API (with fallback to legacy REST).
@@ -267,9 +297,10 @@ class BufferPublisherAdapter(BasePublisherAdapter):
                 input_payload["assets"] = assets
 
             # If target channel is Instagram, inject mandatory Instagram post metadata
+            service_for_ch = getattr(self, "_channel_services", {}).get(ch_id)
             is_instagram = (
-                ch_id == self.instagram_profile_id
-                or any(p in ("instagram", "ig") for p in normalized)
+                service_for_ch == "instagram"
+                or ch_id == self.instagram_profile_id
             )
             if not is_instagram and channel_slug:
                 try:

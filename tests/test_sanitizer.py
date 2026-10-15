@@ -16,6 +16,10 @@ from src.utils.sanitizer import (
     CNPJ_REGEX,
     EMAIL_REGEX,
     PHONE_REGEX,
+    JWT_REGEX,
+    BEARER_REGEX,
+    API_KEY_REGEX,
+    PRIVATE_IP_REGEX,
 )
 
 
@@ -117,6 +121,107 @@ def test_edge_cases_and_punctuation():
     assert "[CNPJ PROTEGIDO]" in sanitized_punct
     assert "[EMAIL PROTEGIDO]" in sanitized_punct
     assert "0001234-56.2023.8.26.0100" not in sanitized_punct
+
+
+def test_phone_sanitization_end_to_end():
+    """Verify end-to-end detection and masking of phone numbers in realistic copy."""
+    text = "Fale conosco pelo telefone +55 11 98765-4321 ou suporte comercial (21) 98765-4321."
+    findings = inspect_sensitive_data(text)
+    phone_findings = [f for f in findings if f["type"] == "phone"]
+    assert len(phone_findings) == 2
+
+    sanitized, audit_log = sanitize_text(text)
+    assert "+55 11 98765-4321" not in sanitized
+    assert "(21) 98765-4321" not in sanitized
+    assert "[TELEFONE PROTEGIDO]" in sanitized
+
+
+def test_jwt_and_bearer_sanitization():
+    """Verify JWT and Authorization Bearer header detection and sanitization."""
+    raw_jwt = (
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+        "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ."
+        "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+    )
+    text_jwt = f"Use o token de acesso: {raw_jwt} para autenticar."
+    findings = inspect_sensitive_data(text_jwt)
+    assert any(f["type"] == "jwt" for f in findings)
+
+    sanitized_jwt, _ = sanitize_text(text_jwt)
+    assert raw_jwt not in sanitized_jwt
+    assert "[JWT PROTEGIDO]" in sanitized_jwt
+
+    text_bearer = "Authorization: Bearer my_super_secret_access_token_123456789"
+    findings_bearer = inspect_sensitive_data(text_bearer)
+    assert any(f["type"] == "bearer_token" for f in findings_bearer)
+
+    sanitized_bearer, _ = sanitize_text(text_bearer)
+    assert "my_super_secret_access_token_123456789" not in sanitized_bearer
+    assert "[BEARER PROTEGIDO]" in sanitized_bearer
+
+
+def test_private_ip_and_api_key_sanitization():
+    """Verify private IPv4 ranges (RFC 1918 + loopback) and API keys are redacted."""
+    text = (
+        "Conecte o serviço em 192.168.1.50 e teste no cluster 10.0.0.1 ou loopback 127.0.0.1. "
+        "Não exponha em 8.8.8.8. Chave: sk_live_1234567890abcdef123456."
+    )
+    findings = inspect_sensitive_data(text)
+    types = [f["type"] for f in findings]
+    assert "private_ip" in types
+    assert "api_key" in types
+
+    sanitized, _ = sanitize_text(text)
+    assert "192.168.1.50" not in sanitized
+    assert "10.0.0.1" not in sanitized
+    assert "127.0.0.1" not in sanitized
+    assert "[IP PRIVADO PROTEGIDO]" in sanitized
+    assert "sk_live_1234567890abcdef123456" not in sanitized
+    assert "[CHAVE PROTEGIDA]" in sanitized
+    # Public IP must remain intact
+    assert "8.8.8.8" in sanitized
+
+
+def test_year_ranges_and_uuids_not_masked_as_phones():
+    """Verify year ranges, UUIDs, and large integers are NOT falsely flagged as phone numbers."""
+    text = (
+        "No período de 2023-2024 e 1999-2000, o investimento foi de 10000000 reais. "
+        "Identificador de rastreio: 12345678-1234-1234-1234-123456789abc."
+    )
+    findings = inspect_sensitive_data(text)
+    phone_findings = [f for f in findings if f["type"] == "phone"]
+    assert len(phone_findings) == 0
+
+    sanitized, audit = sanitize_text(text)
+    assert "2023-2024" in sanitized
+    assert "1999-2000" in sanitized
+    assert "10000000" in sanitized
+    assert "12345678-1234-1234-1234-123456789abc" in sanitized
+    assert "[TELEFONE PROTEGIDO]" not in sanitized
+
+
+def test_modern_ai_api_keys_and_version_strings():
+    """Verify OpenAI sk-proj, Anthropic sk-ant, Google AIza keys, and IP version strings."""
+    text = (
+        "OpenAI: sk-proj-1234567890abcdef1234567890\n"
+        "Anthropic: sk-ant-api03-1234567890abcdef1234567890\n"
+        "Google: AIzaSyD-1234567890abcdef123456789012345\n"
+        "Software version: 192.168.1.1.2 should not be masked as private IP"
+    )
+    findings = inspect_sensitive_data(text)
+    api_key_findings = [f for f in findings if f["type"] == "api_key"]
+    assert len(api_key_findings) == 3
+
+    # 192.168.1.1.2 is a 5-octet version number, not an IPv4
+    ip_findings = [f for f in findings if f["type"] == "private_ip"]
+    assert len(ip_findings) == 0
+
+    sanitized, _ = sanitize_text(text)
+    assert "sk-proj-" not in sanitized
+    assert "sk-ant-" not in sanitized
+    assert "AIzaSy" not in sanitized
+    assert sanitized.count("[CHAVE PROTEGIDA]") == 3
+    assert "192.168.1.1.2" in sanitized
 
 
 if __name__ == "__main__":

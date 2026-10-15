@@ -7,7 +7,7 @@
     "start": "python src/server.py",
     "start:http": "python src/server.py --http 3333",
     "setup:claude": "node scripts/setup_claude.js",
-    "test": "pytest",
+    "test": "uv run pytest tests/",
     "typecheck": "tsc --noEmit",
     "remotion:preview": "remotion preview src/video/index.ts",
     "remotion:render": "remotion render src/video/index.ts",
