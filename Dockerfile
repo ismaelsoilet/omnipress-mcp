@@ -24,10 +24,11 @@ COPY pyproject.toml uv.lock ./
 
 # Install Python dependencies using frozen lockfile
 ENV UV_SYSTEM_PYTHON=1
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev --no-install-project
 
 # Copy application source
 COPY . .
+RUN uv sync --frozen --no-dev
 
 # Create persistent storage directories
 RUN mkdir -p /app/articles /app/media/staging /app/media/output /app/media/assets /app/channels
