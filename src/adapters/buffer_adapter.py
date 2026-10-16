@@ -301,6 +301,7 @@ class BufferPublisherAdapter(BasePublisherAdapter):
             is_instagram = (
                 service_for_ch == "instagram"
                 or ch_id == self.instagram_profile_id
+                or (len(target_ids) == 1 and any(p in ("instagram", "ig") for p in normalized))
             )
             if not is_instagram and channel_slug:
                 try:
@@ -450,6 +451,8 @@ class BufferPublisherAdapter(BasePublisherAdapter):
             if res.status_code == 200:
                 data = res.json().get("data", {}).get("deletePost", {})
                 if "id" in data:
+                    from src.core.publishing_shield import PublishingShield
+                    PublishingShield.remove_entry(data["id"])
                     return {"success": True, "provider": "buffer_graphql", "deleted_id": data["id"]}
                 elif "message" in data:
                     return {"success": False, "provider": "buffer_graphql", "error": data["message"]}

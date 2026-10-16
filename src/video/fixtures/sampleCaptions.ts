@@ -1,4 +1,5 @@
 import short02Json from "./short_02_captions.json";
+import { ActData } from "../types";
 
 /**
  * Universal caption fixtures for Remotion video compositions.
