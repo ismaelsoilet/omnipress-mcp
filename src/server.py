@@ -66,7 +66,7 @@ if hasattr(mcp, "custom_route"):
             return JSONResponse({
                 "status": "healthy",
                 "service": "omnipress-mcp",
-                "version": "0.1.0",
+                "version": "0.2.0",
             })
     except (ImportError, Exception):
         pass

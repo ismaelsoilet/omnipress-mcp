@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "omnipress-mcp"
-version = "0.1.0"
+version = "0.2.0"
 description = "Agentic multi-channel publishing engine for Antigravity via Model Context Protocol (MCP)"
 readme = "README.md"
 authors = [{ name = "OmniPress Team" }]

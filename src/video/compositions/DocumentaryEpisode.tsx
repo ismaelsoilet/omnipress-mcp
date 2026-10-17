@@ -43,7 +43,7 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
     const isSpeaking = config?.voiceovers?.some((vox) => {
       return currentSec >= vox.startInSeconds && currentSec <= (vox.startInSeconds + vox.durationInSeconds);
     });
-    return isSpeaking ? 0.16 : 0.45;
+    return isSpeaking ? 0.23 : 0.55;
   };
 
   return (

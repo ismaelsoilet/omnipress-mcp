@@ -196,7 +196,7 @@ class GhostPublisherAdapter(BasePublisherAdapter):
             "Authorization": f"Ghost {token}",
             "Content-Type": "application/json",
             "Accept-Version": "v5.0",
-            "User-Agent": "OmniPress-MCP/0.1.0",
+            "User-Agent": "OmniPress-MCP/0.2.0",
         }
 
         try:

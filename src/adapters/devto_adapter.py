@@ -96,7 +96,7 @@ class DevToPublisherAdapter(BasePublisherAdapter):
         headers = {
             "api-key": self.api_key,
             "Content-Type": "application/json",
-            "User-Agent": "OmniPress-MCP/0.1.0 (https://github.com/ismaelsoilet/omnipress-mcp)",
+            "User-Agent": "OmniPress-MCP/0.2.0 (https://github.com/ismaelsoilet/omnipress-mcp)",
         }
 
         try:

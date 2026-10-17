@@ -24,7 +24,7 @@ class RedditPublisherAdapter(BasePublisherAdapter):
 
     def _get_access_token(self) -> Optional[str]:
         auth = requests.auth.HTTPBasicAuth(self.client_id, self.client_secret)
-        headers = {"User-Agent": f"OmniPress/0.1.0 by /u/{self.username}"}
+        headers = {"User-Agent": f"OmniPress/0.2.0 by /u/{self.username}"}
         data = {
             "grant_type": "password",
             "username": self.username,
@@ -85,7 +85,7 @@ class RedditPublisherAdapter(BasePublisherAdapter):
 
         headers = {
             "Authorization": f"Bearer {token}",
-            "User-Agent": f"OmniPress/0.1.0 by /u/{self.username}",
+            "User-Agent": f"OmniPress/0.2.0 by /u/{self.username}",
         }
         payload = {
             "api_type": "json",

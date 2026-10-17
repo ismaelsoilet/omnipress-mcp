@@ -12,6 +12,8 @@ import { TacticalGrid } from "../components/TacticalGrid";
 import { FilmGrain } from "../components/FilmGrain";
 import { ActData, ActTimeline, DocumentaryScene } from "../types";
 import { SynchronizedCaptions } from "../components/SynchronizedCaptions";
+import { WordByWordCaptions } from "../components/WordByWordCaptions";
+import { MitoRealidadeOverlays, OverlayEvent } from "../components/MitoRealidadeOverlays";
 
 export interface DocumentaryShortProps {
   title: string;
@@ -22,6 +24,10 @@ export interface DocumentaryShortProps {
   scenes: DocumentaryScene[];
   captionsData?: Record<string, ActData>;
   actTimelines?: ActTimeline[];
+  captionStyle?: "word-by-word" | "chunk";
+  captionsBottomPosition?: number;
+  impactOverlays?: OverlayEvent[];
+  showSceneMetadata?: boolean;
 }
 
 export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
@@ -33,31 +39,53 @@ export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
   scenes = [],
   captionsData,
   actTimelines,
+  captionStyle = "word-by-word",
+  captionsBottomPosition = 560,
+  impactOverlays = [],
+  showSceneMetadata = false,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
 
-  // Fade out suave da música nos últimos 2.5 segundos
+  // Suavização acústica: Fade-in suave de 2.0s na abertura + Fade-out de 2.5s no encerramento da música
+  const fadeInFrames = Math.round(2.0 * fps);
   const fadeOutFrames = Math.round(2.5 * fps);
   const fadeStart = Math.max(0, durationInFrames - fadeOutFrames);
   const effectiveMusicVolume =
     typeof musicVolume === "number"
-      ? interpolate(frame, [fadeStart, durationInFrames], [musicVolume, 0], {
-          extrapolateLeft: "clamp",
-          extrapolateRight: "clamp",
-        })
+      ? interpolate(
+          frame,
+          [0, fadeInFrames, fadeStart, durationInFrames],
+          [0, musicVolume, musicVolume, 0],
+          {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          }
+        )
       : musicVolume;
+
+  // Suavização acústica: Fade-in suave da locução nos primeiros 0.5s (15 frames)
+  const voiceFadeFrames = Math.round(0.5 * fps);
+  const effectiveVoiceVolume = interpolate(
+    frame,
+    [0, voiceFadeFrames],
+    [0, 1.0],
+    {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    }
+  );
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#0A0C10" }}>
-      {/* 1. Trilha Sonora do Short (com fade-out automático no encerramento) */}
+      {/* 1. Trilha Sonora do Short (suavizada com fade-in e fade-out automático) */}
       {musicSrc && (
         <Audio src={staticFile(musicSrc)} volume={effectiveMusicVolume} />
       )}
 
-      {/* 2. Locução Principal */}
+      {/* 2. Locução Principal Suavizada */}
       {voiceoverSrc && (
-        <Audio src={staticFile(voiceoverSrc)} volume={1.0} />
+        <Audio src={staticFile(voiceoverSrc)} volume={effectiveVoiceVolume} />
       )}
 
       {/* 3. Sequência de Cenas e Imagens Rápidas */}
@@ -78,9 +106,9 @@ export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
               imageSrc={staticFile(scene.mediaSrc)}
               durationInFrames={sceneDurationFrames}
               direction={index % 2 === 0 ? "zoom-in" : "zoom-out"}
-              headline={scene.headline}
+              headline={showSceneMetadata ? scene.headline : undefined}
               caption={scene.notes}
-              badge={scene.badge || badge}
+              badge={showSceneMetadata ? (scene.badge || badge) : undefined}
             />
           </Sequence>
         );
@@ -146,14 +174,28 @@ export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
       <TacticalGrid opacity={0.12} />
       <FilmGrain opacity={0.06} />
 
-      {/* 6. Legendas Dinâmicas Sincronizadas (Whisper) */}
+      {/* 6. Overlays de Choque Visual (Carimbos MITO vs REALIDADE, Flashes & Perguntas) */}
+      {impactOverlays && impactOverlays.length > 0 && (
+        <MitoRealidadeOverlays events={impactOverlays} />
+      )}
+
+      {/* 7. Legendas Dinâmicas Sincronizadas (Whisper) */}
       {captionsData && actTimelines && (
-        <SynchronizedCaptions
-          introDurationFrames={0}
-          isVertical={true}
-          captionsData={captionsData}
-          actTimelines={actTimelines}
-        />
+        captionStyle === "word-by-word" ? (
+          <WordByWordCaptions
+            introDurationFrames={0}
+            captionsData={captionsData}
+            actTimelines={actTimelines}
+            bottomPosition={captionsBottomPosition}
+          />
+        ) : (
+          <SynchronizedCaptions
+            introDurationFrames={0}
+            isVertical={true}
+            captionsData={captionsData}
+            actTimelines={actTimelines}
+          />
+        )
       )}
     </AbsoluteFill>
   );

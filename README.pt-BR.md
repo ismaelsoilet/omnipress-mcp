@@ -1,6 +1,6 @@
 # 🌐 OmniPress MCP
 
-[🇺🇸 English](README.md) | [🇧🇷 Português](README.pt-BR.md) | [🤖 Manual para Agentes](docs/AGENT_MANUAL.md) | [🚀 Guia de Submissão](docs/SUBMISSION_GUIDE.md)
+[🇺🇸 English](README.md) | [🇧🇷 Português](README.pt-BR.md) | [🤖 Manual para Agentes](docs/AGENT_MANUAL.md) | [🎬 Skills de Vídeo](docs/VIDEO_CREATION_AND_PLATFORM_SKILLS.md) | [🎞️ Referência Remotion](docs/REMOTION_SKILLS_AND_DOCS.md) | [📜 Changelog](CHANGELOG.md)
 
 > **O Protocolo Universal de Publicação Agêntica e Motor de Distribuição Multi-Canal para Agentes de IA via Model Context Protocol (MCP)**
 
@@ -15,9 +15,9 @@
 O **OmniPress MCP** é um protocolo aberto e agnóstico a nichos para publicação agêntica. Ele capacita agentes de IA (como Google Antigravity, Claude ou ChatGPT) a ingerir ideias brutas, repositórios de código, decisões judiciais/tributárias, memorandos de políticas públicas, fatos históricos ou dados de mercado, transformando-os em artigos completos de alta autoridade, carrosséis visuais para redes sociais, roteiros para canais dark e campanhas estruturadas multi-plataforma.
 
 O OmniPress é projetado para ser **verdadeiramente "Omni"**:
-- **Omni-Domínio**: Motor de ingestão universal expansível através de Skills modulares por nicho (`tech`, `tax-legal`, `govtech`, `darkchannel`).
+- **Omni-Domínio**: Motor de ingestão universal expansível através de 31 skills modulares (tech, tributário/perícia, govtech, dark channels, documentários longos de YouTube e vídeos verticais virais).
 - **Omni-Plataforma**: Distribuição nativa para Dev.to, Ghost CMS, LinkedIn, X (Twitter), Meta Threads, Instagram (Reels & Carrosséis), Reddit, Webhooks (n8n/Make) e arquivos Markdown locais.
-- **Omni-Ambiente**: Servidor MCP unificado em Python (suportando STDIO e HTTP/SSE ASGI) + motor de vídeo Remotion em React + renderizador de carrosséis Pillow em conformidade com a Regra 08.
+- **Omni-Ambiente**: Servidor MCP unificado em Python (suportando STDIO e HTTP/SSE ASGI) + motor de vídeo programático em Remotion React (12 skills oficiais) + renderizador de carrosséis Pillow em conformidade com a Regra 08.
 - **Omni-Canal (Multi-Tenant)**: Espaço de trabalho isolado por canal (`channels/<slug>/`), permitindo gerenciar múltiplos veículos, marcas e canais sem colisão de ativos.
 
 ---

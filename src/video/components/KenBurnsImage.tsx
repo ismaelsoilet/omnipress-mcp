@@ -135,6 +135,67 @@ export const KenBurnsImage: React.FC<KenBurnsSceneProps> = ({
               {headline}
             </h2>
           )}
+
+          {caption && (
+            <div
+              style={{
+                marginTop: 10,
+                color: "#CBD5E1",
+                fontFamily: "'Montserrat', system-ui, sans-serif",
+                fontSize: isVertical ? 18 : 17,
+                fontWeight: 500,
+                letterSpacing: 0.4,
+                lineHeight: 1.35,
+                borderTop: "1px solid rgba(212, 175, 55, 0.3)",
+                paddingTop: 8,
+              }}
+            >
+              {caption}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 5. Tarja / Selo Especial para Imagens de Arquivo Histórico Real */}
+      {badge && badge.toUpperCase().includes("HISTÓRICO") && (
+        <div
+          style={{
+            position: "absolute",
+            top: isVertical ? 150 : 48,
+            right: isVertical ? 40 : 64,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            backgroundColor: "rgba(10, 12, 16, 0.90)",
+            border: "1.5px solid #D4AF37",
+            borderRadius: 8,
+            padding: "8px 18px",
+            backdropFilter: "blur(8px)",
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.8)",
+            zIndex: 30,
+          }}
+        >
+          <div
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: "50%",
+              backgroundColor: "#22C55E",
+              boxShadow: "0 0 10px #22C55E",
+            }}
+          />
+          <span
+            style={{
+              color: "#F1F5F9",
+              fontFamily: "'Courier New', Courier, monospace",
+              fontSize: 14,
+              fontWeight: 800,
+              letterSpacing: 2,
+              textTransform: "uppercase",
+            }}
+          >
+            ARQUIVO REAL // DESCLASSIFICADO
+          </span>
         </div>
       )}
     </AbsoluteFill>

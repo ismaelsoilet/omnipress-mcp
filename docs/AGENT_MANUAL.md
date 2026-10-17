@@ -302,9 +302,30 @@ Quando o usuário pedir: *"Renderize a vinheta ou o episódio de vídeo do canal
      npx remotion render src/video/index.ts DocumentaryEpisode-16x9 out/video.mp4 \
        --props='{"config": {"channelSlug": "meu-canal", "title": "Título do Episódio", "introProps": {"channelName": "MEU CANAL", "primaryColor": "#3B82F6"}}}'
      ```
-5. **Trilha Sonora & Ducking de Áudio**:
-   - Sempre utilize áudio estéreo em 48kHz.
-   - A trilha de fundo sofre ducking automático de volume (reduz para volume `0.15–0.18` / -20dB durante a locução e sobe para `0.40–0.45` em transições silenciosas).
+5. **Tratamento Obrigatório de Estúdio e Masterização de Voz (Voiceover Gate)**:
+   - Toda narração de voz (gravada ou sintética) deve passar obrigatoriamente pela Cadeia de Masterização Broadcast antes de ser renderizada no Remotion:
+     1. De-click e supressão de ruídos de boca (`adeclick`).
+     2. Filtro passa-alta em 80Hz (`highpass=80`) cortando ruídos subsônicos e batidas de mesa.
+     3. Denoise espectral cirúrgico (`afftdn` a -28dB) eliminando chiado de sala e pré-amplificador.
+     4. Equalização cirúrgica de 4 bandas (corte nasal em 300Hz, calor em 140Hz, presença em 3kHz, ar em 8.5kHz).
+     5. Compressor dinâmico de estúdio (ratio ~3:1) para inteligibilidade uniforme.
+     6. Normalização internacional EBU R128 travando o áudio entre **-14.0 e -16.0 LUFS** (alvo: **-14.0 LUFS**, True Peak <= -1.2 dBTP).
+   - É expressamente proibido renderizar vídeos com voz crua ou baixa (< -20 LUFS).
+6. **Suavização Acústica e Protocolo Anti-Ruído Pré-Fala**:
+   - **Lead-in Zeroing**: Todo áudio de gravação real tem ruído ambiente antes da fala; deve-se silenciar digitalmente (`gain = 0.0`) o intervalo entre 0.00s e 80ms antes do primeiro fonema, aplicando curva suave de fade-in (60ms a 80ms) na entrada da voz.
+   - **Fade-in na Trilha Musical**: No Remotion, a música de abertura deve sempre interpolar um fade-in progressivo nos primeiros 1.5 a 2.0 segundos, evitando impactos sonoros repentinos.
+   - **Fade-in de Proteção na Locução**: Utilizar fade-in inicial de 0.5s no componente `<Audio />` de voz.
+7. **Agendamento Direto Multiplataforma (Recomendado para Vídeos Verticais)**:
+   - Para vídeos verticais (Shorts, Reels, TikTok), o agendamento direto nativo é a prática recomendada:
+     - **YouTube Studio**: Upload do MP4, título e descrição com atribuição CC-BY, agendamento de data/hora na aba Visibilidade.
+     - **Meta Business Suite / Instagram**: Upload do MP4 com capa 9:16 personalizada e enquadramento da grade do feed.
+     - **TikTok Studio Desktop (tiktok.com/tiktokstudio)**: Upload do MP4 com ativação de "Agendar vídeo" (até 10 dias) e desativação de legendas automáticas da rede para não sobrepor as legendas do vídeo.
+8. **Uso das 12 Agent Skills Oficiais do Remotion**:
+   - O projeto conta com as 12 skills oficiais instaladas em [`.agents/skills/remotion-*`](../.agents/skills/) e documentadas em [`REMOTION_SKILLS_AND_DOCS.md`](./REMOTION_SKILLS_AND_DOCS.md).
+   - Para animações, utilize sempre `interpolate()` e `spring()` (nunca transições CSS/Tailwind).
+   - Para pré-visualização em tempo real: `npm run remotion:preview`.
+   - Para buscar documentação oficial: consulte o endpoint Algolia ou utilize URLs `.md` (ex.: `https://www.remotion.dev/docs/interpolate.md`).
+   - Para atualizar as skills: `npx remotion skills update`.
 
 ---
 

@@ -1,6 +1,6 @@
 # 🌐 OmniPress MCP
 
-[🇺🇸 English](README.md) | [🇧🇷 Português](README.pt-BR.md) | [🤖 AI Agent Manual](docs/AGENT_MANUAL.md) | [🚀 Submission Guide](docs/SUBMISSION_GUIDE.md)
+[🇺🇸 English](README.md) | [🇧🇷 Português](README.pt-BR.md) | [🤖 AI Agent Manual](docs/AGENT_MANUAL.md) | [🎬 Video Skills](docs/VIDEO_CREATION_AND_PLATFORM_SKILLS.md) | [🎞️ Remotion Reference](docs/REMOTION_SKILLS_AND_DOCS.md) | [📜 Changelog](CHANGELOG.md)
 
 > **The Universal Agentic Publishing Protocol & Media Distribution Engine for AI Agents via Model Context Protocol (MCP)**
 
@@ -15,9 +15,9 @@
 **OmniPress MCP** is an open-source, domain-agnostic agentic publishing protocol. It empowers AI agents (like Google Antigravity, Claude, or ChatGPT) to ingest raw thoughts, codebases, research papers, court rulings, policy memos, or market data, and transform them into authoritative long-form publications, high-contrast visual social carousels, viral dark channel scripts, and multi-platform distribution campaigns.
 
 OmniPress is designed to be **truly "Omni"**:
-- **Omni-Domain**: Universal intake engine extensible via modular niche skills (`tech`, `tax-legal`, `govtech`, `darkchannel`).
+- **Omni-Domain**: Universal intake engine extensible via 31 modular skills (tech, tax-legal, govtech, darkchannel, YouTube long-form documentary, and vertical short-form suites).
 - **Omni-Platform**: Native distribution across Dev.to, Ghost CMS, LinkedIn, X (Twitter), Meta Threads, Instagram (Reels & Carousels), Reddit, Webhooks (n8n/Make), and Markdown archives.
-- **Omni-Runtime**: Unified Python MCP engine (supporting STDIO and HTTP/SSE ASGI) + Remotion React video engine + Pillow high-contrast carousel builder.
+- **Omni-Runtime**: Unified Python MCP engine (supporting STDIO and HTTP/SSE ASGI) + Remotion React programmatic video engine (12 official skills) + Pillow high-contrast carousel builder.
 - **Omni-Channel (Multi-Tenant)**: Isolated channel workspaces (`channels/<slug>/`) enabling seamless management of multiple brands, publications, or dark channels without asset collisions.
 
 ---

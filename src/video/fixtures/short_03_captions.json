@@ -1,0 +1,2565 @@
+{
+  "short_03": {
+    "title": "A Epidemia da Dança de 1518: O Surto Bizarro de Estrasburgo",
+    "duration": 100.13,
+    "chunks": [
+      {
+        "start": 1.18,
+        "end": 3.06,
+        "text": "Em julho de 1518,",
+        "words": [
+          {
+            "word": "Em",
+            "start": 1.18,
+            "end": 1.34
+          },
+          {
+            "word": "julho",
+            "start": 1.34,
+            "end": 1.76
+          },
+          {
+            "word": "de",
+            "start": 1.76,
+            "end": 1.94
+          },
+          {
+            "word": "1518,",
+            "start": 1.94,
+            "end": 3.06
+          }
+        ]
+      },
+      {
+        "start": 3.5,
+        "end": 4.48,
+        "text": "numa rua estreita de",
+        "words": [
+          {
+            "word": "numa",
+            "start": 3.5,
+            "end": 3.6
+          },
+          {
+            "word": "rua",
+            "start": 3.6,
+            "end": 3.82
+          },
+          {
+            "word": "estreita",
+            "start": 3.82,
+            "end": 4.34
+          },
+          {
+            "word": "de",
+            "start": 4.34,
+            "end": 4.48
+          }
+        ]
+      },
+      {
+        "start": 4.48,
+        "end": 4.98,
+        "text": "Estrasburgo,",
+        "words": [
+          {
+            "word": "Estrasburgo,",
+            "start": 4.48,
+            "end": 4.98
+          }
+        ]
+      },
+      {
+        "start": 5.42,
+        "end": 7.36,
+        "text": "uma mulher chamada Frau Troffea,",
+        "words": [
+          {
+            "word": "uma",
+            "start": 5.42,
+            "end": 5.8
+          },
+          {
+            "word": "mulher",
+            "start": 5.8,
+            "end": 6.02
+          },
+          {
+            "word": "chamada",
+            "start": 6.02,
+            "end": 6.52
+          },
+          {
+            "word": "Frau Troffea,",
+            "start": 6.52,
+            "end": 7.36
+          }
+        ]
+      },
+      {
+        "start": 8.0,
+        "end": 8.78,
+        "text": "começou a dançar.",
+        "words": [
+          {
+            "word": "começou",
+            "start": 8.0,
+            "end": 8.28
+          },
+          {
+            "word": "a",
+            "start": 8.28,
+            "end": 8.48
+          },
+          {
+            "word": "dançar.",
+            "start": 8.48,
+            "end": 8.78
+          }
+        ]
+      },
+      {
+        "start": 9.22,
+        "end": 10.18,
+        "text": "Não havia música,",
+        "words": [
+          {
+            "word": "Não",
+            "start": 9.22,
+            "end": 9.42
+          },
+          {
+            "word": "havia",
+            "start": 9.42,
+            "end": 9.74
+          },
+          {
+            "word": "música,",
+            "start": 9.74,
+            "end": 10.18
+          }
+        ]
+      },
+      {
+        "start": 10.86,
+        "end": 11.6,
+        "text": "ela não sorria,",
+        "words": [
+          {
+            "word": "ela",
+            "start": 10.86,
+            "end": 11.0
+          },
+          {
+            "word": "não",
+            "start": 11.0,
+            "end": 11.2
+          },
+          {
+            "word": "sorria,",
+            "start": 11.2,
+            "end": 11.6
+          }
+        ]
+      },
+      {
+        "start": 12.22,
+        "end": 13.52,
+        "text": "seu rosto expressava puro",
+        "words": [
+          {
+            "word": "seu",
+            "start": 12.22,
+            "end": 12.38
+          },
+          {
+            "word": "rosto",
+            "start": 12.38,
+            "end": 12.58
+          },
+          {
+            "word": "expressava",
+            "start": 12.58,
+            "end": 13.3
+          },
+          {
+            "word": "puro",
+            "start": 13.3,
+            "end": 13.52
+          }
+        ]
+      },
+      {
+        "start": 13.52,
+        "end": 13.92,
+        "text": "pavor,",
+        "words": [
+          {
+            "word": "pavor,",
+            "start": 13.52,
+            "end": 13.92
+          }
+        ]
+      },
+      {
+        "start": 14.54,
+        "end": 15.66,
+        "text": "mas seus pés simplesmente",
+        "words": [
+          {
+            "word": "mas",
+            "start": 14.54,
+            "end": 14.7
+          },
+          {
+            "word": "seus",
+            "start": 14.7,
+            "end": 14.94
+          },
+          {
+            "word": "pés",
+            "start": 14.94,
+            "end": 15.16
+          },
+          {
+            "word": "simplesmente",
+            "start": 15.16,
+            "end": 15.66
+          }
+        ]
+      },
+      {
+        "start": 15.66,
+        "end": 16.5,
+        "text": "não paravam.",
+        "words": [
+          {
+            "word": "não",
+            "start": 15.66,
+            "end": 15.98
+          },
+          {
+            "word": "paravam.",
+            "start": 15.98,
+            "end": 16.5
+          }
+        ]
+      },
+      {
+        "start": 16.92,
+        "end": 18.04,
+        "text": "Ela dançou por seis",
+        "words": [
+          {
+            "word": "Ela",
+            "start": 16.92,
+            "end": 17.16
+          },
+          {
+            "word": "dançou",
+            "start": 17.16,
+            "end": 17.6
+          },
+          {
+            "word": "por",
+            "start": 17.6,
+            "end": 17.8
+          },
+          {
+            "word": "seis",
+            "start": 17.8,
+            "end": 18.04
+          }
+        ]
+      },
+      {
+        "start": 18.04,
+        "end": 18.88,
+        "text": "dias seguidos,",
+        "words": [
+          {
+            "word": "dias",
+            "start": 18.04,
+            "end": 18.28
+          },
+          {
+            "word": "seguidos,",
+            "start": 18.28,
+            "end": 18.88
+          }
+        ]
+      },
+      {
+        "start": 19.22,
+        "end": 20.62,
+        "text": "até os sapatos empaparem",
+        "words": [
+          {
+            "word": "até",
+            "start": 19.22,
+            "end": 19.42
+          },
+          {
+            "word": "os",
+            "start": 19.42,
+            "end": 19.6
+          },
+          {
+            "word": "sapatos",
+            "start": 19.6,
+            "end": 19.96
+          },
+          {
+            "word": "empaparem",
+            "start": 19.96,
+            "end": 20.62
+          }
+        ]
+      },
+      {
+        "start": 20.62,
+        "end": 21.24,
+        "text": "de sangue,",
+        "words": [
+          {
+            "word": "de",
+            "start": 20.62,
+            "end": 20.76
+          },
+          {
+            "word": "sangue,",
+            "start": 20.76,
+            "end": 21.24
+          }
+        ]
+      },
+      {
+        "start": 21.8,
+        "end": 23.14,
+        "text": "e o pesadelo só",
+        "words": [
+          {
+            "word": "e",
+            "start": 21.8,
+            "end": 22.32
+          },
+          {
+            "word": "o",
+            "start": 22.32,
+            "end": 22.4
+          },
+          {
+            "word": "pesadelo",
+            "start": 22.4,
+            "end": 22.88
+          },
+          {
+            "word": "só",
+            "start": 22.88,
+            "end": 23.14
+          }
+        ]
+      },
+      {
+        "start": 23.14,
+        "end": 23.62,
+        "text": "começou,",
+        "words": [
+          {
+            "word": "começou,",
+            "start": 23.14,
+            "end": 23.62
+          }
+        ]
+      },
+      {
+        "start": 23.62,
+        "end": 25.28,
+        "text": "em poucas semanas,",
+        "words": [
+          {
+            "word": "em",
+            "start": 23.62,
+            "end": 24.46
+          },
+          {
+            "word": "poucas",
+            "start": 24.46,
+            "end": 24.8
+          },
+          {
+            "word": "semanas,",
+            "start": 24.8,
+            "end": 25.28
+          }
+        ]
+      },
+      {
+        "start": 25.86,
+        "end": 27.26,
+        "text": "mais de 400 pessoas",
+        "words": [
+          {
+            "word": "mais",
+            "start": 25.86,
+            "end": 26.02
+          },
+          {
+            "word": "de",
+            "start": 26.02,
+            "end": 26.18
+          },
+          {
+            "word": "400",
+            "start": 26.18,
+            "end": 26.52
+          },
+          {
+            "word": "pessoas",
+            "start": 26.52,
+            "end": 27.26
+          }
+        ]
+      },
+      {
+        "start": 27.26,
+        "end": 28.44,
+        "text": "se juntaram ao transe,",
+        "words": [
+          {
+            "word": "se",
+            "start": 27.26,
+            "end": 27.44
+          },
+          {
+            "word": "juntaram",
+            "start": 27.44,
+            "end": 27.86
+          },
+          {
+            "word": "ao",
+            "start": 27.86,
+            "end": 28.04
+          },
+          {
+            "word": "transe,",
+            "start": 28.04,
+            "end": 28.44
+          }
+        ]
+      },
+      {
+        "start": 29.08,
+        "end": 30.6,
+        "text": "dançando dia e noite até",
+        "words": [
+          {
+            "word": "dançando",
+            "start": 29.08,
+            "end": 29.54
+          },
+          {
+            "word": "dia",
+            "start": 29.54,
+            "end": 29.74
+          },
+          {
+            "word": "e noite",
+            "start": 29.74,
+            "end": 30.22
+          },
+          {
+            "word": "até",
+            "start": 30.22,
+            "end": 30.6
+          }
+        ]
+      },
+      {
+        "start": 30.6,
+        "end": 31.36,
+        "text": "colapsarem,",
+        "words": [
+          {
+            "word": "colapsarem,",
+            "start": 30.6,
+            "end": 31.36
+          }
+        ]
+      },
+      {
+        "start": 31.86,
+        "end": 33.62,
+        "text": "dezenas morriam diariamente de",
+        "words": [
+          {
+            "word": "dezenas",
+            "start": 31.86,
+            "end": 32.4
+          },
+          {
+            "word": "morriam",
+            "start": 32.4,
+            "end": 32.84
+          },
+          {
+            "word": "diariamente",
+            "start": 32.84,
+            "end": 33.32
+          },
+          {
+            "word": "de",
+            "start": 33.32,
+            "end": 33.62
+          }
+        ]
+      },
+      {
+        "start": 33.62,
+        "end": 35.56,
+        "text": "ataques cardíacos e exaustão.",
+        "words": [
+          {
+            "word": "ataques",
+            "start": 33.62,
+            "end": 33.96
+          },
+          {
+            "word": "cardíacos",
+            "start": 33.96,
+            "end": 34.68
+          },
+          {
+            "word": "e",
+            "start": 34.68,
+            "end": 34.88
+          },
+          {
+            "word": "exaustão.",
+            "start": 34.88,
+            "end": 35.56
+          }
+        ]
+      },
+      {
+        "start": 36.62,
+        "end": 37.4,
+        "text": "Desesperadas,",
+        "words": [
+          {
+            "word": "Desesperadas,",
+            "start": 36.62,
+            "end": 37.4
+          }
+        ]
+      },
+      {
+        "start": 37.92,
+        "end": 39.68,
+        "text": "as autoridades consultaram médicos",
+        "words": [
+          {
+            "word": "as",
+            "start": 37.92,
+            "end": 38.08
+          },
+          {
+            "word": "autoridades",
+            "start": 38.08,
+            "end": 38.54
+          },
+          {
+            "word": "consultaram",
+            "start": 38.54,
+            "end": 39.16
+          },
+          {
+            "word": "médicos",
+            "start": 39.16,
+            "end": 39.68
+          }
+        ]
+      },
+      {
+        "start": 39.68,
+        "end": 41.02,
+        "text": "que deram diagnóstico mais",
+        "words": [
+          {
+            "word": "que",
+            "start": 39.68,
+            "end": 39.92
+          },
+          {
+            "word": "deram",
+            "start": 39.92,
+            "end": 40.22
+          },
+          {
+            "word": "diagnóstico",
+            "start": 40.22,
+            "end": 40.82
+          },
+          {
+            "word": "mais",
+            "start": 40.82,
+            "end": 41.02
+          }
+        ]
+      },
+      {
+        "start": 41.02,
+        "end": 42.0,
+        "text": "bizarro da história,",
+        "words": [
+          {
+            "word": "bizarro",
+            "start": 41.02,
+            "end": 41.5
+          },
+          {
+            "word": "da",
+            "start": 41.5,
+            "end": 41.6
+          },
+          {
+            "word": "história,",
+            "start": 41.6,
+            "end": 42.0
+          }
+        ]
+      },
+      {
+        "start": 42.78,
+        "end": 44.26,
+        "text": "sangue superaquecido.",
+        "words": [
+          {
+            "word": "sangue",
+            "start": 42.78,
+            "end": 43.24
+          },
+          {
+            "word": "superaquecido.",
+            "start": 43.24,
+            "end": 44.26
+          }
+        ]
+      },
+      {
+        "start": 44.92,
+        "end": 46.36,
+        "text": "E o tratamento prescrito?",
+        "words": [
+          {
+            "word": "E",
+            "start": 44.92,
+            "end": 45.26
+          },
+          {
+            "word": "o",
+            "start": 45.26,
+            "end": 45.32
+          },
+          {
+            "word": "tratamento",
+            "start": 45.32,
+            "end": 45.74
+          },
+          {
+            "word": "prescrito?",
+            "start": 45.74,
+            "end": 46.36
+          }
+        ]
+      },
+      {
+        "start": 47.04,
+        "end": 48.98,
+        "text": "Eles precisavam continuar dançando",
+        "words": [
+          {
+            "word": "Eles",
+            "start": 47.04,
+            "end": 47.36
+          },
+          {
+            "word": "precisavam",
+            "start": 47.36,
+            "end": 48.04
+          },
+          {
+            "word": "continuar",
+            "start": 48.04,
+            "end": 48.42
+          },
+          {
+            "word": "dançando",
+            "start": 48.42,
+            "end": 48.98
+          }
+        ]
+      },
+      {
+        "start": 48.98,
+        "end": 50.12,
+        "text": "até a febre passar.",
+        "words": [
+          {
+            "word": "até",
+            "start": 48.98,
+            "end": 49.24
+          },
+          {
+            "word": "a",
+            "start": 49.24,
+            "end": 49.46
+          },
+          {
+            "word": "febre",
+            "start": 49.46,
+            "end": 49.7
+          },
+          {
+            "word": "passar.",
+            "start": 49.7,
+            "end": 50.12
+          }
+        ]
+      },
+      {
+        "start": 50.12,
+        "end": 52.44,
+        "text": "A cidade contratou dezenas",
+        "words": [
+          {
+            "word": "A",
+            "start": 50.12,
+            "end": 51.08
+          },
+          {
+            "word": "cidade",
+            "start": 51.08,
+            "end": 51.38
+          },
+          {
+            "word": "contratou",
+            "start": 51.38,
+            "end": 52.0
+          },
+          {
+            "word": "dezenas",
+            "start": 52.0,
+            "end": 52.44
+          }
+        ]
+      },
+      {
+        "start": 52.44,
+        "end": 53.56,
+        "text": "de músicos e erguiu",
+        "words": [
+          {
+            "word": "de",
+            "start": 52.44,
+            "end": 52.58
+          },
+          {
+            "word": "músicos",
+            "start": 52.58,
+            "end": 52.96
+          },
+          {
+            "word": "e",
+            "start": 52.96,
+            "end": 53.28
+          },
+          {
+            "word": "erguiu",
+            "start": 53.28,
+            "end": 53.56
+          }
+        ]
+      },
+      {
+        "start": 53.56,
+        "end": 54.64,
+        "text": "palcos de madeira na",
+        "words": [
+          {
+            "word": "palcos",
+            "start": 53.56,
+            "end": 53.98
+          },
+          {
+            "word": "de",
+            "start": 53.98,
+            "end": 54.16
+          },
+          {
+            "word": "madeira",
+            "start": 54.16,
+            "end": 54.52
+          },
+          {
+            "word": "na",
+            "start": 54.52,
+            "end": 54.64
+          }
+        ]
+      },
+      {
+        "start": 54.64,
+        "end": 55.12,
+        "text": "praça,",
+        "words": [
+          {
+            "word": "praça,",
+            "start": 54.64,
+            "end": 55.12
+          }
+        ]
+      },
+      {
+        "start": 55.68,
+        "end": 56.58,
+        "text": "forçando os doentes a",
+        "words": [
+          {
+            "word": "forçando",
+            "start": 55.68,
+            "end": 56.08
+          },
+          {
+            "word": "os",
+            "start": 56.08,
+            "end": 56.22
+          },
+          {
+            "word": "doentes",
+            "start": 56.22,
+            "end": 56.44
+          },
+          {
+            "word": "a",
+            "start": 56.44,
+            "end": 56.58
+          }
+        ]
+      },
+      {
+        "start": 56.58,
+        "end": 58.0,
+        "text": "dançar 24 horas por",
+        "words": [
+          {
+            "word": "dançar",
+            "start": 56.58,
+            "end": 56.88
+          },
+          {
+            "word": "24",
+            "start": 56.88,
+            "end": 57.26
+          },
+          {
+            "word": "horas",
+            "start": 57.26,
+            "end": 57.78
+          },
+          {
+            "word": "por",
+            "start": 57.78,
+            "end": 58.0
+          }
+        ]
+      },
+      {
+        "start": 58.0,
+        "end": 58.32,
+        "text": "dia.",
+        "words": [
+          {
+            "word": "dia.",
+            "start": 58.0,
+            "end": 58.32
+          }
+        ]
+      },
+      {
+        "start": 59.12,
+        "end": 60.84,
+        "text": "O resultado foi catastrófico,",
+        "words": [
+          {
+            "word": "O",
+            "start": 59.12,
+            "end": 59.22
+          },
+          {
+            "word": "resultado",
+            "start": 59.22,
+            "end": 59.64
+          },
+          {
+            "word": "foi",
+            "start": 59.64,
+            "end": 59.96
+          },
+          {
+            "word": "catastrófico,",
+            "start": 59.96,
+            "end": 60.84
+          }
+        ]
+      },
+      {
+        "start": 61.34,
+        "end": 62.3,
+        "text": "o ritmo acelerou,",
+        "words": [
+          {
+            "word": "o",
+            "start": 61.34,
+            "end": 61.48
+          },
+          {
+            "word": "ritmo",
+            "start": 61.48,
+            "end": 61.82
+          },
+          {
+            "word": "acelerou,",
+            "start": 61.82,
+            "end": 62.3
+          }
+        ]
+      },
+      {
+        "start": 62.66,
+        "end": 64.26,
+        "text": "o contágio psicológico e",
+        "words": [
+          {
+            "word": "o",
+            "start": 62.66,
+            "end": 62.8
+          },
+          {
+            "word": "contágio",
+            "start": 62.8,
+            "end": 63.18
+          },
+          {
+            "word": "psicológico",
+            "start": 63.18,
+            "end": 64.06
+          },
+          {
+            "word": "e",
+            "start": 64.06,
+            "end": 64.26
+          }
+        ]
+      },
+      {
+        "start": 64.26,
+        "end": 65.7,
+        "text": "os palcos viraram verdadeiros",
+        "words": [
+          {
+            "word": "os",
+            "start": 64.26,
+            "end": 64.4
+          },
+          {
+            "word": "palcos",
+            "start": 64.4,
+            "end": 64.82
+          },
+          {
+            "word": "viraram",
+            "start": 64.82,
+            "end": 65.16
+          },
+          {
+            "word": "verdadeiros",
+            "start": 65.16,
+            "end": 65.7
+          }
+        ]
+      },
+      {
+        "start": 65.7,
+        "end": 67.14,
+        "text": "matadouros a céu aberto.",
+        "words": [
+          {
+            "word": "matadouros",
+            "start": 65.7,
+            "end": 66.22
+          },
+          {
+            "word": "a",
+            "start": 66.22,
+            "end": 66.46
+          },
+          {
+            "word": "céu",
+            "start": 66.46,
+            "end": 66.68
+          },
+          {
+            "word": "aberto.",
+            "start": 66.68,
+            "end": 67.14
+          }
+        ]
+      },
+      {
+        "start": 67.58,
+        "end": 69.56,
+        "text": "Pessoas imploravam por socorro,",
+        "words": [
+          {
+            "word": "Pessoas",
+            "start": 67.58,
+            "end": 68.14
+          },
+          {
+            "word": "imploravam",
+            "start": 68.14,
+            "end": 68.74
+          },
+          {
+            "word": "por",
+            "start": 68.74,
+            "end": 68.96
+          },
+          {
+            "word": "socorro,",
+            "start": 68.96,
+            "end": 69.56
+          }
+        ]
+      },
+      {
+        "start": 69.82,
+        "end": 71.14,
+        "text": "enquanto seus próprios músculos",
+        "words": [
+          {
+            "word": "enquanto",
+            "start": 69.82,
+            "end": 70.04
+          },
+          {
+            "word": "seus",
+            "start": 70.04,
+            "end": 70.36
+          },
+          {
+            "word": "próprios",
+            "start": 70.36,
+            "end": 70.8
+          },
+          {
+            "word": "músculos",
+            "start": 70.8,
+            "end": 71.14
+          }
+        ]
+      },
+      {
+        "start": 71.14,
+        "end": 72.94,
+        "text": "continuavam pulando contra sua",
+        "words": [
+          {
+            "word": "continuavam",
+            "start": 71.14,
+            "end": 71.84
+          },
+          {
+            "word": "pulando",
+            "start": 71.84,
+            "end": 72.32
+          },
+          {
+            "word": "contra",
+            "start": 72.32,
+            "end": 72.72
+          },
+          {
+            "word": "sua",
+            "start": 72.72,
+            "end": 72.94
+          }
+        ]
+      },
+      {
+        "start": 72.94,
+        "end": 73.48,
+        "text": "vontade.",
+        "words": [
+          {
+            "word": "vontade.",
+            "start": 72.94,
+            "end": 73.48
+          }
+        ]
+      },
+      {
+        "start": 74.32,
+        "end": 75.78,
+        "text": "O surto só cessou",
+        "words": [
+          {
+            "word": "O",
+            "start": 74.32,
+            "end": 74.7
+          },
+          {
+            "word": "surto",
+            "start": 74.7,
+            "end": 75.1
+          },
+          {
+            "word": "só",
+            "start": 75.1,
+            "end": 75.28
+          },
+          {
+            "word": "cessou",
+            "start": 75.28,
+            "end": 75.78
+          }
+        ]
+      },
+      {
+        "start": 75.78,
+        "end": 77.06,
+        "text": "quando os sobreviventes foram",
+        "words": [
+          {
+            "word": "quando",
+            "start": 75.78,
+            "end": 76.16
+          },
+          {
+            "word": "os",
+            "start": 76.16,
+            "end": 76.32
+          },
+          {
+            "word": "sobreviventes",
+            "start": 76.32,
+            "end": 76.82
+          },
+          {
+            "word": "foram",
+            "start": 76.82,
+            "end": 77.06
+          }
+        ]
+      },
+      {
+        "start": 77.06,
+        "end": 78.28,
+        "text": "levados amarrados para um",
+        "words": [
+          {
+            "word": "levados",
+            "start": 77.06,
+            "end": 77.42
+          },
+          {
+            "word": "amarrados",
+            "start": 77.42,
+            "end": 77.94
+          },
+          {
+            "word": "para",
+            "start": 77.94,
+            "end": 78.12
+          },
+          {
+            "word": "um",
+            "start": 78.12,
+            "end": 78.28
+          }
+        ]
+      },
+      {
+        "start": 78.28,
+        "end": 79.5,
+        "text": "santuário nas montanhas,",
+        "words": [
+          {
+            "word": "santuário",
+            "start": 78.28,
+            "end": 78.66
+          },
+          {
+            "word": "nas",
+            "start": 78.66,
+            "end": 78.88
+          },
+          {
+            "word": "montanhas,",
+            "start": 78.88,
+            "end": 79.5
+          }
+        ]
+      },
+      {
+        "start": 80.02,
+        "end": 81.58,
+        "text": "onde calçaram sapatos vermelhos",
+        "words": [
+          {
+            "word": "onde",
+            "start": 80.02,
+            "end": 80.16
+          },
+          {
+            "word": "calçaram",
+            "start": 80.16,
+            "end": 80.64
+          },
+          {
+            "word": "sapatos",
+            "start": 80.64,
+            "end": 81.16
+          },
+          {
+            "word": "vermelhos",
+            "start": 81.16,
+            "end": 81.58
+          }
+        ]
+      },
+      {
+        "start": 81.58,
+        "end": 82.32,
+        "text": "santificados.",
+        "words": [
+          {
+            "word": "santificados.",
+            "start": 81.58,
+            "end": 82.32
+          }
+        ]
+      },
+      {
+        "start": 83.24,
+        "end": 85.08,
+        "text": "Historiadores modernos comprovaram,",
+        "words": [
+          {
+            "word": "Historiadores",
+            "start": 83.24,
+            "end": 83.78
+          },
+          {
+            "word": "modernos",
+            "start": 83.78,
+            "end": 84.4
+          },
+          {
+            "word": "comprovaram,",
+            "start": 84.4,
+            "end": 85.08
+          }
+        ]
+      },
+      {
+        "start": 85.44,
+        "end": 86.4,
+        "text": "não foi veneno,",
+        "words": [
+          {
+            "word": "não",
+            "start": 85.44,
+            "end": 85.64
+          },
+          {
+            "word": "foi",
+            "start": 85.64,
+            "end": 85.88
+          },
+          {
+            "word": "veneno,",
+            "start": 85.88,
+            "end": 86.4
+          }
+        ]
+      },
+      {
+        "start": 86.9,
+        "end": 88.54,
+        "text": "mas sim histeria coletiva",
+        "words": [
+          {
+            "word": "mas",
+            "start": 86.9,
+            "end": 87.04
+          },
+          {
+            "word": "sim",
+            "start": 87.04,
+            "end": 87.26
+          },
+          {
+            "word": "histeria",
+            "start": 87.26,
+            "end": 87.76
+          },
+          {
+            "word": "coletiva",
+            "start": 87.76,
+            "end": 88.54
+          }
+        ]
+      },
+      {
+        "start": 88.54,
+        "end": 90.2,
+        "text": "induzida pela fome extrema",
+        "words": [
+          {
+            "word": "induzida",
+            "start": 88.54,
+            "end": 89.1
+          },
+          {
+            "word": "pela",
+            "start": 89.1,
+            "end": 89.32
+          },
+          {
+            "word": "fome",
+            "start": 89.32,
+            "end": 89.64
+          },
+          {
+            "word": "extrema",
+            "start": 89.64,
+            "end": 90.2
+          }
+        ]
+      },
+      {
+        "start": 90.2,
+        "end": 91.52,
+        "text": "e pelo terror místico.",
+        "words": [
+          {
+            "word": "e",
+            "start": 90.2,
+            "end": 90.42
+          },
+          {
+            "word": "pelo",
+            "start": 90.42,
+            "end": 90.64
+          },
+          {
+            "word": "terror",
+            "start": 90.64,
+            "end": 90.9
+          },
+          {
+            "word": "místico.",
+            "start": 90.9,
+            "end": 91.52
+          }
+        ]
+      },
+      {
+        "start": 92.04,
+        "end": 93.48,
+        "text": "Você teria resistido a esse",
+        "words": [
+          {
+            "word": "Você",
+            "start": 92.04,
+            "end": 92.36
+          },
+          {
+            "word": "teria",
+            "start": 92.36,
+            "end": 92.68
+          },
+          {
+            "word": "resistido",
+            "start": 92.68,
+            "end": 93.24
+          },
+          {
+            "word": "a esse",
+            "start": 93.24,
+            "end": 93.48
+          }
+        ]
+      },
+      {
+        "start": 93.48,
+        "end": 93.94,
+        "text": "transe?",
+        "words": [
+          {
+            "word": "transe?",
+            "start": 93.48,
+            "end": 93.94
+          }
+        ]
+      },
+      {
+        "start": 94.58,
+        "end": 96.06,
+        "text": "Deixe sua opinião nos comentários",
+        "words": [
+          {
+            "word": "Deixe",
+            "start": 94.58,
+            "end": 94.84
+          },
+          {
+            "word": "sua opinião",
+            "start": 94.84,
+            "end": 94.98
+          },
+          {
+            "word": "nos",
+            "start": 94.98,
+            "end": 95.36
+          },
+          {
+            "word": "comentários",
+            "start": 95.36,
+            "end": 96.06
+          }
+        ]
+      },
+      {
+        "start": 96.06,
+        "end": 97.18,
+        "text": "e siga o Dossiê",
+        "words": [
+          {
+            "word": "e",
+            "start": 96.06,
+            "end": 96.5
+          },
+          {
+            "word": "siga",
+            "start": 96.5,
+            "end": 96.86
+          },
+          {
+            "word": "o",
+            "start": 96.86,
+            "end": 96.98
+          },
+          {
+            "word": "Dossiê",
+            "start": 96.98,
+            "end": 97.18
+          }
+        ]
+      },
+      {
+        "start": 97.18,
+        "end": 98.62,
+        "text": "Histórico para mais arquivos",
+        "words": [
+          {
+            "word": "Histórico",
+            "start": 97.18,
+            "end": 97.68
+          },
+          {
+            "word": "para",
+            "start": 97.68,
+            "end": 97.94
+          },
+          {
+            "word": "mais",
+            "start": 97.94,
+            "end": 98.24
+          },
+          {
+            "word": "arquivos",
+            "start": 98.24,
+            "end": 98.62
+          }
+        ]
+      },
+      {
+        "start": 98.62,
+        "end": 99.66,
+        "text": "desclassificados.",
+        "words": [
+          {
+            "word": "desclassificados.",
+            "start": 98.62,
+            "end": 99.66
+          }
+        ]
+      }
+    ],
+    "words": [
+      {
+        "word": "Em",
+        "start": 0.0,
+        "end": 1.34
+      },
+      {
+        "word": "julho",
+        "start": 1.34,
+        "end": 1.76
+      },
+      {
+        "word": "de",
+        "start": 1.76,
+        "end": 1.94
+      },
+      {
+        "word": "1518,",
+        "start": 1.94,
+        "end": 3.06
+      },
+      {
+        "word": "numa",
+        "start": 3.5,
+        "end": 3.6
+      },
+      {
+        "word": "rua",
+        "start": 3.6,
+        "end": 3.82
+      },
+      {
+        "word": "estreita",
+        "start": 3.82,
+        "end": 4.34
+      },
+      {
+        "word": "de",
+        "start": 4.34,
+        "end": 4.48
+      },
+      {
+        "word": "Estrasburgo,",
+        "start": 4.48,
+        "end": 4.98
+      },
+      {
+        "word": "uma",
+        "start": 5.42,
+        "end": 5.8
+      },
+      {
+        "word": "mulher",
+        "start": 5.8,
+        "end": 6.02
+      },
+      {
+        "word": "chamada",
+        "start": 6.02,
+        "end": 6.52
+      },
+      {
+        "word": "Frau Troffea,",
+        "start": 6.52,
+        "end": 7.36
+      },
+      {
+        "word": "começou",
+        "start": 8.0,
+        "end": 8.28
+      },
+      {
+        "word": "a",
+        "start": 8.28,
+        "end": 8.48
+      },
+      {
+        "word": "dançar.",
+        "start": 8.48,
+        "end": 8.78
+      },
+      {
+        "word": "Não",
+        "start": 9.22,
+        "end": 9.42
+      },
+      {
+        "word": "havia",
+        "start": 9.42,
+        "end": 9.74
+      },
+      {
+        "word": "música,",
+        "start": 9.74,
+        "end": 10.18
+      },
+      {
+        "word": "ela",
+        "start": 10.86,
+        "end": 11.0
+      },
+      {
+        "word": "não",
+        "start": 11.0,
+        "end": 11.2
+      },
+      {
+        "word": "sorria,",
+        "start": 11.2,
+        "end": 11.6
+      },
+      {
+        "word": "seu",
+        "start": 12.22,
+        "end": 12.38
+      },
+      {
+        "word": "rosto",
+        "start": 12.38,
+        "end": 12.58
+      },
+      {
+        "word": "expressava",
+        "start": 12.58,
+        "end": 13.3
+      },
+      {
+        "word": "puro",
+        "start": 13.3,
+        "end": 13.52
+      },
+      {
+        "word": "pavor,",
+        "start": 13.52,
+        "end": 13.92
+      },
+      {
+        "word": "mas",
+        "start": 14.54,
+        "end": 14.7
+      },
+      {
+        "word": "seus",
+        "start": 14.7,
+        "end": 14.94
+      },
+      {
+        "word": "pés",
+        "start": 14.94,
+        "end": 15.16
+      },
+      {
+        "word": "simplesmente",
+        "start": 15.16,
+        "end": 15.66
+      },
+      {
+        "word": "não",
+        "start": 15.66,
+        "end": 15.98
+      },
+      {
+        "word": "paravam.",
+        "start": 15.98,
+        "end": 16.5
+      },
+      {
+        "word": "Ela",
+        "start": 16.92,
+        "end": 17.16
+      },
+      {
+        "word": "dançou",
+        "start": 17.16,
+        "end": 17.6
+      },
+      {
+        "word": "por",
+        "start": 17.6,
+        "end": 17.8
+      },
+      {
+        "word": "seis",
+        "start": 17.8,
+        "end": 18.04
+      },
+      {
+        "word": "dias",
+        "start": 18.04,
+        "end": 18.28
+      },
+      {
+        "word": "seguidos,",
+        "start": 18.28,
+        "end": 18.88
+      },
+      {
+        "word": "até",
+        "start": 19.22,
+        "end": 19.42
+      },
+      {
+        "word": "os",
+        "start": 19.42,
+        "end": 19.6
+      },
+      {
+        "word": "sapatos",
+        "start": 19.6,
+        "end": 19.96
+      },
+      {
+        "word": "empaparem",
+        "start": 19.96,
+        "end": 20.62
+      },
+      {
+        "word": "de",
+        "start": 20.62,
+        "end": 20.76
+      },
+      {
+        "word": "sangue,",
+        "start": 20.76,
+        "end": 21.24
+      },
+      {
+        "word": "e",
+        "start": 21.8,
+        "end": 22.32
+      },
+      {
+        "word": "o",
+        "start": 22.32,
+        "end": 22.4
+      },
+      {
+        "word": "pesadelo",
+        "start": 22.4,
+        "end": 22.88
+      },
+      {
+        "word": "só",
+        "start": 22.88,
+        "end": 23.14
+      },
+      {
+        "word": "começou,",
+        "start": 23.14,
+        "end": 23.62
+      },
+      {
+        "word": "em",
+        "start": 23.62,
+        "end": 24.46
+      },
+      {
+        "word": "poucas",
+        "start": 24.46,
+        "end": 24.8
+      },
+      {
+        "word": "semanas,",
+        "start": 24.8,
+        "end": 25.28
+      },
+      {
+        "word": "mais",
+        "start": 25.86,
+        "end": 26.02
+      },
+      {
+        "word": "de",
+        "start": 26.02,
+        "end": 26.18
+      },
+      {
+        "word": "400",
+        "start": 26.18,
+        "end": 26.52
+      },
+      {
+        "word": "pessoas",
+        "start": 26.52,
+        "end": 27.26
+      },
+      {
+        "word": "se",
+        "start": 27.26,
+        "end": 27.44
+      },
+      {
+        "word": "juntaram",
+        "start": 27.44,
+        "end": 27.86
+      },
+      {
+        "word": "ao",
+        "start": 27.86,
+        "end": 28.04
+      },
+      {
+        "word": "transe,",
+        "start": 28.04,
+        "end": 28.44
+      },
+      {
+        "word": "dançando",
+        "start": 29.08,
+        "end": 29.54
+      },
+      {
+        "word": "dia",
+        "start": 29.54,
+        "end": 29.74
+      },
+      {
+        "word": "e noite",
+        "start": 29.74,
+        "end": 30.22
+      },
+      {
+        "word": "até",
+        "start": 30.22,
+        "end": 30.6
+      },
+      {
+        "word": "colapsarem,",
+        "start": 30.6,
+        "end": 31.36
+      },
+      {
+        "word": "dezenas",
+        "start": 31.86,
+        "end": 32.4
+      },
+      {
+        "word": "morriam",
+        "start": 32.4,
+        "end": 32.84
+      },
+      {
+        "word": "diariamente",
+        "start": 32.84,
+        "end": 33.32
+      },
+      {
+        "word": "de",
+        "start": 33.32,
+        "end": 33.62
+      },
+      {
+        "word": "ataques",
+        "start": 33.62,
+        "end": 33.96
+      },
+      {
+        "word": "cardíacos",
+        "start": 33.96,
+        "end": 34.68
+      },
+      {
+        "word": "e",
+        "start": 34.68,
+        "end": 34.88
+      },
+      {
+        "word": "exaustão.",
+        "start": 34.88,
+        "end": 35.56
+      },
+      {
+        "word": "Desesperadas,",
+        "start": 36.62,
+        "end": 37.4
+      },
+      {
+        "word": "as",
+        "start": 37.92,
+        "end": 38.08
+      },
+      {
+        "word": "autoridades",
+        "start": 38.08,
+        "end": 38.54
+      },
+      {
+        "word": "consultaram",
+        "start": 38.54,
+        "end": 39.16
+      },
+      {
+        "word": "médicos",
+        "start": 39.16,
+        "end": 39.68
+      },
+      {
+        "word": "que",
+        "start": 39.68,
+        "end": 39.92
+      },
+      {
+        "word": "deram",
+        "start": 39.92,
+        "end": 40.22
+      },
+      {
+        "word": "diagnóstico",
+        "start": 40.22,
+        "end": 40.82
+      },
+      {
+        "word": "mais",
+        "start": 40.82,
+        "end": 41.02
+      },
+      {
+        "word": "bizarro",
+        "start": 41.02,
+        "end": 41.5
+      },
+      {
+        "word": "da",
+        "start": 41.5,
+        "end": 41.6
+      },
+      {
+        "word": "história,",
+        "start": 41.6,
+        "end": 42.0
+      },
+      {
+        "word": "sangue",
+        "start": 42.78,
+        "end": 43.24
+      },
+      {
+        "word": "superaquecido.",
+        "start": 43.24,
+        "end": 44.26
+      },
+      {
+        "word": "E",
+        "start": 44.92,
+        "end": 45.26
+      },
+      {
+        "word": "o",
+        "start": 45.26,
+        "end": 45.32
+      },
+      {
+        "word": "tratamento",
+        "start": 45.32,
+        "end": 45.74
+      },
+      {
+        "word": "prescrito?",
+        "start": 45.74,
+        "end": 46.36
+      },
+      {
+        "word": "Eles",
+        "start": 47.04,
+        "end": 47.36
+      },
+      {
+        "word": "precisavam",
+        "start": 47.36,
+        "end": 48.04
+      },
+      {
+        "word": "continuar",
+        "start": 48.04,
+        "end": 48.42
+      },
+      {
+        "word": "dançando",
+        "start": 48.42,
+        "end": 48.98
+      },
+      {
+        "word": "até",
+        "start": 48.98,
+        "end": 49.24
+      },
+      {
+        "word": "a",
+        "start": 49.24,
+        "end": 49.46
+      },
+      {
+        "word": "febre",
+        "start": 49.46,
+        "end": 49.7
+      },
+      {
+        "word": "passar.",
+        "start": 49.7,
+        "end": 50.12
+      },
+      {
+        "word": "A",
+        "start": 50.12,
+        "end": 51.08
+      },
+      {
+        "word": "cidade",
+        "start": 51.08,
+        "end": 51.38
+      },
+      {
+        "word": "contratou",
+        "start": 51.38,
+        "end": 52.0
+      },
+      {
+        "word": "dezenas",
+        "start": 52.0,
+        "end": 52.44
+      },
+      {
+        "word": "de",
+        "start": 52.44,
+        "end": 52.58
+      },
+      {
+        "word": "músicos",
+        "start": 52.58,
+        "end": 52.96
+      },
+      {
+        "word": "e",
+        "start": 52.96,
+        "end": 53.28
+      },
+      {
+        "word": "erguiu",
+        "start": 53.28,
+        "end": 53.56
+      },
+      {
+        "word": "palcos",
+        "start": 53.56,
+        "end": 53.98
+      },
+      {
+        "word": "de",
+        "start": 53.98,
+        "end": 54.16
+      },
+      {
+        "word": "madeira",
+        "start": 54.16,
+        "end": 54.52
+      },
+      {
+        "word": "na",
+        "start": 54.52,
+        "end": 54.64
+      },
+      {
+        "word": "praça,",
+        "start": 54.64,
+        "end": 55.12
+      },
+      {
+        "word": "forçando",
+        "start": 55.68,
+        "end": 56.08
+      },
+      {
+        "word": "os",
+        "start": 56.08,
+        "end": 56.22
+      },
+      {
+        "word": "doentes",
+        "start": 56.22,
+        "end": 56.44
+      },
+      {
+        "word": "a",
+        "start": 56.44,
+        "end": 56.58
+      },
+      {
+        "word": "dançar",
+        "start": 56.58,
+        "end": 56.88
+      },
+      {
+        "word": "24",
+        "start": 56.88,
+        "end": 57.26
+      },
+      {
+        "word": "horas",
+        "start": 57.26,
+        "end": 57.78
+      },
+      {
+        "word": "por",
+        "start": 57.78,
+        "end": 58.0
+      },
+      {
+        "word": "dia.",
+        "start": 58.0,
+        "end": 58.32
+      },
+      {
+        "word": "O",
+        "start": 59.12,
+        "end": 59.22
+      },
+      {
+        "word": "resultado",
+        "start": 59.22,
+        "end": 59.64
+      },
+      {
+        "word": "foi",
+        "start": 59.64,
+        "end": 59.96
+      },
+      {
+        "word": "catastrófico,",
+        "start": 59.96,
+        "end": 60.84
+      },
+      {
+        "word": "o",
+        "start": 61.34,
+        "end": 61.48
+      },
+      {
+        "word": "ritmo",
+        "start": 61.48,
+        "end": 61.82
+      },
+      {
+        "word": "acelerou,",
+        "start": 61.82,
+        "end": 62.3
+      },
+      {
+        "word": "o",
+        "start": 62.66,
+        "end": 62.8
+      },
+      {
+        "word": "contágio",
+        "start": 62.8,
+        "end": 63.18
+      },
+      {
+        "word": "psicológico",
+        "start": 63.18,
+        "end": 64.06
+      },
+      {
+        "word": "e",
+        "start": 64.06,
+        "end": 64.26
+      },
+      {
+        "word": "os",
+        "start": 64.26,
+        "end": 64.4
+      },
+      {
+        "word": "palcos",
+        "start": 64.4,
+        "end": 64.82
+      },
+      {
+        "word": "viraram",
+        "start": 64.82,
+        "end": 65.16
+      },
+      {
+        "word": "verdadeiros",
+        "start": 65.16,
+        "end": 65.7
+      },
+      {
+        "word": "matadouros",
+        "start": 65.7,
+        "end": 66.22
+      },
+      {
+        "word": "a",
+        "start": 66.22,
+        "end": 66.46
+      },
+      {
+        "word": "céu",
+        "start": 66.46,
+        "end": 66.68
+      },
+      {
+        "word": "aberto.",
+        "start": 66.68,
+        "end": 67.14
+      },
+      {
+        "word": "Pessoas",
+        "start": 67.58,
+        "end": 68.14
+      },
+      {
+        "word": "imploravam",
+        "start": 68.14,
+        "end": 68.74
+      },
+      {
+        "word": "por",
+        "start": 68.74,
+        "end": 68.96
+      },
+      {
+        "word": "socorro,",
+        "start": 68.96,
+        "end": 69.56
+      },
+      {
+        "word": "enquanto",
+        "start": 69.82,
+        "end": 70.04
+      },
+      {
+        "word": "seus",
+        "start": 70.04,
+        "end": 70.36
+      },
+      {
+        "word": "próprios",
+        "start": 70.36,
+        "end": 70.8
+      },
+      {
+        "word": "músculos",
+        "start": 70.8,
+        "end": 71.14
+      },
+      {
+        "word": "continuavam",
+        "start": 71.14,
+        "end": 71.84
+      },
+      {
+        "word": "pulando",
+        "start": 71.84,
+        "end": 72.32
+      },
+      {
+        "word": "contra",
+        "start": 72.32,
+        "end": 72.72
+      },
+      {
+        "word": "sua",
+        "start": 72.72,
+        "end": 72.94
+      },
+      {
+        "word": "vontade.",
+        "start": 72.94,
+        "end": 73.48
+      },
+      {
+        "word": "O",
+        "start": 74.32,
+        "end": 74.7
+      },
+      {
+        "word": "surto",
+        "start": 74.7,
+        "end": 75.1
+      },
+      {
+        "word": "só",
+        "start": 75.1,
+        "end": 75.28
+      },
+      {
+        "word": "cessou",
+        "start": 75.28,
+        "end": 75.78
+      },
+      {
+        "word": "quando",
+        "start": 75.78,
+        "end": 76.16
+      },
+      {
+        "word": "os",
+        "start": 76.16,
+        "end": 76.32
+      },
+      {
+        "word": "sobreviventes",
+        "start": 76.32,
+        "end": 76.82
+      },
+      {
+        "word": "foram",
+        "start": 76.82,
+        "end": 77.06
+      },
+      {
+        "word": "levados",
+        "start": 77.06,
+        "end": 77.42
+      },
+      {
+        "word": "amarrados",
+        "start": 77.42,
+        "end": 77.94
+      },
+      {
+        "word": "para",
+        "start": 77.94,
+        "end": 78.12
+      },
+      {
+        "word": "um",
+        "start": 78.12,
+        "end": 78.28
+      },
+      {
+        "word": "santuário",
+        "start": 78.28,
+        "end": 78.66
+      },
+      {
+        "word": "nas",
+        "start": 78.66,
+        "end": 78.88
+      },
+      {
+        "word": "montanhas,",
+        "start": 78.88,
+        "end": 79.5
+      },
+      {
+        "word": "onde",
+        "start": 80.02,
+        "end": 80.16
+      },
+      {
+        "word": "calçaram",
+        "start": 80.16,
+        "end": 80.64
+      },
+      {
+        "word": "sapatos",
+        "start": 80.64,
+        "end": 81.16
+      },
+      {
+        "word": "vermelhos",
+        "start": 81.16,
+        "end": 81.58
+      },
+      {
+        "word": "santificados.",
+        "start": 81.58,
+        "end": 82.32
+      },
+      {
+        "word": "Historiadores",
+        "start": 83.24,
+        "end": 83.78
+      },
+      {
+        "word": "modernos",
+        "start": 83.78,
+        "end": 84.4
+      },
+      {
+        "word": "comprovaram,",
+        "start": 84.4,
+        "end": 85.08
+      },
+      {
+        "word": "não",
+        "start": 85.44,
+        "end": 85.64
+      },
+      {
+        "word": "foi",
+        "start": 85.64,
+        "end": 85.88
+      },
+      {
+        "word": "veneno,",
+        "start": 85.88,
+        "end": 86.4
+      },
+      {
+        "word": "mas",
+        "start": 86.9,
+        "end": 87.04
+      },
+      {
+        "word": "sim",
+        "start": 87.04,
+        "end": 87.26
+      },
+      {
+        "word": "histeria",
+        "start": 87.26,
+        "end": 87.76
+      },
+      {
+        "word": "coletiva",
+        "start": 87.76,
+        "end": 88.54
+      },
+      {
+        "word": "induzida",
+        "start": 88.54,
+        "end": 89.1
+      },
+      {
+        "word": "pela",
+        "start": 89.1,
+        "end": 89.32
+      },
+      {
+        "word": "fome",
+        "start": 89.32,
+        "end": 89.64
+      },
+      {
+        "word": "extrema",
+        "start": 89.64,
+        "end": 90.2
+      },
+      {
+        "word": "e",
+        "start": 90.2,
+        "end": 90.42
+      },
+      {
+        "word": "pelo",
+        "start": 90.42,
+        "end": 90.64
+      },
+      {
+        "word": "terror",
+        "start": 90.64,
+        "end": 90.9
+      },
+      {
+        "word": "místico.",
+        "start": 90.9,
+        "end": 91.52
+      },
+      {
+        "word": "Você",
+        "start": 92.04,
+        "end": 92.36
+      },
+      {
+        "word": "teria",
+        "start": 92.36,
+        "end": 92.68
+      },
+      {
+        "word": "resistido",
+        "start": 92.68,
+        "end": 93.24
+      },
+      {
+        "word": "a esse",
+        "start": 93.24,
+        "end": 93.48
+      },
+      {
+        "word": "transe?",
+        "start": 93.48,
+        "end": 93.94
+      },
+      {
+        "word": "Deixe",
+        "start": 94.58,
+        "end": 94.84
+      },
+      {
+        "word": "sua opinião",
+        "start": 94.84,
+        "end": 94.98
+      },
+      {
+        "word": "nos",
+        "start": 94.98,
+        "end": 95.36
+      },
+      {
+        "word": "comentários",
+        "start": 95.36,
+        "end": 96.06
+      },
+      {
+        "word": "e",
+        "start": 96.06,
+        "end": 96.5
+      },
+      {
+        "word": "siga",
+        "start": 96.5,
+        "end": 96.86
+      },
+      {
+        "word": "o",
+        "start": 96.86,
+        "end": 96.98
+      },
+      {
+        "word": "Dossiê",
+        "start": 96.98,
+        "end": 97.18
+      },
+      {
+        "word": "Histórico",
+        "start": 97.18,
+        "end": 97.68
+      },
+      {
+        "word": "para",
+        "start": 97.68,
+        "end": 97.94
+      },
+      {
+        "word": "mais",
+        "start": 97.94,
+        "end": 98.24
+      },
+      {
+        "word": "arquivos",
+        "start": 98.24,
+        "end": 98.62
+      },
+      {
+        "word": "desclassificados.",
+        "start": 98.62,
+        "end": 99.66
+      }
+    ]
+  }
+}

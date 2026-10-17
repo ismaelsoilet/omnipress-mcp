@@ -1,4 +1,7 @@
 import short02Json from "./short_02_captions.json";
+import short03Json from "./short_03_captions.json";
+import short03ReelsJson from "./short_03_reels_88s_captions.json";
+import short04Json from "./short_04_captions.json";
 import { ActData } from "../types";
 
 /**
@@ -6,6 +9,9 @@ import { ActData } from "../types";
  * Used for development previews and CI builds when channel-specific media is not mounted.
  */
 export const short02Captions: Record<string, ActData> = short02Json as unknown as Record<string, ActData>;
+export const short03Captions: Record<string, ActData> = short03Json as unknown as Record<string, ActData>;
+export const short03ReelsCaptions: Record<string, ActData> = short03ReelsJson as unknown as Record<string, ActData>;
+export const short04Captions: Record<string, ActData> = short04Json as unknown as Record<string, ActData>;
 
 export const sampleShortCaptions: Record<string, ActData> = {
   short_01: {

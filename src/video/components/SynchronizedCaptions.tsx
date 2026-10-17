@@ -81,7 +81,7 @@ export const SynchronizedCaptions: React.FC<SynchronizedCaptionsProps> = ({
           flexWrap: "wrap",
           justifyContent: "center",
           alignItems: "center",
-          gap: isVertical ? "8px 12px" : "10px 16px",
+          gap: isVertical ? "6px 10px" : "4px 8px",
           textAlign: "center",
         }}
       >
@@ -94,20 +94,20 @@ export const SynchronizedCaptions: React.FC<SynchronizedCaptionsProps> = ({
               key={idx}
               style={{
                 fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                fontSize: isVertical ? 36 : 34,
+                fontSize: isVertical ? 36 : 32,
                 fontWeight: isActive ? 900 : isPast ? 700 : 500,
                 color: isActive
                   ? "#FFD700"
                   : isPast
                   ? "#FFFFFF"
-                  : "rgba(225, 230, 238, 0.40)",
+                  : "rgba(225, 230, 238, 0.65)",
                 backgroundColor: isActive
                   ? "rgba(212, 175, 55, 0.28)"
                   : "transparent",
                 borderBottom: isActive ? "3px solid #FFD700" : "3px solid transparent",
                 borderRadius: 4,
-                padding: "2px 8px",
-                letterSpacing: isVertical ? "0.4px" : "0.5px",
+                padding: isVertical ? "2px 6px" : "2px 4px",
+                letterSpacing: "0.2px",
                 textShadow: isActive
                   ? "0 0 16px rgba(255, 215, 0, 0.8), 0 2px 4px rgba(0,0,0,0.95)"
                   : "0 2px 4px rgba(0, 0, 0, 0.85)",

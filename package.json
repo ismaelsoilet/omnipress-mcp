@@ -1,6 +1,6 @@
 {
   "name": "omnipress-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Agentic multi-channel publishing engine for Antigravity via Model Context Protocol (MCP)",
   "main": "src/video/index.ts",
   "scripts": {
@@ -12,7 +12,8 @@
     "remotion:preview": "remotion preview src/video/index.ts",
     "remotion:render": "remotion render src/video/index.ts",
     "remotion:render:intro": "remotion render src/video/index.ts ChannelIntro-16x9 out/intro_dossie_16x9.mp4",
-    "remotion:render:intro:shorts": "remotion render src/video/index.ts ChannelIntro-9x16 out/intro_dossie_9x16.mp4"
+    "remotion:render:intro:shorts": "remotion render src/video/index.ts ChannelIntro-9x16 out/intro_dossie_9x16.mp4",
+    "remotion:skills:update": "remotion skills update"
   },
   "keywords": [
     "antigravity",

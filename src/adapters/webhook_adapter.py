@@ -60,7 +60,7 @@ class WebhookPublisherAdapter(BasePublisherAdapter):
         body_bytes = json.dumps(data).encode("utf-8")
         headers = {
             "Content-Type": "application/json",
-            "User-Agent": "OmniPress-MCP/0.1.0",
+            "User-Agent": "OmniPress-MCP/0.2.0",
         }
 
         if self.secret:
