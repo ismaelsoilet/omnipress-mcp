@@ -83,13 +83,23 @@ class UniversalCarouselEngine:
         aspect_ratio: str = "3:4",
         top_bias: float = 0.20,
         contrast_boost: float = 1.15,
+        color_boost: float = 1.0,
     ) -> Path:
-        """Crops, resizes to exact target resolution and enhances archival contrast."""
+        """Crops, resizes to exact target resolution and enhances archival contrast and color saturation."""
         target_size = ASPECT_DIMENSIONS.get(aspect_ratio, (1080, 1440))
         dst_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with Image.open(src_path) as img:
-            img = img.convert("RGB")
+        with Image.open(src_path) as raw_img:
+            # Handle alpha transparency safely to prevent black artifacts
+            if raw_img.mode in ("RGBA", "LA") or (raw_img.mode == "P" and "transparency" in raw_img.info):
+                rgba = raw_img.convert("RGBA")
+                bg_composite = Image.new("RGBA", rgba.size, (10, 12, 16, 255))
+                img = Image.alpha_composite(bg_composite, rgba).convert("RGB")
+            elif raw_img.mode == "CMYK":
+                img = raw_img.convert("RGB")
+            else:
+                img = raw_img.convert("RGB")
+
             w, h = img.size
             target_ratio = target_size[0] / target_size[1]
             img_ratio = w / h
@@ -108,6 +118,10 @@ class UniversalCarouselEngine:
             if contrast_boost != 1.0:
                 enhancer = ImageEnhance.Contrast(img)
                 img = enhancer.enhance(contrast_boost)
+
+            if color_boost != 1.0:
+                color_enhancer = ImageEnhance.Color(img)
+                img = color_enhancer.enhance(color_boost)
 
             img.save(dst_path, "JPEG", quality=95)
             return dst_path
@@ -158,12 +172,14 @@ class UniversalCarouselEngine:
 
             top_bias = slide.get("top_bias", 0.20)
             contrast_boost = slide.get("contrast_boost", 1.15)
+            color_boost = slide.get("color_boost", 1.0)
             self.prepare_background(
                 src_path=src_bg,
                 dst_path=dst_bg,
                 aspect_ratio=aspect_ratio,
                 top_bias=top_bias,
                 contrast_boost=contrast_boost,
+                color_boost=color_boost,
             )
 
             prepared_slides.append({
@@ -259,8 +275,9 @@ class UniversalCarouselEngine:
 
         if res.get("success"):
             PublishingShield.record_published(
-                text=clean_caption,
                 channel_id=channel_slug,
+                text=clean_caption,
+                media_urls=media_urls,
                 provider="buffer",
                 status="queued" if schedule_time else "published",
                 response=res,

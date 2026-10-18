@@ -181,6 +181,29 @@ class PublishingShield:
         return True, None
 
     @classmethod
+    def _resolve_channel_aliases(cls, channel_id: str) -> set:
+        """Resolves known aliases for a channel ID (e.g. channel_slug <-> buffer_channel_id)."""
+        aliases = {channel_id}
+        try:
+            from src.core.channel_manager import ChannelManager
+            cm = ChannelManager()
+            ch = cm.get_channel(channel_id)
+            if ch:
+                for s_info in ch.get("social", {}).values():
+                    if isinstance(s_info, dict) and s_info.get("buffer_channel_id"):
+                        aliases.add(s_info["buffer_channel_id"])
+            else:
+                for ch_item in cm.list_channels(include_templates=False):
+                    slug = ch_item.get("slug")
+                    for s_info in ch_item.get("social", {}).values():
+                        if isinstance(s_info, dict) and s_info.get("buffer_channel_id") == channel_id:
+                            if slug:
+                                aliases.add(slug)
+        except Exception:
+            pass
+        return aliases
+
+    @classmethod
     def check_duplicate(
         cls,
         channel_id: str,
@@ -191,37 +214,47 @@ class PublishingShield:
     ) -> Tuple[bool, Optional[str]]:
         """
         Verifies if an identical post was already dispatched to this channel in the given window.
+        Inspects channel aliases (e.g. buffer_channel_id and channel_slug) to prevent cross-layer duplicates.
         Returns (is_duplicate, error_message).
         """
         if force:
             return False, None
 
-        fingerprint = cls.generate_fingerprint(channel_id, text, media_urls)
+        aliases = cls._resolve_channel_aliases(channel_id)
         now = time.time()
         ledger = cls.load_ledger()
 
-        for entry in ledger:
-            if entry.get("fingerprint") == fingerprint:
-                elapsed = now - entry.get("timestamp", 0)
-                if elapsed < window_seconds:
-                    hours_ago = round(elapsed / 3600, 1)
-                    return (
-                        True,
-                        f"🛡️ Shield Block (Rule 09 Exactly-Once): This exact post was already published to channel '{channel_id}' {hours_ago}h ago (Post ID: {entry.get('post_id', 'unknown')}). Duplicate dispatch blocked to protect account reputation.",
-                    )
+        for candidate_id in aliases:
+            fingerprint = cls.generate_fingerprint(candidate_id, text, media_urls)
+            for entry in ledger:
+                if entry.get("fingerprint") == fingerprint:
+                    elapsed = now - entry.get("timestamp", 0)
+                    if elapsed < window_seconds:
+                        hours_ago = round(elapsed / 3600, 1)
+                        return (
+                            True,
+                            f"🛡️ Shield Block (Rule 09 Exactly-Once): This exact post was already published to channel '{candidate_id}' {hours_ago}h ago (Post ID: {entry.get('post_id', 'unknown')}). Duplicate dispatch blocked to protect account reputation.",
+                        )
 
         return False, None
 
     @classmethod
     def record_published(
         cls,
-        channel_id: str,
-        text: str,
+        channel_id: str = "",
+        text: str = "",
         media_urls: Optional[List[str]] = None,
         post_id: Optional[str] = None,
         provider: str = "buffer_graphql",
+        **kwargs: Any,
     ) -> None:
-        """Records a successful publication in the persistent idempotency ledger."""
+        """Records a successful publication in the persistent idempotency ledger.
+        
+        Supports flexible kwargs (status, response, channel_slug, etc.) for cross-engine compatibility.
+        """
+        if not channel_id and "channel_slug" in kwargs:
+            channel_id = str(kwargs.pop("channel_slug"))
+
         fingerprint = cls.generate_fingerprint(channel_id, text, media_urls)
         with cls._lock(exclusive=True):
             ledger = cls._load_ledger_unlocked()
@@ -230,7 +263,7 @@ class PublishingShield:
             cutoff = time.time() - (7 * 86400)
             clean_ledger = [e for e in ledger if e.get("timestamp", 0) > cutoff and e.get("fingerprint") != fingerprint]
 
-            clean_ledger.append({
+            entry: Dict[str, Any] = {
                 "fingerprint": fingerprint,
                 "channel_id": channel_id,
                 "post_id": post_id,
@@ -238,7 +271,11 @@ class PublishingShield:
                 "timestamp": time.time(),
                 "text_preview": text[:80].replace("\n", " "),
                 "media_count": len(media_urls) if media_urls else 0,
-            })
+            }
+            if "status" in kwargs:
+                entry["status"] = str(kwargs["status"])
+
+            clean_ledger.append(entry)
             cls._save_ledger_unlocked(clean_ledger)
 
     @classmethod

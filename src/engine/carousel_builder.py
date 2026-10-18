@@ -19,7 +19,50 @@ def hex_to_rgb(hex_code: str) -> Tuple[int, int, int]:
         return (212, 175, 55)  # Default gold
 
 
-def wrap_text_by_pixel(text: str, font: ImageFont.FreeTypeFont, max_width: int, draw: ImageDraw.ImageDraw) -> List[str]:
+def load_safe_font(font_path: Optional[str], size: int, is_bold: bool = False) -> Any:
+    """Safely loads a TrueType font with cross-platform fallbacks (Linux, macOS, Windows) and default fallback."""
+    candidates = []
+    if font_path:
+        candidates.append(font_path)
+
+    if is_bold:
+        candidates.extend([
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+            "/System/Library/Fonts/Helvetica.ttc",
+            "/System/Library/Fonts/Supplemental/Arial.ttf",
+            "/Library/Fonts/Arial.ttf",
+            "C:/Windows/Fonts/arialbd.ttf",
+            "C:/Windows/Fonts/arial.ttf",
+        ])
+    else:
+        candidates.extend([
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/TTF/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+            "/System/Library/Fonts/Helvetica.ttc",
+            "/System/Library/Fonts/Supplemental/Arial.ttf",
+            "/Library/Fonts/Arial.ttf",
+            "C:/Windows/Fonts/arial.ttf",
+        ])
+
+    for path in candidates:
+        if Path(path).is_file():
+            try:
+                return ImageFont.truetype(path, size=size)
+            except Exception:
+                continue
+
+    try:
+        return ImageFont.load_default(size=size)
+    except Exception:
+        return ImageFont.load_default()
+
+
+def wrap_text_by_pixel(text: str, font: Any, max_width: int, draw: ImageDraw.ImageDraw) -> List[str]:
     """Dynamically wraps words so no line ever exceeds max_width pixels."""
     words = text.split()
     lines = []
@@ -77,10 +120,17 @@ class CarouselBuilder:
         handle = branding.get("handle", "@canal")
         badge = badge_text or branding.get("badge_text", channel.get("name", "OMNIPRESS"))
 
-        bold_font_path = typography.get("bold_font", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
-        reg_font_path = typography.get("regular_font", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
+        bold_font_path = typography.get("bold_font")
+        reg_font_path = typography.get("regular_font")
 
-        img = Image.open(bg_image_path).convert("RGBA")
+        with Image.open(bg_image_path) as raw_img:
+            if raw_img.mode in ("RGBA", "LA") or (raw_img.mode == "P" and "transparency" in raw_img.info):
+                rgba = raw_img.convert("RGBA")
+                bg_card = Image.new("RGBA", rgba.size, (10, 12, 16, 255))
+                img = Image.alpha_composite(bg_card, rgba)
+            else:
+                img = raw_img.convert("RGBA")
+
         w, h = img.size
 
         # Force target aspect ratio (3:4 or 1:1)
@@ -100,11 +150,11 @@ class CarouselBuilder:
         overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
         draw = ImageDraw.Draw(overlay)
 
-        # Fonts
-        font_badge = ImageFont.truetype(bold_font_path, size=max(20, int(w * 0.024)))
-        font_head = ImageFont.truetype(bold_font_path, size=max(38, int(w * 0.046)))
-        font_body = ImageFont.truetype(reg_font_path, size=max(28, int(w * 0.034)))
-        font_foot = ImageFont.truetype(bold_font_path, size=max(20, int(w * 0.024)))
+        # Fonts (safe loading with cross-platform fallbacks and proportional minimums)
+        font_badge = load_safe_font(bold_font_path, size=max(14, int(w * 0.024)), is_bold=True)
+        font_head = load_safe_font(bold_font_path, size=max(20, int(w * 0.046)), is_bold=True)
+        font_body = load_safe_font(reg_font_path, size=max(16, int(w * 0.034)), is_bold=False)
+        font_foot = load_safe_font(bold_font_path, size=max(14, int(w * 0.024)), is_bold=True)
 
         # Dynamic Text Layout Pre-calculation (needed for gradient & safety card placement)
         margin_x = int(w * 0.065)
@@ -113,11 +163,11 @@ class CarouselBuilder:
         head_lines = wrap_text_by_pixel(headline, font_head, max_text_w, draw)
         body_lines = wrap_text_by_pixel(body, font_body, max_text_w, draw) if body else []
 
-        line_h_head = int(font_head.size * 1.25)
-        line_h_body = int(font_body.size * 1.35)
+        line_h_head = int(getattr(font_head, "size", 40) * 1.25)
+        line_h_body = int(getattr(font_body, "size", 30) * 1.35)
 
         total_h = len(head_lines) * line_h_head + 14 + len(body_lines) * line_h_body
-        start_y = h - total_h - int(h * 0.11)
+        start_y = max(int(h * 0.08), h - total_h - int(h * 0.11))
 
         # 1. Dark bottom gradient (starts before text begins to guarantee base contrast)
         grad_start = min(int(h * gradient_start_ratio), max(0, start_y - int(h * 0.06)))
@@ -135,13 +185,13 @@ class CarouselBuilder:
         badge_content = f"• {badge.upper()} | {handle.upper()} •"
         bx, by = int(w * 0.06), int(h * 0.045)
         max_badge_w = w - (bx * 2) - 28
-        badge_size = max(20, int(w * 0.024))
-        font_badge = ImageFont.truetype(bold_font_path, size=badge_size)
+        badge_size = max(14, int(w * 0.024))
+        font_badge = load_safe_font(bold_font_path, size=badge_size, is_bold=True)
         bbox_b = draw.textbbox((0, 0), badge_content, font=font_badge)
         bw, bh = bbox_b[2] - bbox_b[0], bbox_b[3] - bbox_b[1]
-        while bw > max_badge_w and badge_size > 14:
+        while bw > max_badge_w and badge_size > 10:
             badge_size -= 1
-            font_badge = ImageFont.truetype(bold_font_path, size=badge_size)
+            font_badge = load_safe_font(bold_font_path, size=badge_size, is_bold=True)
             bbox_b = draw.textbbox((0, 0), badge_content, font=font_badge)
             bw, bh = bbox_b[2] - bbox_b[0], bbox_b[3] - bbox_b[1]
 

@@ -129,6 +129,7 @@ class UniversalAudioEngine:
         cmd = [
             self.ffmpeg_bin,
             "-y",
+            "-vn",
             "-i", str(input_path),
             "-af", filtergraph,
             "-ar", str(sample_rate),
@@ -167,3 +168,103 @@ class UniversalAudioEngine:
                 "success": False,
                 "error": f"FFmpeg binary not found at '{self.ffmpeg_bin}'. Please install ffmpeg or set FFMPEG_PATH.",
             }
+
+    def surgical_debreather(
+        self,
+        raw_wav_path: Union[str, Path],
+        captions_path: Union[str, Path, Dict[str, Any]],
+        out_clean_wav_path: Union[str, Path],
+        min_pause_sec: float = 0.12,
+        fade_ms: float = 30.0,
+    ) -> Dict[str, Any]:
+        """Surgically purges breath sounds and ambient room noise during inter-phrase pauses using Whisper word timestamps."""
+        try:
+            import numpy as np
+            import scipy.io.wavfile as wavfile
+        except ImportError:
+            raise RuntimeError("numpy and scipy are required for surgical_debreather. Install via 'uv add numpy scipy'.")
+
+        raw_wav = Path(raw_wav_path).resolve()
+        out_wav = Path(out_clean_wav_path).resolve()
+        out_wav.parent.mkdir(parents=True, exist_ok=True)
+
+        sr, data = wavfile.read(raw_wav)
+        if data.ndim == 2:
+            data_f = data.astype(np.float32) / 32768.0
+        else:
+            data_f = (data.astype(np.float32) / 32768.0)[:, np.newaxis]
+
+        num_samples = len(data_f)
+
+        if isinstance(captions_path, dict):
+            captions_data = captions_path
+        else:
+            captions_data = json.loads(Path(captions_path).read_text(encoding="utf-8"))
+
+        if "words" in captions_data:
+            words = captions_data["words"]
+        elif "short_01" in captions_data and "words" in captions_data["short_01"]:
+            words = captions_data["short_01"]["words"]
+        else:
+            first_act = next(iter(captions_data.values()), {})
+            words = first_act.get("words", []) if isinstance(first_act, dict) else []
+
+        if not words:
+            wavfile.write(out_wav, sr, data)
+            return {"success": True, "output_file": str(out_wav), "pauses_cleaned": 0}
+
+        gain_mask = np.ones(num_samples, dtype=np.float32)
+        fade_samples = int((fade_ms / 1000.0) * sr)
+
+        # 1. Silence before first word
+        first_word_start = words[0]["start"]
+        first_speech_idx = int(max(0, (first_word_start - 0.08) * sr))
+        if first_speech_idx > 0:
+            gain_mask[:max(0, first_speech_idx - fade_samples)] = 0.0
+            if first_speech_idx > fade_samples:
+                gain_mask[first_speech_idx - fade_samples:first_speech_idx] = np.linspace(0.0, 1.0, fade_samples)
+
+        # 2. Silence pauses between words where breaths occur
+        pauses_cleaned = 0
+        for i in range(len(words) - 1):
+            w_curr = words[i]
+            w_next = words[i + 1]
+            pause_start_sec = w_curr["end"] + 0.04
+            pause_end_sec = w_next["start"] - 0.04
+            pause_dur = pause_end_sec - pause_start_sec
+            if pause_dur >= min_pause_sec:
+                pauses_cleaned += 1
+                p_start = int(pause_start_sec * sr)
+                p_end = int(pause_end_sec * sr)
+
+                fo_end = min(num_samples, p_start + fade_samples)
+                if fo_end > p_start:
+                    gain_mask[p_start:fo_end] = np.linspace(1.0, 0.0, fo_end - p_start)
+
+                mid_start = min(num_samples, p_start + fade_samples)
+                mid_end = max(mid_start, min(num_samples, p_end - fade_samples))
+                if mid_end > mid_start:
+                    gain_mask[mid_start:mid_end] = 0.0
+
+                fi_start = max(0, p_end - fade_samples)
+                if p_end > fi_start:
+                    gain_mask[fi_start:p_end] = np.linspace(0.0, 1.0, p_end - fi_start)
+
+        # 3. Silence after last word
+        last_word_end = words[-1]["end"]
+        last_speech_idx = int(min(num_samples, (last_word_end + 0.06) * sr))
+        if last_speech_idx < num_samples:
+            fade_out_end = min(num_samples, last_speech_idx + fade_samples)
+            gain_mask[last_speech_idx:fade_out_end] = np.linspace(1.0, 0.0, fade_out_end - last_speech_idx)
+            gain_mask[fade_out_end:] = 0.0
+
+        cleaned_f = data_f * gain_mask[:, np.newaxis]
+        cleaned_int16 = (np.clip(cleaned_f, -1.0, 1.0) * 32767.0).astype(np.int16)
+        wavfile.write(out_wav, sr, cleaned_int16)
+
+        return {
+            "success": True,
+            "output_file": str(out_wav),
+            "pauses_cleaned": pauses_cleaned,
+            "sample_rate": sr,
+        }

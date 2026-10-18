@@ -503,3 +503,212 @@ def test_canonical_template_recipes_validity():
     res = pub_engine.execute_recipe(post_template, dry_run=True)
     assert res["success"] is True
     assert res["dry_run"] is True
+
+
+def test_record_published_flexible_signature_no_type_error(tmp_path, monkeypatch):
+    """Verifies that PublishingShield.record_published accepts flexible kwargs without TypeError (Critical Fix #1)."""
+    test_ledger = tmp_path / "test_ledger.json"
+    monkeypatch.setattr(PublishingShield, "get_ledger_path", classmethod(lambda cls: test_ledger))
+
+    # Test call with kwargs matching universal engines
+    PublishingShield.record_published(
+        channel_id="test-channel",
+        text="Sample post text",
+        media_urls=["https://cdn.example.com/slide1.jpg"],
+        provider="buffer",
+        status="queued",
+        response={"success": True, "id": "post_123"},
+    )
+
+    ledger = PublishingShield.load_ledger()
+    assert len(ledger) == 1
+    assert ledger[0]["channel_id"] == "test-channel"
+    assert ledger[0]["status"] == "queued"
+
+
+def test_publishing_shield_alias_duplicate_detection(tmp_path, monkeypatch):
+    """Verifies that check_duplicate resolves aliases between buffer_channel_id and channel_slug (High Fix #4)."""
+    test_ledger = tmp_path / "test_ledger.json"
+    monkeypatch.setattr(PublishingShield, "get_ledger_path", classmethod(lambda cls: test_ledger))
+
+    # Mock ChannelManager to return a known mapping
+    mock_cm = MagicMock()
+    mock_cm.get_channel.return_value = {
+        "slug": "dossie-historico",
+        "social": {"instagram": {"buffer_channel_id": "buf_ig_12345"}}
+    }
+    mock_cm.list_channels.return_value = [{
+        "slug": "dossie-historico",
+        "social": {"instagram": {"buffer_channel_id": "buf_ig_12345"}}
+    }]
+
+    with patch("src.core.channel_manager.ChannelManager", return_value=mock_cm):
+        # Record publication under buffer_channel_id
+        PublishingShield.record_published(
+            channel_id="buf_ig_12345",
+            text="Same historical content published via adapter",
+        )
+
+        # Check duplicate using channel_slug
+        is_dup, err = PublishingShield.check_duplicate(
+            channel_id="dossie-historico",
+            text="Same historical content published via adapter",
+        )
+        assert is_dup is True
+        assert "Duplicate dispatch blocked" in err
+
+
+def test_captions_export_act_id_and_remotion_format(tmp_path):
+    """Verifies UniversalCaptionsEngine exports both flat root keys and act-keyed dictionary (High Fix #2)."""
+    engine = UniversalCaptionsEngine()
+    whisper_data = {
+        "words": [
+            {"word": "HISTÓRIA", "start": 0.0, "end": 0.5},
+            {"word": "SECRETA", "start": 0.5, "end": 1.0},
+            {"word": "REVELADA", "start": 1.0, "end": 1.5},
+        ]
+    }
+    out_json = tmp_path / "captions_act.json"
+    res = engine.process_and_export(whisper_data, out_json, words_per_chunk=2, act_id="short_01")
+    assert res["success"] is True
+
+    exported = json.loads(out_json.read_text(encoding="utf-8"))
+    # 1. Flat root keys
+    assert "words" in exported
+    assert "chunks" in exported
+    assert "metadata" in exported
+    # 2. Remotion ActData nested key
+    assert "short_01" in exported
+    act_data = exported["short_01"]
+    assert act_data["name"] == "short_01"
+    assert "words" in act_data
+    assert "chunks" in act_data
+    assert len(act_data["chunks"]) == 2
+
+
+def test_carousel_prepare_background_rgba_and_cmyk(tmp_path, temp_workspace):
+    """Verifies UniversalCarouselEngine handles RGBA transparent PNGs and CMYK without black artifacts (Medium Fix #6)."""
+    engine = UniversalCarouselEngine(channel_manager=temp_workspace["cm"])
+
+    # 1. RGBA with transparent alpha
+    rgba_path = tmp_path / "transparent.png"
+    rgba_img = Image.new("RGBA", (800, 800), (255, 0, 0, 0)) # Fully transparent red
+    rgba_img.save(rgba_path)
+
+    out_bg = tmp_path / "prepared_rgba.jpg"
+    engine.prepare_background(rgba_path, out_bg, color_boost=1.1)
+    assert out_bg.exists()
+    processed = Image.open(out_bg)
+    assert processed.mode == "RGB"
+    assert processed.size == (1080, 1440)
+
+    # 2. CMYK image
+    cmyk_path = tmp_path / "cmyk.jpg"
+    cmyk_img = Image.new("CMYK", (800, 800), (0, 100, 100, 0))
+    cmyk_img.save(cmyk_path)
+
+    out_cmyk = tmp_path / "prepared_cmyk.jpg"
+    engine.prepare_background(cmyk_path, out_cmyk)
+    assert out_cmyk.exists()
+
+
+def test_carousel_builder_safe_font_fallback(tmp_path, temp_workspace):
+    """Verifies CarouselBuilder falls back to default fonts when custom font path does not exist (Medium Fix #5)."""
+    from src.engine.carousel_builder import CarouselBuilder
+
+    # Channel with invalid font path
+    ch_config = {
+        "slug": "canal-nofont",
+        "name": "Canal No Font",
+        "branding": {
+            "typography": {
+                "bold_font": "/nonexistent/fonts/fake_bold.ttf",
+                "regular_font": "/nonexistent/fonts/fake_reg.ttf",
+            }
+        }
+    }
+    temp_workspace["cm"].get_channel = MagicMock(return_value=ch_config)
+
+    builder = CarouselBuilder(channel_manager=temp_workspace["cm"])
+    bg_img = tmp_path / "bg.jpg"
+    Image.new("RGB", (1080, 1440), (20, 20, 20)).save(bg_img)
+    out_slide = tmp_path / "out_slide.jpg"
+
+    # Must NOT raise OSError: cannot open resource
+    res = builder.render_slide(
+        bg_image_path=bg_img,
+        output_path=out_slide,
+        channel_slug="canal-nofont",
+        headline="Título Sem Fonte no Sistema",
+        body="Corpo explicativo seguro com fallback.",
+    )
+    assert res.exists()
+
+
+def test_carousel_builder_small_resolution_no_negative_y(tmp_path, temp_workspace):
+    """Verifies CarouselBuilder clamps start_y so text is never truncated on small/tight images (Medium Fix #6)."""
+    from src.engine.carousel_builder import CarouselBuilder
+
+    builder = CarouselBuilder(channel_manager=temp_workspace["cm"])
+    small_bg = tmp_path / "small_bg.jpg"
+    Image.new("RGB", (300, 400), (30, 30, 30)).save(small_bg)
+    out_slide = tmp_path / "out_small.jpg"
+
+    res = builder.render_slide(
+        bg_image_path=small_bg,
+        output_path=out_slide,
+        channel_slug=temp_workspace["channel_slug"],
+        headline="Título Muito Longo Para Uma Imagem Muito Pequena Que Poderia Causar Overflow",
+        body="Corpo adicional que ocupa bastante espaço vertical.",
+    )
+    assert res.exists()
+
+
+def test_catbox_storage_validation_and_retry(tmp_path):
+    """Verifies CatboxStorageProvider validates returned URLs and retries on errors (Medium Fix #8)."""
+    from src.utils.storage import CatboxStorageProvider
+    import urllib.error
+
+    provider = CatboxStorageProvider()
+    test_file = tmp_path / "sample.jpg"
+    test_file.write_bytes(b"dummy image bytes")
+
+    # 1. Invalid response (e.g. HTML error from Catbox or Cloudflare)
+    mock_resp_invalid = MagicMock()
+    mock_resp_invalid.read.return_value = b"<html>Error: 502 Bad Gateway</html>"
+    mock_resp_invalid.__enter__.return_value = mock_resp_invalid
+
+    with patch("urllib.request.urlopen", return_value=mock_resp_invalid), patch("time.sleep"):
+        with pytest.raises(RuntimeError, match="Catbox upload failed after 3 attempts"):
+            provider.upload_file(test_file)
+
+    # 2. Transient network error followed by valid URL
+    mock_resp_valid = MagicMock()
+    mock_resp_valid.read.return_value = b"https://files.catbox.moe/abc1234.jpg\n"
+    mock_resp_valid.__enter__.return_value = mock_resp_valid
+
+    with patch("urllib.request.urlopen", side_effect=[urllib.error.URLError("Connection reset"), mock_resp_valid]), patch("time.sleep"):
+        url = provider.upload_file(test_file)
+        assert url == "https://files.catbox.moe/abc1234.jpg"
+
+
+def test_surgical_debreather_pause_gating(tmp_path):
+    """Verifies UniversalAudioEngine.surgical_debreather silences inter-word pauses >= 120ms (High Fix #3)."""
+    engine = UniversalAudioEngine()
+    # Create 2-second audio file
+    raw_wav = tmp_path / "raw_voice.wav"
+    create_synthetic_wav(raw_wav, duration_sec=2.0, sample_rate=44100)
+
+    # Captions with a 400ms pause between word 1 and word 2
+    captions = {
+        "words": [
+            {"word": "PRIMEIRA", "start": 0.1, "end": 0.5},
+            {"word": "SEGUNDA", "start": 0.9, "end": 1.4},  # 400ms pause between 0.5 and 0.9
+        ]
+    }
+    clean_wav = tmp_path / "clean_voice.wav"
+    res = engine.surgical_debreather(raw_wav, captions, clean_wav, min_pause_sec=0.12)
+    assert res["success"] is True
+    assert clean_wav.exists()
+    assert res["pauses_cleaned"] >= 1
+

@@ -235,6 +235,8 @@ def cmd_carousel(args: argparse.Namespace) -> int:
 
     if args.channel:
         recipe_data["channel_slug"] = args.channel
+    if getattr(args, "post", None):
+        recipe_data["post_slug"] = args.post
 
     channel_slug = recipe_data.get("channel_slug", "default")
     post_slug = recipe_data.get("post_slug", recipe_path.stem)
@@ -341,10 +343,12 @@ def cmd_align_captions(args: argparse.Namespace) -> int:
         output_json=output_path,
         words_per_chunk=args.words_per_chunk,
         uppercase=not args.lowercase,
+        act_id=getattr(args, "act_id", "short_01"),
     )
 
     if res.get("success"):
         print(f"✅ Chunked captions exported to: {output_path}")
+        print(f"   Act ID      : {res.get('act_id')}")
         print(f"   Total Words : {res.get('total_words')}")
         print(f"   Total Chunks: {res.get('total_chunks')}")
         print(f"   Duration    : {res.get('duration')}s")
@@ -445,6 +449,7 @@ def main(argv: Optional[list] = None) -> int:
     carousel_p = subparsers.add_parser("carousel", help="Execute declarative carousel recipes (render, upload, schedule)")
     carousel_p.add_argument("--recipe", "-r", required=True, help="Path to carousel recipe JSON file")
     carousel_p.add_argument("--channel", "-c", help="Override channel slug")
+    carousel_p.add_argument("--post", help="Override post slug")
     carousel_p.add_argument("--render", action="store_true", help="Render slides from recipe")
     carousel_p.add_argument("--upload", action="store_true", help="Upload slides to CDN")
     carousel_p.add_argument("--schedule", action="store_true", help="Schedule or publish post")
@@ -465,6 +470,7 @@ def main(argv: Optional[list] = None) -> int:
     captions_p.add_argument("-o", "--output", required=True, help="Output captions JSON file")
     captions_p.add_argument("--words-per-chunk", type=int, default=3, help="Words per subtitle chunk (default: 3)")
     captions_p.add_argument("--lowercase", action="store_true", help="Keep original casing instead of uppercase")
+    captions_p.add_argument("--act-id", default="short_01", help="Act ID key for Remotion synchronization (default: short_01)")
 
     # publish (Universal Engine)
     publish_p = subparsers.add_parser("publish", help="Publish or schedule posts with PublishingShield (Rule 09)")

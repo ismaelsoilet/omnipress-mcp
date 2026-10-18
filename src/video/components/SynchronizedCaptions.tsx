@@ -40,7 +40,7 @@ export const SynchronizedCaptions: React.FC<SynchronizedCaptionsProps> = ({
 
   if (!activeAct) return null;
 
-  const actInfo = captionsData[activeAct.id];
+  const actInfo = captionsData[activeAct.id] || (captionsData as any);
   if (!actInfo || !actInfo.chunks) return null;
 
 

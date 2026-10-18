@@ -139,8 +139,9 @@ class UniversalPublisherEngine:
         # 4. Record to ledger on success
         if res.get("success"):
             PublishingShield.record_published(
-                text=cleaned_text,
                 channel_id=channel_slug,
+                text=cleaned_text,
+                media_urls=media_urls,
                 provider="buffer",
                 status="queued" if schedule_time else "published",
                 response=res,

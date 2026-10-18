@@ -130,8 +130,14 @@ class UniversalCaptionsEngine:
         output_json: Union[str, Path],
         words_per_chunk: int = 3,
         uppercase: bool = True,
+        act_id: str = "short_01",
     ) -> Dict[str, Any]:
-        """Loads Whisper input, chunks words, and exports Remotion-ready caption JSON."""
+        """Loads Whisper input, chunks words, and exports Remotion-ready caption JSON.
+        
+        Writes both flat root keys (metadata, words, chunks) and act-keyed dictionary (e.g. ['short_01']),
+        ensuring 100% compatibility with Remotion components (SynchronizedCaptions, WordByWordCaptions)
+        as well as legacy scripts and channel utilities.
+        """
         out_path = Path(output_json).resolve()
         out_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -143,20 +149,29 @@ class UniversalCaptionsEngine:
         )
 
         total_duration = raw_words[-1]["end"] if raw_words else 0.0
+        act_data = {
+            "name": act_id,
+            "duration": total_duration,
+            "words": raw_words,
+            "chunks": chunks,
+        }
         payload = {
             "metadata": {
                 "total_words": len(raw_words),
                 "total_chunks": len(chunks),
                 "duration_seconds": total_duration,
+                "act_id": act_id,
             },
             "words": raw_words,
             "chunks": chunks,
+            act_id: act_data,
         }
 
         out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
         return {
             "success": True,
             "output_file": str(out_path),
+            "act_id": act_id,
             "total_words": len(raw_words),
             "total_chunks": len(chunks),
             "duration": total_duration,

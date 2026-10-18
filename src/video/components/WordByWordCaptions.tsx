@@ -61,7 +61,7 @@ export const WordByWordCaptions: React.FC<WordByWordCaptionsProps> = ({
 
   if (!activeAct) return null;
 
-  const actInfo = captionsData[activeAct.id];
+  const actInfo = captionsData[activeAct.id] || (captionsData as any);
   if (!actInfo || !actInfo.words || actInfo.words.length === 0) return null;
 
   const timeInAct = currentGlobalSec - activeAct.globalStart;

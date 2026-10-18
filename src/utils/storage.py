@@ -1,6 +1,7 @@
 """OmniPress Storage Manager — Agnostic file and asset hosting for social platforms (Instagram, etc.)."""
 
 import os
+import time
 import urllib.request
 import urllib.parse
 from abc import ABC, abstractmethod
@@ -59,8 +60,20 @@ class CatboxStorageProvider(BaseStorageProvider):
             },
         )
 
-        with urllib.request.urlopen(req, timeout=45) as resp:
-            return resp.read().decode("utf-8").strip()
+        last_error = None
+        for attempt in range(1, 4):
+            try:
+                with urllib.request.urlopen(req, timeout=45) as resp:
+                    url = resp.read().decode("utf-8").strip()
+                    if url.startswith("http://") or url.startswith("https://"):
+                        return url
+                    raise RuntimeError(f"Storage upload returned invalid response: {url[:100]}")
+            except Exception as e:
+                last_error = e
+                if attempt < 3:
+                    time.sleep(attempt * 1.5)
+
+        raise RuntimeError(f"Catbox upload failed after 3 attempts: {last_error}")
 
 
 class LocalStaticStorageProvider(BaseStorageProvider):
