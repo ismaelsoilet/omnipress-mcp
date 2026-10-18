@@ -403,3 +403,37 @@ python src/server.py
 # Iniciar o servidor MCP em modo HTTP/SSE ASGI (Porta 3333):
 python src/server.py --http 3333
 ```
+
+---
+
+## 7. Padrão de Receitas Declarativas & Motores Universais (Regra 12 / v0.3.0)
+
+### 7.1. Anti-Pattern: Criação de Scripts Descartáveis
+É **terminantemente proibido** aos agentes criar scripts pontuais em Python (`render_carousel_*.py`, `upload_carousel_*.py`, `schedule_carousel_*.py`) para processar carrosséis, tratar áudios ou postar em redes sociais. Esse padrão causou proliferação descontrolada de 90+ scripts com chaves expostas e caminhos absolutos hardcoded.
+
+### 7.2. O Novo Padrão Operacional: Receita Declarativa
+Todo conteúdo deve ser estruturado em arquivos declarativos JSON/YAML dentro da pasta do criativo no canal (ex: `channels/<slug>/media/carousels/<post>/carousel_recipe.json`).
+
+O agente executa o pipeline por meio dos **Motores Universais do Repositório**:
+
+```bash
+# Execução completa de Carrossel (preparo de fundos + render com cards + upload CDN + agendamento Buffer):
+omnipress carousel --recipe channels/<slug>/media/carousels/<post>/carousel_recipe.json --all
+
+# Masterização de Áudio Broadcast (-14 LUFS EBU R128, adeclick, denoise, 4-band EQ e compressor):
+omnipress master-audio channels/<slug>/media/voiceover/raw_vox.m4a -o channels/<slug>/media/voiceover/master_vox.mp3
+
+# Formatação e Chunking de Legendas Whisper para Remotion:
+omnipress align-captions channels/<slug>/shorts/<id>/whisper.json -o channels/<slug>/shorts/<id>/captions.json
+
+# Publicação ou Agendamento Seguro com PublishingShield:
+omnipress publish --recipe channels/<slug>/articles/<id>/post_recipe.json
+```
+
+### 7.3. Quando Scripts Customizados São Permitidos?
+Scripts em `channels/<slug>/scripts/` continuam plenamente suportados e recomendados quando o criativo demandar:
+1. Raspagem de dados específica de fontes externas do canal.
+2. Animação experimental de canvas/gráficos que fuja do padrão do `CarouselBuilder`.
+3. Processamento estatístico de dados jurídicos, fiscais ou científicos exclusivos daquela publicação.
+Para todas as publicações e carrosséis padrão, utilize exclusivamente as receitas declarativas e os motores universais.
+

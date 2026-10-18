@@ -77,6 +77,15 @@ When an agent generates a content campaign, it must produce three synchronized a
 - **Tag & Token Sanitization**: Dev.to tags must be sanitized to max 4 lowercase alphanumeric tokens. Ghost CMS tokens must be short-lived HS256 JWTs with 5-minute expiry.
 - **Diagnostic Tooling**: Runtimes and capabilities must be verifiable via `omnipress doctor`, `omnipress status`, and configured via `omnipress setup`.
 
+### 9. Declarative-First Execution Engines & Anti-Script Standard (Rule 12)
+- **Declarative Recipes Over Bespoke Scripts**: Agents must NEVER write repetitive one-off Python scripts (`render_*.py`, `upload_*.py`, `schedule_*.py`) for standard carousels, voiceover mastering, captions, or social posts.
+- **Universal Engine Invocations**: Standard deliverables must use declarative JSON recipes (`carousel_recipe.json`, `post_recipe.json`) executed by core universal engines:
+  - `omnipress carousel --recipe ... --all` (auto background prep, contrast cards, CDN upload, and Buffer scheduling).
+  - `omnipress master-audio <input> -o <output>` (Rule 10 studio mastering chain & -14.0 LUFS EBU R128).
+  - `omnipress align-captions <whisper.json> -o <output.json>` (Whisper timestamp standardization & 2-4 word chunking).
+  - `omnipress publish --recipe ...` (privacy sanitization & PublishingShield duplicate protection).
+- **Channel Flexibility Preserved**: Custom scripts in `channels/<slug>/scripts/` are strictly reserved for bespoke non-standard tasks (e.g. specialized scrapers or custom interactive visualizations).
+
 ---
 
 ## 🇧🇷 Diretrizes em Português
@@ -149,4 +158,13 @@ Ao gerar campanhas de conteúdo, o agente deve produzir 3 formatos integrados:
 - **Escudo Pré-Voo de Idempotência**: Todo envio de artigo deve consultar `PublishingShield.check_duplicate()` antes de atingir APIs remotas e registrar `PublishingShield.record_published()` em caso de sucesso.
 - **Sanitização de Tags e Tokens**: Tags do Dev.to devem ser restritas a no máximo 4 tokens alfanuméricos em minúsculas. Tokens do Ghost CMS devem ser JWTs HS256 de curta duração (5 minutos).
 - **Diagnóstico e Operabilidade**: Runtimes e credenciais devem ser verificáveis via `omnipress doctor`, `omnipress status`, e configuráveis via `omnipress setup`.
+
+### 9. Padrão de Motores Universais e Receitas Declarativas (Regra 12)
+- **Receitas Declarativas em Vez de Scripts Pontuais**: O agente JAMAIS deve criar scripts Python descartáveis e repetitivos (`render_*.py`, `upload_*.py`, `schedule_*.py`) para carrosséis padrão, tratamento de áudio, alinhamento de legendas ou publicação de posts.
+- **Invocação dos Motores Universais do Repositório**: Entregáveis canônicos devem definir suas instruções em arquivos JSON declarativos (`carousel_recipe.json`, `post_recipe.json`), processados diretamente pelos motores universais em `src/engine/` e comandos da CLI:
+  - `omnipress carousel --recipe ... --all`: orquestra recorte inteligente de fundos, renderização de cartões protetores (Regra 08), upload CDN e agendamento via Buffer.
+  - `omnipress master-audio <input> -o <output>`: executa a cadeia broadcast de 6 estágios e crava -14.0 LUFS EBU R128 (Regra 10).
+  - `omnipress align-captions <whisper.json> -o <output.json>`: padroniza timestamps do Whisper em blocos dinâmicos de 2 a 4 palavras para Remotion.
+  - `omnipress publish --recipe ...`: executa higienização LGPD e proteção anti-duplicação via `PublishingShield` (Regra 09).
+- **Flexibilidade Preservada**: Scripts customizados em `channels/<slug>/scripts/` são estritamente reservados para tarefas verdadeiramente atípicas (como raspagem de dados especializada ou testes gráficos interativos fora do padrão).
 

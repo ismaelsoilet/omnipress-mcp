@@ -196,10 +196,10 @@ def cmd_build_carousel(args: argparse.Namespace) -> int:
         print(f"❌ Failed parsing slides JSON: {e}")
         return 1
 
-    rendered = builder.render_carousel_deck(
+    rendered = builder.build_carousel(
         channel_slug=args.channel,
         post_slug=args.post,
-        slides=slides_data,
+        slides_data=slides_data,
         aspect_ratio=args.aspect_ratio,
     )
     print(f"✅ Rendered {len(rendered)} carousel slide(s):")
@@ -208,12 +208,209 @@ def cmd_build_carousel(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_carousel(args: argparse.Namespace) -> int:
+    """Executes declarative carousel recipes via UniversalCarouselEngine."""
+    import json
+    from src.engine.universal_carousel import UniversalCarouselEngine
+
+    recipe_path = Path(args.recipe).resolve()
+    if not recipe_path.exists():
+        print(f"❌ Error: Recipe file not found: {recipe_path}")
+        return 1
+
+    do_render = args.render or args.all
+    do_upload = args.upload or args.all
+    do_schedule = args.schedule or args.all
+    if not (do_render or do_upload or do_schedule):
+        do_render = True
+
+    cm = ChannelManager()
+    engine = UniversalCarouselEngine(channel_manager=cm)
+
+    try:
+        recipe_data, _ = engine.load_recipe(recipe_path)
+    except Exception as e:
+        print(f"❌ Error loading recipe: {e}")
+        return 1
+
+    if args.channel:
+        recipe_data["channel_slug"] = args.channel
+
+    channel_slug = recipe_data.get("channel_slug", "default")
+    post_slug = recipe_data.get("post_slug", recipe_path.stem)
+    recipe_data["post_slug"] = post_slug
+
+    print("============================================================")
+    print("         OmniPress Universal Carousel Execution Engine      ")
+    print("============================================================")
+    print(f"  Channel : {channel_slug}")
+    print(f"  Post    : {post_slug}")
+    print(f"  Recipe  : {recipe_path.name}")
+    print(f"  Actions : render={do_render}, upload={do_upload}, schedule={do_schedule}")
+    print("------------------------------------------------------------")
+
+    try:
+        result = engine.execute_recipe(
+            recipe_input=recipe_data,
+            render=do_render,
+            upload=do_upload,
+            schedule=do_schedule,
+            force_duplicate=args.force_duplicate,
+        )
+
+        if do_render and result.get("rendered_slides"):
+            print(f"✅ Rendered {len(result['rendered_slides'])} slide(s):")
+            for p in result["rendered_slides"]:
+                print(f"   • {p}")
+
+        if do_upload and result.get("cdn_urls"):
+            print(f"📤 Uploaded {len(result['cdn_urls'])} slide(s) to CDN:")
+            for u in result["cdn_urls"]:
+                print(f"   • {u}")
+
+        if do_schedule and result.get("publish_result"):
+            pub_res = result["publish_result"]
+            if pub_res.get("success"):
+                print(f"🎉 Publication/Scheduling successful:")
+                print(f"   {json.dumps(pub_res, indent=2, ensure_ascii=False)}")
+            elif pub_res.get("skipped"):
+                print(f"ℹ️  Publication skipped: {pub_res.get('reason')}")
+            else:
+                print(f"⚠️ Publication failed or blocked: {pub_res.get('error')}")
+                return 1
+
+        print("============================================================")
+        print("✅ Pipeline completed successfully.")
+        return 0
+    except Exception as e:
+        print(f"❌ Pipeline failed: {e}")
+        return 1
+
+
+def cmd_master_audio(args: argparse.Namespace) -> int:
+    """Masters voiceover to broadcast standards (Rule 10)."""
+    from src.engine.universal_audio import UniversalAudioEngine, find_ffmpeg_binary
+
+    input_path = Path(args.input).resolve()
+    if not input_path.exists():
+        print(f"❌ Error: Input voiceover file not found: {input_path}")
+        return 1
+
+    output_path = Path(args.output).resolve()
+    ffmpeg_bin = find_ffmpeg_binary()
+
+    print("============================================================")
+    print("      OmniPress Universal Audio Mastering Engine (Rule 10)  ")
+    print("============================================================")
+    print(f"  Input       : {input_path.name}")
+    print(f"  Output      : {output_path.name}")
+    print(f"  Target LUFS : {args.target_lufs} LUFS")
+    print(f"  Sample Rate : {args.sample_rate} Hz")
+    print("------------------------------------------------------------")
+
+    engine = UniversalAudioEngine(ffmpeg_bin=ffmpeg_bin)
+    res = engine.master_voiceover(
+        input_audio=input_path,
+        output_audio=output_path,
+        target_lufs=args.target_lufs,
+        sample_rate=args.sample_rate,
+        bitrate=args.bitrate,
+    )
+
+    if res.get("success"):
+        print(f"✅ Mastered audio generated successfully: {output_path}")
+        return 0
+    else:
+        print(f"❌ Audio mastering failed: {res.get('error')}")
+        return 1
+
+
+def cmd_align_captions(args: argparse.Namespace) -> int:
+    """Formats Whisper JSON into Remotion chunked captions."""
+    from src.engine.universal_captions import UniversalCaptionsEngine
+
+    input_path = Path(args.input).resolve()
+    if not input_path.exists():
+        print(f"❌ Error: Whisper input file not found: {input_path}")
+        return 1
+
+    output_path = Path(args.output).resolve()
+    engine = UniversalCaptionsEngine()
+    res = engine.process_and_export(
+        input_whisper=input_path,
+        output_json=output_path,
+        words_per_chunk=args.words_per_chunk,
+        uppercase=not args.lowercase,
+    )
+
+    if res.get("success"):
+        print(f"✅ Chunked captions exported to: {output_path}")
+        print(f"   Total Words : {res.get('total_words')}")
+        print(f"   Total Chunks: {res.get('total_chunks')}")
+        print(f"   Duration    : {res.get('duration')}s")
+        return 0
+    else:
+        print(f"❌ Captions alignment failed: {res.get('error')}")
+        return 1
+
+
+def cmd_publish(args: argparse.Namespace) -> int:
+    """Publishes or schedules posts via UniversalPublisherEngine with PublishingShield."""
+    import json
+    from src.engine.universal_publisher import UniversalPublisherEngine
+
+    cm = ChannelManager()
+    engine = UniversalPublisherEngine(channel_manager=cm)
+
+    print("============================================================")
+    print("      OmniPress Universal Social Publisher Engine (Rule 09) ")
+    print("============================================================")
+
+    if args.recipe:
+        recipe_path = Path(args.recipe).resolve()
+        if not recipe_path.exists():
+            print(f"❌ Error: Recipe file not found: {recipe_path}")
+            return 1
+        res = engine.execute_recipe(
+            recipe_input=recipe_path,
+            force_duplicate=args.force_duplicate,
+            dry_run=args.dry_run,
+        )
+    else:
+        if not args.text:
+            print("❌ Error: Must provide either --recipe or --text.")
+            return 1
+
+        channel_slug = args.channel or cm.get_active_channel().get("slug", "default")
+        res = engine.publish_social_post(
+            channel_slug=channel_slug,
+            text=args.text,
+            platforms=args.platforms,
+            media_urls=args.media or [],
+            schedule_time=args.schedule_time,
+            mode=args.mode,
+            force_duplicate=args.force_duplicate,
+            dry_run=args.dry_run,
+        )
+
+    if res.get("success"):
+        if res.get("dry_run"):
+            print("✅ Dry-run pre-flight validation passed successfully:")
+        else:
+            print("🎉 Publication dispatched and recorded to PublishingShield ledger:")
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0
+    else:
+        print(f"❌ Publication failed: {res.get('error')}")
+        return 1
+
+
 def main(argv: Optional[list] = None) -> int:
     parser = argparse.ArgumentParser(
         prog="omnipress",
         description="OmniPress CLI - Universal Agentic Publishing Protocol & Management Suite",
     )
-    parser.add_argument("--version", action="version", version="OmniPress MCP 0.2.0")
+    parser.add_argument("--version", action="version", version="OmniPress MCP 0.3.0")
 
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
 
@@ -244,8 +441,45 @@ def main(argv: Optional[list] = None) -> int:
     info_p = subparsers.add_parser("info-channel", help="Show detailed configuration for a channel")
     info_p.add_argument("slug", help="Channel slug to inspect")
 
-    # build-carousel
-    build_p = subparsers.add_parser("build-carousel", help="Render portrait carousel slides from JSON definition")
+    # carousel (Universal Engine)
+    carousel_p = subparsers.add_parser("carousel", help="Execute declarative carousel recipes (render, upload, schedule)")
+    carousel_p.add_argument("--recipe", "-r", required=True, help="Path to carousel recipe JSON file")
+    carousel_p.add_argument("--channel", "-c", help="Override channel slug")
+    carousel_p.add_argument("--render", action="store_true", help="Render slides from recipe")
+    carousel_p.add_argument("--upload", action="store_true", help="Upload slides to CDN")
+    carousel_p.add_argument("--schedule", action="store_true", help="Schedule or publish post")
+    carousel_p.add_argument("--all", action="store_true", help="Execute all pipeline stages")
+    carousel_p.add_argument("--force-duplicate", action="store_true", help="Bypass duplicate check")
+
+    # master-audio (Universal Engine)
+    audio_p = subparsers.add_parser("master-audio", help="Master voiceover audio to broadcast standards (Rule 10)")
+    audio_p.add_argument("input", help="Source voiceover audio (.m4a, .wav, .mp3)")
+    audio_p.add_argument("-o", "--output", required=True, help="Output mastered audio file (.mp3, .wav)")
+    audio_p.add_argument("--target-lufs", type=float, default=-14.0, help="Target loudness (default: -14.0 LUFS)")
+    audio_p.add_argument("--sample-rate", type=int, default=48000, help="Sample rate in Hz (default: 48000)")
+    audio_p.add_argument("--bitrate", default="192k", help="MP3 bitrate (default: 192k)")
+
+    # align-captions (Universal Engine)
+    captions_p = subparsers.add_parser("align-captions", help="Convert Whisper JSON to Remotion chunked captions")
+    captions_p.add_argument("input", help="Raw Whisper JSON file")
+    captions_p.add_argument("-o", "--output", required=True, help="Output captions JSON file")
+    captions_p.add_argument("--words-per-chunk", type=int, default=3, help="Words per subtitle chunk (default: 3)")
+    captions_p.add_argument("--lowercase", action="store_true", help="Keep original casing instead of uppercase")
+
+    # publish (Universal Engine)
+    publish_p = subparsers.add_parser("publish", help="Publish or schedule posts with PublishingShield (Rule 09)")
+    publish_p.add_argument("--recipe", "-r", help="Path to post_recipe.json")
+    publish_p.add_argument("--channel", "-c", help="Target channel workspace slug")
+    publish_p.add_argument("--text", "-t", help="Post caption / body text")
+    publish_p.add_argument("--platforms", "-p", nargs="+", default=["instagram"], help="Target platforms")
+    publish_p.add_argument("--media", "-m", nargs="*", default=[], help="Media URLs to attach")
+    publish_p.add_argument("--schedule-time", help="ISO 8601 UTC timestamp")
+    publish_p.add_argument("--mode", choices=["shareNow", "customScheduled", "addToQueue"], help="Publish mode")
+    publish_p.add_argument("--dry-run", action="store_true", help="Dry run validation without dispatch")
+    publish_p.add_argument("--force-duplicate", action="store_true", help="Bypass PublishingShield duplicate check")
+
+    # build-carousel (legacy alias)
+    build_p = subparsers.add_parser("build-carousel", help="Render portrait carousel slides (legacy)")
     build_p.add_argument("--channel", required=True, help="Target channel slug")
     build_p.add_argument("--post", required=True, help="Unique post slug for output directory")
     build_p.add_argument("--config", required=True, help="Path to JSON file with slides array")
@@ -265,6 +499,14 @@ def main(argv: Optional[list] = None) -> int:
         return cmd_create_channel(args)
     elif args.command == "info-channel":
         return cmd_info_channel(args)
+    elif args.command == "carousel":
+        return cmd_carousel(args)
+    elif args.command == "master-audio":
+        return cmd_master_audio(args)
+    elif args.command == "align-captions":
+        return cmd_align_captions(args)
+    elif args.command == "publish":
+        return cmd_publish(args)
     elif args.command == "build-carousel":
         return cmd_build_carousel(args)
     else:
@@ -275,3 +517,4 @@ def main(argv: Optional[list] = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+

@@ -108,8 +108,43 @@ npm run remotion:render -- DocumentaryEpisode-16x9 channels/meu-novo-canal/media
 
 ---
 
+## 📜 Padrão de Receitas Declarativas & Motores Universais (v0.3.0)
+
+Para evitar scripts descartáveis duplicados (`render_*.py`, `upload_*.py`, `schedule_*.py`), o OmniPress MCP utiliza o **Padrão de Receitas Declarativas**. Você define o conteúdo em JSON/YAML e aciona os motores universais do repositório:
+
+### 1. Carrosséis com Receita Declarativa (`carousel_recipe.json`)
+Crie sua receita em `channels/<slug>/media/carousels/<post>/carousel_recipe.json` (veja modelo em `channels/_template/media/carousels/_template_carousel/carousel_recipe.json`) e execute:
+```bash
+# Renderizar lâminas com contraste seguro (Regra 08)
+omnipress carousel --recipe channels/meu-canal/media/carousels/post_01/carousel_recipe.json --render
+
+# Pipeline completo: Preparar backgrounds + Renderizar + Upload CDN + Agendar via Buffer
+omnipress carousel --recipe channels/meu-canal/media/carousels/post_01/carousel_recipe.json --all
+```
+
+### 2. Masterização Broadcast de Locução (`omnipress master-audio`)
+Aplica a cadeia completa de estúdio (adeclick, 80Hz highpass, spectral denoise, 4-band EQ cirúrgico, compressor e EBU R128 a -14.0 LUFS):
+```bash
+omnipress master-audio channels/meu-canal/media/voiceover/raw_voz.m4a -o channels/meu-canal/media/voiceover/master_voz.mp3
+```
+
+### 3. Alinhamento de Legendas Whisper (`omnipress align-captions`)
+Converte o JSON bruto gerado pelo Whisper em chunks de alta retenção prontos para o Remotion:
+```bash
+omnipress align-captions channels/meu-canal/documentarios/ep01/whisper_raw.json -o channels/meu-canal/documentarios/ep01/captions.json
+```
+
+### 4. Publicação e Agendamento Universal (`omnipress publish`)
+Despacha posts com higienização LGPD e proteção anti-duplicação (`PublishingShield`):
+```bash
+omnipress publish --recipe channels/meu-canal/articles/post_01/post_recipe.json
+```
+
+---
+
 ## 🛡️ Políticas de Isolamento & Segurança (Regras 04 e 09)
 
 1. **Zero Vazamento no Git**: Diretórios sob `channels/*` (exceto `channels/_template/`) estão estritamente incluídos no `.gitignore`. Suas mídias, áudios e credenciais privadas jamais serão enviadas ao repositório público.
 2. **Agnosticismo Total**: Jamais hardcode nomes de canais ou arquivos de episódios dentro de `src/video/`. Passe tudo via propriedades (`props`) ou arquivos de configuração do canal.
 3. **Publicação Estritamente Única (Exactly-Once)**: Todas as publicações feitas via `omnipress_queue_post` ou `omnipress_publish_article` são registradas no livro-razão `media/staging/publishing_ledger.json` para evitar envios duplicados acidentais.
+

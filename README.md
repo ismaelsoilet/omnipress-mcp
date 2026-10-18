@@ -269,40 +269,52 @@ When you ask the AI to draft an article:
 3. Runs the privacy and secrets scanner.
 4. Invokes `omnipress_publish_article`, saving to `channels/<slug>/articles/YYYY/MM/article-title.md`.
 
-#### Workflow B: Render a Branded Instagram Carousel (3:4)
-1. Place background images into `channels/<slug>/media/raw/`.
-2. Define the slides array in a JSON file (or have the AI generate it):
-
+#### Workflow B: Universal Carousel Engine & Declarative Recipes (v0.3.0)
+Instead of writing repetitive Python scripts, create a declarative `carousel_recipe.json`:
 ```json
-[
-  {
-    "bg_image": "channels/tech-insights/media/raw/bg_slide1.jpg",
-    "headline": "The Death of Monoliths?",
-    "body": "Why poorly designed distributed systems cost 10x more to maintain.",
-    "page_str": "01/05"
-  },
-  {
-    "bg_image": "channels/tech-insights/media/raw/bg_slide2.jpg",
-    "headline": "The Latency Paradox",
-    "body": "Every network hop across microservices accumulates latency overhead.",
-    "page_str": "02/05"
+{
+  "channel_slug": "tech-insights",
+  "post_slug": "death-of-monoliths",
+  "aspect_ratio": "3:4",
+  "slides": [
+    {
+      "headline": "The Death of Monoliths?",
+      "body": "Why poorly designed distributed systems cost 10x more to maintain.",
+      "badge_text": "SYSTEM ARCHITECTURE",
+      "bg_image": "channels/tech-insights/media/raw/bg_slide1.jpg",
+      "top_bias": 0.20
+    }
+  ],
+  "publish": {
+    "caption": "Why distributed systems cost 10x more when done wrong...\n\n#architecture #microservices #devops",
+    "platforms": ["instagram"],
+    "schedule_time": "2026-10-31T20:00:00.000Z"
   }
-]
+}
 ```
 
-3. Render using the CLI or MCP tool:
+Run the complete pipeline (background prep + contrast rendering + CDN upload + Buffer scheduling):
 ```bash
-python src/cli.py build-carousel \
-  --channel tech-insights \
-  --post death-of-monoliths \
-  --config slides.json \
-  --aspect-ratio 3:4
+omnipress carousel --recipe channels/tech-insights/media/carousels/death-of-monoliths/carousel_recipe.json --all
 ```
-Rendered slides are output to `channels/tech-insights/media/carousels/death-of-monoliths/slide_01.jpg`.
 
-#### Workflow C: Queue Social Posts
-The agent calls `omnipress_queue_post` specifying target platforms:
-- `platforms: ["linkedin", "twitter", "threads", "reddit:webdev"]`
+#### Workflow C: Studio Broadcast Audio Mastering (Rule 10)
+Masters raw human or AI voiceover through the 6-stage studio mastering chain (-14.0 LUFS EBU R128):
+```bash
+omnipress master-audio channels/tech-insights/media/voiceover/raw_voice.m4a -o channels/tech-insights/media/voiceover/master_voice.mp3
+```
+
+#### Workflow D: Whisper Captions Alignment
+Extracts word timestamps from Whisper JSON and chunks them into punchy 2-4 word captions for Remotion video:
+```bash
+omnipress align-captions channels/tech-insights/shorts/s01/whisper.json -o channels/tech-insights/shorts/s01/captions.json
+```
+
+#### Workflow E: Queue Social Posts with PublishingShield
+```bash
+omnipress publish --recipe channels/tech-insights/articles/post_01/post_recipe.json
+```
+
 - Sanitized text is delivered into each platform's draft queue.
 
 #### Workflow D: Produce Dark Channel Scripts (YouTube Shorts / Reels)

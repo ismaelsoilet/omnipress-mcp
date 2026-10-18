@@ -1,0 +1,37 @@
+{
+  "channel_slug": "_template",
+  "post_slug": "sample_carousel",
+  "aspect_ratio": "3:4",
+  "slides": [
+    {
+      "headline": "MANCHETE DO PRIMEIRO SLIDE",
+      "body": "Texto explicativo e cativante introduzindo o tema de forma clara, objetiva e persuasiva com contraste protegido.",
+      "badge_text": "TÓPICO • EDIÇÃO 01",
+      "bg_image": "background_slide_01.jpg",
+      "top_bias": 0.20,
+      "swipe_str": "Deslize →"
+    },
+    {
+      "headline": "DESENVOLVIMENTO DO TEMA",
+      "body": "Dados, evidências, citações ou etapas do raciocínio apresentados com cartões de contraste em conformidade com a Regra 08.",
+      "badge_text": "ANÁLISE PROFUNDA",
+      "bg_image": "background_slide_02.jpg",
+      "top_bias": 0.15,
+      "swipe_str": "Deslize →"
+    },
+    {
+      "headline": "CONCLUSÃO & CALL TO ACTION",
+      "body": "Fechamento memorável com pergunta reflexiva convidando o seguidor a comentar e salvar este post para consultas futuras.",
+      "badge_text": "CONSIDERAÇÕES FINAIS",
+      "bg_image": "background_slide_03.jpg",
+      "top_bias": 0.20,
+      "swipe_str": "Salve & Compartilhe"
+    }
+  ],
+  "publish": {
+    "caption": "🔥 Legenda de alto engajamento formatada com quebras de linha e chamada para ação.\n\nComente abaixo o que você acha e siga @seucanal para mais análises diárias.\n\n#omnipress #conteudo #analise #inovacao",
+    "platforms": ["instagram"],
+    "schedule_time": "2026-10-31T20:00:00.000Z",
+    "mode": "customScheduled"
+  }
+}

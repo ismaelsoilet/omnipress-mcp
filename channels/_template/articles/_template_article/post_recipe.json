@@ -1,0 +1,12 @@
+{
+  "channel_slug": "_template",
+  "title": "Título Estratégico do Artigo Long-Form",
+  "text": "Este é o corpo do artigo formatado para sindicação multi-canal ou post de alto engajamento.\n\nPrincipais pontos:\n- Ponto analítico 1 com dados verificados\n- Ponto analítico 2 com lições práticas\n- Conclusão estratégica\n\nO que você achou desta abordagem? Compartilhe nos comentários.\n\n#tech #arquitetura #desenvolvimento #omnipress",
+  "platforms": ["linkedin", "instagram"],
+  "tags": ["tecnologia", "arquitetura", "opensource"],
+  "category": "tecnologia",
+  "author": "Equipe OmniPress",
+  "canonical_url": "https://seublog.com/artigo-estrategico",
+  "schedule_time": "2026-10-31T20:00:00.000Z",
+  "mode": "customScheduled"
+}

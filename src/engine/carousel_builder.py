@@ -269,3 +269,6 @@ class CarouselBuilder:
             generated_paths.append(out_file)
 
         return generated_paths
+
+    # Alias for backward compatibility with CLI and legacy callers
+    render_carousel_deck = build_carousel
