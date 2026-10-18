@@ -210,6 +210,8 @@ def test_audio_mastering_nonexistent_file():
 def test_audio_real_ffmpeg_mastering(tmp_path):
     """Executes a REAL broadcast mastering pass through ffmpeg on synthetic audio."""
     ffmpeg_bin = find_ffmpeg_binary()
+    if not ffmpeg_bin:
+        pytest.skip("FFmpeg binary not installed on host")
     engine = UniversalAudioEngine(ffmpeg_bin=ffmpeg_bin)
 
     raw_wav = tmp_path / "synthetic_voice.wav"
@@ -476,12 +478,13 @@ def test_script_runners(tmp_path, temp_workspace):
     assert exit_code_pub == 0
 
     # 3. scripts/omnipress_audio_master.py
-    raw_wav = tmp_path / "test_script_voice.wav"
-    create_synthetic_wav(raw_wav, duration_sec=0.4)
-    out_mp3 = tmp_path / "test_script_voice_mastered.mp3"
-    exit_code_audio = script_audio_main([str(raw_wav), "-o", str(out_mp3)])
-    assert exit_code_audio == 0
-    assert out_mp3.exists()
+    if find_ffmpeg_binary():
+        raw_wav = tmp_path / "test_script_voice.wav"
+        create_synthetic_wav(raw_wav, duration_sec=0.4)
+        out_mp3 = tmp_path / "test_script_voice_mastered.mp3"
+        exit_code_audio = script_audio_main([str(raw_wav), "-o", str(out_mp3)])
+        assert exit_code_audio == 0
+        assert out_mp3.exists()
 
 
 def test_canonical_template_recipes_validity():
