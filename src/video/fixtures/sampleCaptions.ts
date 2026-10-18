@@ -1,45 +1,45 @@
-import short02Json from "./short_02_captions.json";
-import short03Json from "./short_03_captions.json";
-import short03ReelsJson from "./short_03_reels_88s_captions.json";
-import short04Json from "./short_04_captions.json";
 import { ActData } from "../types";
 
 /**
- * Universal caption fixtures for Remotion video compositions.
- * Used for development previews and CI builds when channel-specific media is not mounted.
+ * Universal agnostic caption fixtures for Remotion video compositions.
+ * Used for development previews, automated testing, and CI builds
+ * when channel-specific media is not mounted.
  */
-export const short02Captions: Record<string, ActData> = short02Json as unknown as Record<string, ActData>;
-export const short03Captions: Record<string, ActData> = short03Json as unknown as Record<string, ActData>;
-export const short03ReelsCaptions: Record<string, ActData> = short03ReelsJson as unknown as Record<string, ActData>;
-export const short04Captions: Record<string, ActData> = short04Json as unknown as Record<string, ActData>;
-
 export const sampleShortCaptions: Record<string, ActData> = {
   short_01: {
-    name: "A Cidade Proibida de 18 Andares no Subsolo",
-    duration: 65.07,
+    name: "Abertura / Exemplo de Short",
+    duration: 65.0,
     words: [
-      { word: "Em", start: 0.95, end: 1.22 },
-      { word: "1963,", start: 1.22, end: 2.55 },
-      { word: "E", start: 2.58, end: 3.1 },
-      { word: "encontrou", start: 3.1, end: 3.8 },
+      { word: "Bem-vindo", start: 0.5, end: 1.2 },
+      { word: "ao", start: 1.2, end: 1.4 },
+      { word: "OmniPress,", start: 1.4, end: 2.2 },
+      { word: "o", start: 2.3, end: 2.5 },
+      { word: "motor", start: 2.5, end: 2.9 },
+      { word: "de", start: 2.9, end: 3.1 },
+      { word: "publicação", start: 3.1, end: 3.8 },
+      { word: "programática.", start: 3.8, end: 4.8 },
     ],
     chunks: [
       {
-        start: 0.95,
-        end: 2.55,
-        text: "Em 1963, um homem derrubou uma parede no porão...",
+        start: 0.5,
+        end: 2.2,
+        text: "Bem-vindo ao OmniPress,",
         words: [
-          { word: "Em", start: 0.95, end: 1.22 },
-          { word: "1963,", start: 1.22, end: 2.55 },
+          { word: "Bem-vindo", start: 0.5, end: 1.2 },
+          { word: "ao", start: 1.2, end: 1.4 },
+          { word: "OmniPress,", start: 1.4, end: 2.2 },
         ],
       },
       {
-        start: 2.58,
-        end: 5.12,
-        text: "E encontrou uma galeria que não constava em nenhum mapa.",
+        start: 2.3,
+        end: 4.8,
+        text: "o motor de publicação programática.",
         words: [
-          { word: "E", start: 2.58, end: 3.1 },
-          { word: "encontrou", start: 3.1, end: 3.8 },
+          { word: "o", start: 2.3, end: 2.5 },
+          { word: "motor", start: 2.5, end: 2.9 },
+          { word: "de", start: 2.9, end: 3.1 },
+          { word: "publicação", start: 3.1, end: 3.8 },
+          { word: "programática.", start: 3.8, end: 4.8 },
         ],
       },
     ],
@@ -49,19 +49,27 @@ export const sampleShortCaptions: Record<string, ActData> = {
 export const sampleEpisodeCaptions: Record<string, ActData> = {
   act_00: {
     name: "Prólogo",
-    duration: 65.78,
+    duration: 60.0,
     words: [
-      { word: "Documentos", start: 0.0, end: 1.0 },
-      { word: "desclassificados", start: 1.0, end: 2.5 },
+      { word: "Este", start: 0.0, end: 0.8 },
+      { word: "é", start: 0.8, end: 1.0 },
+      { word: "um", start: 1.0, end: 1.3 },
+      { word: "episódio", start: 1.3, end: 2.2 },
+      { word: "de", start: 2.2, end: 2.4 },
+      { word: "demonstração.", start: 2.4, end: 3.5 },
     ],
     chunks: [
       {
         start: 0.0,
         end: 3.5,
-        text: "Documentos desclassificados revelam a história oculta.",
+        text: "Este é um episódio de demonstração.",
         words: [
-          { word: "Documentos", start: 0.0, end: 1.0 },
-          { word: "desclassificados", start: 1.0, end: 2.5 },
+          { word: "Este", start: 0.0, end: 0.8 },
+          { word: "é", start: 0.8, end: 1.0 },
+          { word: "um", start: 1.0, end: 1.3 },
+          { word: "episódio", start: 1.3, end: 2.2 },
+          { word: "de", start: 2.2, end: 2.4 },
+          { word: "demonstração.", start: 2.4, end: 3.5 },
         ],
       },
     ],

@@ -20,6 +20,8 @@ export interface KenBurnsSceneProps {
   caption?: string;
   badge?: string;
   showFilmGrain?: boolean;
+  brightness?: number;
+  contrast?: number;
 }
 
 export interface DocumentaryScene {

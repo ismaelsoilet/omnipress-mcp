@@ -19,6 +19,16 @@
       "regular_font": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
     }
   },
+  "video": {
+    "channel_name": "NOME DO CANAL",
+    "badge_text": "CONTEÚDO OFICIAL // NÍVEL 1",
+    "sub_text": "HISTÓRIAS, CURIOSIDADES E INVESTIGAÇÕES",
+    "classified_code": "REF // CANAL-OFICIAL",
+    "primary_color": "#3B82F6",
+    "background_color": "#0A0C10",
+    "default_aspect_ratio": "9:16",
+    "standard_short_duration_sec": 65.0
+  },
   "social": {
     "instagram": {
       "handle": "canal.oficial",
@@ -28,6 +38,19 @@
         "#conteudo",
         "#curiosidades"
       ]
+    },
+    "youtube": {
+      "channel_id": "",
+      "buffer_channel_id": "",
+      "default_privacy": "public"
+    },
+    "x_twitter": {
+      "handle": "canal_oficial",
+      "buffer_channel_id": ""
+    },
+    "linkedin": {
+      "profile_id": "",
+      "buffer_channel_id": ""
     }
   },
   "settings": {

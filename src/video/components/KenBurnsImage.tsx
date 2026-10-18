@@ -17,6 +17,8 @@ export const KenBurnsImage: React.FC<KenBurnsSceneProps> = ({
   caption,
   badge,
   showFilmGrain = true,
+  brightness = 1.0,
+  contrast = 1.0,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames, width, height } = useVideoConfig();
@@ -29,21 +31,21 @@ export const KenBurnsImage: React.FC<KenBurnsSceneProps> = ({
   let translateY = 0;
 
   if (direction === "zoom-in") {
-    scale = interpolate(frame, [0, durationInFrames], [1.0, 1.15], {
+    scale = interpolate(frame, [0, durationInFrames], [1.0, 1.08], {
       extrapolateRight: "clamp",
     });
   } else if (direction === "zoom-out") {
-    scale = interpolate(frame, [0, durationInFrames], [1.15, 1.0], {
+    scale = interpolate(frame, [0, durationInFrames], [1.08, 1.0], {
       extrapolateRight: "clamp",
     });
   } else if (direction === "pan-left") {
-    scale = 1.12;
-    translateX = interpolate(frame, [0, durationInFrames], [20, -20], {
+    scale = 1.06;
+    translateX = interpolate(frame, [0, durationInFrames], [12, -12], {
       extrapolateRight: "clamp",
     });
   } else if (direction === "pan-right") {
-    scale = 1.12;
-    translateX = interpolate(frame, [0, durationInFrames], [-20, 20], {
+    scale = 1.06;
+    translateX = interpolate(frame, [0, durationInFrames], [-12, 12], {
       extrapolateRight: "clamp",
     });
   }
@@ -68,21 +70,21 @@ export const KenBurnsImage: React.FC<KenBurnsSceneProps> = ({
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            filter: "brightness(0.72) contrast(1.05)",
+            filter: `brightness(${brightness}) contrast(${contrast})`,
           }}
         />
       </AbsoluteFill>
 
-      {/* 2. Vinheta e Gradiente Radial Escuro Protetor */}
+      {/* 2. Vinheta e Gradiente Radial Escuro Protetor Suave */}
       <AbsoluteFill
         style={{
           background:
-            "radial-gradient(circle at center, transparent 35%, rgba(6, 8, 12, 0.75) 85%, rgba(4, 5, 8, 0.95) 100%)",
+            "radial-gradient(circle at center, transparent 75%, rgba(6, 8, 12, 0.18) 92%, rgba(4, 5, 8, 0.38) 100%)",
         }}
       />
 
       {/* 3. Granulação de Película de Época */}
-      {showFilmGrain && <FilmGrain opacity={0.07} />}
+      {showFilmGrain && <FilmGrain opacity={0.035} />}
 
       {/* 4. Caixa Protetora Tática de Metadados do Arquivo (Topo Superior Esquerdo — Regra 08) */}
       {(headline || badge) && (

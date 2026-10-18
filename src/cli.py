@@ -32,7 +32,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     """Reports configured channels, active channel workspace, and ledger entries."""
     cm = ChannelManager()
     channels = cm.list_channels(include_templates=False)
-    active_slug = os.getenv("OMNIPRESS_ACTIVE_CHANNEL", "dossie-historico")
+    active_slug = os.getenv("OMNIPRESS_ACTIVE_CHANNEL", "default")
 
     print("============================================================")
     print("                 OmniPress MCP — System Status              ")
@@ -117,7 +117,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
         current_env["GHOST_ADMIN_API_KEY"] = ghost_key_input
 
     # Active channel
-    curr_channel = current_env.get("OMNIPRESS_ACTIVE_CHANNEL", "dossie-historico")
+    curr_channel = current_env.get("OMNIPRESS_ACTIVE_CHANNEL", "default")
     channel_prompt = f"  Active Channel Slug [{curr_channel}]: "
     ch_input = input(channel_prompt).strip()
     if ch_input:

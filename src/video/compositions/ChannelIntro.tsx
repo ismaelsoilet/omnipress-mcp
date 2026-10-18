@@ -21,7 +21,7 @@ export const ChannelIntro: React.FC<ChannelIntroProps> = ({
   badgeText,
   subText,
   classifiedCode,
-  primaryColor = "#D4AF37", // Dourado Clássico do Dossiê Histórico
+  primaryColor = "#3B82F6", // Padrão agnóstico, customizável por props
   backgroundColor = "#0A0C10",
   language = "pt",
   audioSrc,
@@ -30,19 +30,19 @@ export const ChannelIntro: React.FC<ChannelIntroProps> = ({
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
 
-  // Textos padrão bilíngues
+  // Textos padrão bilíngues agnósticos
   const isEn = language === "en";
-  const finalTitle = channelName || (isEn ? "HISTORICAL DOSSIER" : "DOSSIÊ HISTÓRICO");
+  const finalTitle = channelName || (isEn ? "CHANNEL NAME" : "NOME DO CANAL");
   const finalBadge =
-    badgeText || (isEn ? "DECLASSIFIED ARCHIVE // LVL 1" : "ARQUIVO DESCLASSIFICADO // NÍVEL 1");
+    badgeText || (isEn ? "FEATURED CONTENT // OFFICIAL" : "CONTEÚDO OFICIAL // DESTAQUE");
   const finalSub =
     subText ||
     (isEn
-      ? "OFFICIAL RECORDS • THE UNTOLD HISTORY"
-      : "DOCUMENTOS SECRETOS • A HISTÓRIA OCULTA");
+      ? "OFFICIAL RECORDS • THE UNTOLD STORY"
+      : "DOCUMENTOS & INVESTIGAÇÕES");
   const finalCode =
-    classifiedCode || (isEn ? "REF // TOP-SECRET-ARCHIVE" : "REF // TOP-SECRET-TUR-1963");
-  const stampText = isEn ? "DECLASSIFIED" : "DESCLASSIFICADO";
+    classifiedCode || (isEn ? "REF // OMNIPRESS-EN" : "REF // OMNIPRESS-PT");
+  const stampText = isEn ? "OFFICIAL" : "OFICIAL";
 
   // 1. Animação de entrada com física de mola (Spring)
   const introSpring = spring({

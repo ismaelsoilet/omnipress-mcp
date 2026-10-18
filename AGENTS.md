@@ -33,8 +33,9 @@ When an agent generates a content campaign, it must produce three synchronized a
 - **Structured Guidance**: Docstrings and descriptions must specify `Use when:`, `Do NOT use when:`, and `Returns:`.
 
 ### 4. Multi-Channel Agnostic Architecture
-- **Isolation by Default**: Every media brand or publication must live in its own directory under `channels/<slug>/` containing `channel.json`, `articles/`, `media/` (`raw/`, `carousels/`, `stories/`, `highlights/`), and `scripts/`.
-- **Engine vs. Channel Asset Separation**: Core layout engines, publisher adapters, and MCP tools remain in `src/` (`src/core/`, `src/engine/`, `src/adapters/`). Channel-specific generation scripts and post definitions belong in `channels/<slug>/scripts/`.
+- **Isolation by Default**: Every media brand or publication must live in its own directory under `channels/<slug>/` containing `channel.json`, `articles/`, `media/` (`raw/`, `carousels/`, `stories/`, `visuals/`, `voiceover/`, `soundtrack/`, `output/`), `documentarios/`, `shorts/`, and `scripts/`. See [`channels/_template/`](channels/_template/README.md) as the canonical workspace standard.
+- **Strict Decoupling Gate**: Channel-specific assets (video episode configs, Whisper alignment JSON, voiceovers, background music, or custom scripts) must NEVER be committed to `src/` (e.g. `src/video/fixtures/` or `Root.tsx`). The core engine must remain 100% agnostic.
+- **Engine vs. Channel Asset Separation**: Core layout engines, publisher adapters, and MCP tools remain in `src/` (`src/core/`, `src/engine/`, `src/adapters/`, `src/video/`). Channel-specific generation scripts and post definitions belong in `channels/<slug>/scripts/`.
 - **Dynamic Configuration**: Publisher adapters resolve credentials and channel IDs (e.g., `buffer_channel_id`) dynamically from `channel.json` before falling back to `.env`.
 
 ### 5. Visual Contrast & Carousel Legibility Standards (Rule 08)
@@ -104,8 +105,9 @@ Ao gerar campanhas de conteúdo, o agente deve produzir 3 formatos integrados:
 - **Estruturação**: Descrições e docstrings devem conter `Use when:`, `Do NOT use when:` e `Returns:`.
 
 ### 4. Arquitetura Agnóstica Multi-Canal
-- **Isolamento por Canal**: Cada canal de mídia reside exclusivamente em sua pasta em `channels/<slug>/` com seu respectivo `channel.json`, `articles/`, `media/` (`raw/`, `carousels/`, `stories/`, `highlights/`) e `scripts/`.
-- **Separação Motor vs. Canal**: Motores universais de layout, adaptadores e ferramentas MCP pertencem a `src/` (`src/core/`, `src/engine/`, `src/adapters/`). Scripts e criativos específicos do canal pertencem a `channels/<slug>/scripts/`.
+- **Isolamento por Canal**: Cada canal de mídia reside exclusivamente em sua pasta em `channels/<slug>/` com seu respectivo `channel.json`, `articles/`, `media/` (`raw/`, `carousels/`, `stories/`, `visuals/`, `voiceover/`, `soundtrack/`, `output/`), `documentarios/`, `shorts/` e `scripts/`. Consulte [`channels/_template/`](channels/_template/README.md) como o padrão canônico de workspace.
+- **Portão de Desacoplamento Estrito**: Ativos de canal (arquivos de configuração de episódios, JSONs de alinhamento Whisper, locuções gravadas, trilhas musicais ou scripts locais) NUNCA devem ser commitados no diretório `src/` (como `src/video/fixtures/` ou `Root.tsx`). O motor central do repositório deve permanecer 100% agnóstico e genérico.
+- **Separação Motor vs. Canal**: Motores universais de layout, adaptadores e ferramentas MCP pertencem a `src/` (`src/core/`, `src/engine/`, `src/adapters/`, `src/video/`). Scripts e criativos específicos do canal pertencem a `channels/<slug>/scripts/`.
 - **Configuração Dinâmica**: Adaptadores de publicação resolvem IDs de canal (ex.: `buffer_channel_id`) diretamente de `channel.json` antes de consultar `.env`.
 
 ### 5. Padrão de Contraste Visual e Segurança Tipográfica em Carrosséis (Regra 08)

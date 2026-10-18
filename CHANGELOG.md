@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **Decoupled Channel Assets from Core Engine**:
+  - Purged 24,000+ lines of channel-specific Whisper timestamps, configs, and audio assets (`captions_aligned_ep02.json`, `ep02DocumentaryConfig.ts`, `short_02_captions.json`, `short_03_captions.json`, `short_03_reels_88s_captions.json`, `short_04_captions.json`, `public/intro_sfx.mp3`) from git tracking.
+  - Refactored `src/video/Root.tsx` into a clean, brand-agnostic video engine template exposing universal compositions (`ChannelIntro-16x9`, `ChannelIntro-9x16`, `DocumentaryEpisode-16x9`, `DocumentaryEpisode-9x16`, `DocumentaryShort-9x16`, `Thumbnail-16x9`).
+  - Decoupled `src/cli.py` fallback channels and `src/video/compositions/` default properties from hardcoded channel references.
+  - Preserved all historical channel assets securely in the git-ignored `channels/dossie-historico/` workspace.
+
+### Added
+- **Canonical Channel Workspace Template (`channels/_template/`)**:
+  - Expanded `channels/_template/` with full directory hierarchy for multi-channel scaling: `articles/`, `media/` (`raw/`, `carousels/`, `stories/`, `visuals/`, `voiceover/`, `soundtrack/`, `output/`), `documentarios/_template_episodio/`, `shorts/_template_short/`, and `scripts/example_runner.py`.
+  - Added comprehensive bilingual documentation in `channels/_template/README.md` defining channel workspace lifecycles, Remotion dynamic prop rendering, and publishing workflows.
+
 ---
 
 ## [0.2.0] — 2026-10-17

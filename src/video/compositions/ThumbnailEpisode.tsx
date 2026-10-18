@@ -15,16 +15,16 @@ export interface ThumbnailEpisodeProps {
 }
 
 export const ThumbnailEpisode: React.FC<ThumbnailEpisodeProps> = ({
-  titleLine1 = "18 ANDARES",
-  titleLine2 = "NO SUBSOLO",
-  tagText = "ARQUIVO SECRETO // TURQUIA 1963",
-  calloutText = "ACHOU ATRÁS DA PAREDE!",
-  depthTag = "85 METROS DE PROFUNDIDADE",
-  peopleTag = "ABRIGAVA 20.000 PESSOAS",
-  doorTag = "PORTAS DE MEIA TONELADA",
-  imageSrc = "dossie/ep01/derinkuyu_slide3_corte_transversal_1791756658406.jpg",
-  cellarSrc = "dossie/ep01/derinkuyu_slide2_descoberta_1791756631797.jpg",
-  showClassifiedStamp = true,
+  titleLine1 = "MANCHETE PRINCIPAL",
+  titleLine2 = "SEGUNDA LINHA",
+  tagText = "CATEGORIA // INVESTIGAÇÃO",
+  calloutText = "CHAMADA DE IMPACTO!",
+  depthTag = "TAG 1",
+  peopleTag = "TAG 2",
+  doorTag = "TAG 3",
+  imageSrc = "",
+  cellarSrc = "",
+  showClassifiedStamp = false,
 }) => {
   return (
     <AbsoluteFill

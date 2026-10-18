@@ -170,11 +170,7 @@ export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
         </div>
       </div>
 
-      {/* 5. Grade Tática Sutil & Grão de Filme */}
-      <TacticalGrid opacity={0.12} />
-      <FilmGrain opacity={0.06} />
-
-      {/* 6. Overlays de Choque Visual (Carimbos MITO vs REALIDADE, Flashes & Perguntas) */}
+      {/* 5. Overlays de Choque Visual (Carimbos MITO vs REALIDADE, Flashes & Perguntas) */}
       {impactOverlays && impactOverlays.length > 0 && (
         <MitoRealidadeOverlays events={impactOverlays} />
       )}
