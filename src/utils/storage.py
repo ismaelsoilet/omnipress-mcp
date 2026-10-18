@@ -43,7 +43,8 @@ class CatboxStorageProvider(BaseStorageProvider):
         data.extend(b"fileupload\r\n")
 
         filename = remote_name or file_path.name
-        content_type = "image/png" if file_path.suffix.lower() == ".png" else "image/jpeg"
+        import mimetypes
+        content_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
         data.extend(f"--{boundary}\r\n".encode())
         data.extend(f'Content-Disposition: form-data; name="fileToUpload"; filename="{filename}"\r\n'.encode())
         data.extend(f"Content-Type: {content_type}\r\n\r\n".encode())
@@ -96,7 +97,7 @@ class LocalStaticStorageProvider(BaseStorageProvider):
         if not file_path.exists():
             raise FileNotFoundError(f"Media file not found: {file_path}")
 
-        filename = remote_name or file_path.name
+        filename = Path(remote_name or file_path.name).name
         dest_path = self.staging_dir / filename
         if file_path != dest_path.resolve():
             shutil.copy2(file_path, dest_path)
@@ -124,19 +125,27 @@ class S3StorageProvider(BaseStorageProvider):
         if not file_path.exists():
             raise FileNotFoundError(f"Media file not found: {file_path}")
 
-        key = remote_name or file_path.name
+        key = Path(remote_name or file_path.name).name
         try:
             import boto3  # Optional dependency
+            import mimetypes
             s3 = boto3.client("s3", endpoint_url=self.endpoint_url)
-            content_type = "image/png" if file_path.suffix.lower() == ".png" else "image/jpeg"
+            content_type = mimetypes.guess_type(file_path.name)[0] or "application/octet-stream"
+            extra_args: Dict[str, Any] = {"ContentType": content_type}
+            s3_acl = os.getenv("S3_ACL")
+            if s3_acl:
+                extra_args["ACL"] = s3_acl
+
             s3.upload_file(
                 str(file_path),
                 self.bucket_name,
                 key,
-                ExtraArgs={"ContentType": content_type, "ACL": "public-read"},
+                ExtraArgs=extra_args,
             )
             if self.public_url_prefix:
                 return f"{self.public_url_prefix}/{key}"
+            if self.endpoint_url:
+                return f"{self.endpoint_url.rstrip('/')}/{self.bucket_name}/{key}"
             return f"https://{self.bucket_name}.s3.amazonaws.com/{key}"
         except ImportError:
             raise RuntimeError("boto3 is required for S3StorageProvider. Install via 'uv add boto3'")

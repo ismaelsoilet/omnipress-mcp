@@ -1,5 +1,6 @@
 """Runtime capability inspector and environment validator for OmniPress."""
 
+import os
 import shutil
 import subprocess
 import sys
@@ -8,7 +9,9 @@ from typing import Dict, Any, Optional
 
 def check_command_version(cmd: str, version_arg: str = "--version") -> Optional[str]:
     """Returns trimmed version string if command exists and succeeds, else None."""
-    if not shutil.which(cmd):
+    from pathlib import Path
+    is_path = "/" in cmd or "\\" in cmd
+    if not (is_path and Path(cmd).is_file() and os.access(cmd, os.X_OK)) and not shutil.which(cmd):
         return None
     try:
         out = subprocess.check_output([cmd, version_arg], stderr=subprocess.STDOUT, text=True, timeout=3)
@@ -37,7 +40,14 @@ def get_runtime_capabilities() -> Dict[str, Any]:
 
     node_version = check_command_version("node", "-v")
     npm_version = check_command_version("npm", "-v")
-    ffmpeg_version = check_command_version("ffmpeg", "-version")
+
+    try:
+        from src.engine.universal_audio import find_ffmpeg_binary
+        ffmpeg_bin = find_ffmpeg_binary()
+    except Exception:
+        ffmpeg_bin = "ffmpeg"
+
+    ffmpeg_version = check_command_version(ffmpeg_bin, "-version")
     if ffmpeg_version and "ffmpeg version" in ffmpeg_version:
         ffmpeg_version = ffmpeg_version.split()[2]
 

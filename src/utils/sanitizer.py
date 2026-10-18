@@ -11,7 +11,7 @@ CPF_REGEX = re.compile(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b")
 CNPJ_REGEX = re.compile(r"\b\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}\b")
 
 # General Sensitive Data (Email and phone numbers)
-EMAIL_REGEX = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b")
+EMAIL_REGEX = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,24}\b")
 
 # Brazilian landline & mobile phone numbers
 # With DDD: (11) 98765-4321, 11 98765-4321, +55 11 98765-4321, (31) 3214-5678, etc.
@@ -27,7 +27,14 @@ PHONE_REGEX = re.compile(
 JWT_REGEX = re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b")
 BEARER_REGEX = re.compile(r"\bBearer\s+[A-Za-z0-9_\-\.=:~+/]{16,}\b", re.IGNORECASE)
 API_KEY_REGEX = re.compile(
-    r"\b(?:sk[-_](?:proj|ant|live|test)[-_][A-Za-z0-9_\-]{16,}|(?:sk|pk|ghp|gho|ghu|ghs|ghr|xoxb|xoxp|live|test)_[A-Za-z0-9_]{16,}|AIza[0-9A-Za-z\-_]{35})\b"
+    r"\b(?:"
+    r"sk[-_][A-Za-z0-9_\-]{20,}|"
+    r"(?:sk|pk|ghp|gho|ghu|ghs|ghr|xoxb|xoxp|live|test)_[A-Za-z0-9_]{16,}|"
+    r"github_pat_[A-Za-z0-9_]{22,}|"
+    r"AKIA[0-9A-Z]{16}|"
+    r"[a-f0-9]{24}:[a-f0-9]{64}|"
+    r"AIza[0-9A-Za-z\-_]{35}"
+    r")\b"
 )
 
 # Private IPv4 addresses (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8)

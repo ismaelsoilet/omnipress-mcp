@@ -5,19 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] — 2026-10-18
+
+### Added
+- **Universal Declarative Execution Engines (Rule 12)**:
+  - Universal Carousel Engine (`src/engine/universal_carousel.py`): Aspect ratio bias auto-formatting, dynamic backdrop cards, CDN uploading, and Buffer scheduling.
+  - Universal Audio Mastering Engine (`src/engine/universal_audio.py`): EBU R128 (-14.0 LUFS target, <= -1.2 dBTP), 4-band surgical EQ (140Hz warmth, 300Hz de-box, 3kHz presence, 8.5kHz air), dynamic broadcast compression, and speech-aware pause de-breather.
+  - Universal Captions Engine (`src/engine/universal_captions.py`): Whisper timestamp parser supporting multi-act structures, 2-4 word kinetic chunking, and Remotion subtitle JSON generation.
+  - Universal Multi-Platform Publisher (`src/engine/universal_publisher.py`): Multi-channel publisher with privacy sanitization and PublishingShield anti-duplicate protection.
+  - Declarative recipes in `channels/_template/`: `carousel_recipe.json` and `post_recipe.json`.
+- **Packaging & Hardening (SureForge Adversarial Round 2)**:
+  - Added `.dockerignore` blocking `.env*`, `.git`, `.venv`, `channels/`, `.agents/`, `node_modules/`, `dist/`.
+  - Added sdist excludes in `pyproject.toml` preventing internal assets leakage.
+  - Integrated `src/engine/dark_media.py` directly into core engine.
+  - Expanded `sanitize_text` with modern multi-segment gTLDs (`.technology`, `.solutions`), OpenAI/AWS/GitHub PAT/Ghost token detection.
+  - Eliminated 30-word false-positive collisions in `PublishingShield.generate_fingerprint`.
+  - Enforced strict Rule 10 ducking ceiling (`0.16`) and fixed Remotion React 19 loose component type compatibility.
+  - Fixed multi-channel partial failures and ledger recording in `BufferAdapter`.
+  - Implemented `BasePublisherAdapter` on `MarkdownAdapter`.
 
 ### Changed
 - **Decoupled Channel Assets from Core Engine**:
-  - Purged 24,000+ lines of channel-specific Whisper timestamps, configs, and audio assets (`captions_aligned_ep02.json`, `ep02DocumentaryConfig.ts`, `short_02_captions.json`, `short_03_captions.json`, `short_03_reels_88s_captions.json`, `short_04_captions.json`, `public/intro_sfx.mp3`) from git tracking.
-  - Refactored `src/video/Root.tsx` into a clean, brand-agnostic video engine template exposing universal compositions (`ChannelIntro-16x9`, `ChannelIntro-9x16`, `DocumentaryEpisode-16x9`, `DocumentaryEpisode-9x16`, `DocumentaryShort-9x16`, `Thumbnail-16x9`).
+  - Purged 24,000+ lines of channel-specific Whisper timestamps, configs, and audio assets from git tracking.
+  - Refactored `src/video/Root.tsx` into a clean, brand-agnostic video engine template exposing universal compositions.
   - Decoupled `src/cli.py` fallback channels and `src/video/compositions/` default properties from hardcoded channel references.
-  - Preserved all historical channel assets securely in the git-ignored `channels/dossie-historico/` workspace.
-
-### Added
+  - Preserved historical channel assets securely in git-ignored `channels/dossie-historico/` workspace.
 - **Canonical Channel Workspace Template (`channels/_template/`)**:
-  - Expanded `channels/_template/` with full directory hierarchy for multi-channel scaling: `articles/`, `media/` (`raw/`, `carousels/`, `stories/`, `visuals/`, `voiceover/`, `soundtrack/`, `output/`), `documentarios/_template_episodio/`, `shorts/_template_short/`, and `scripts/example_runner.py`.
-  - Added comprehensive bilingual documentation in `channels/_template/README.md` defining channel workspace lifecycles, Remotion dynamic prop rendering, and publishing workflows.
+  - Expanded `channels/_template/` with full directory hierarchy for multi-channel scaling.
+
 
 ---
 

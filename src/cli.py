@@ -161,6 +161,7 @@ def cmd_create_channel(args: argparse.Namespace) -> int:
         category=args.category,
         description=args.description or "",
         primary_color=args.color,
+        buffer_channel_id=getattr(args, "buffer_id", "") or "",
     )
     print(f"✅ Channel '{res['name']}' created successfully at {res.get('path', '')}")
     return 0
@@ -241,6 +242,7 @@ def cmd_carousel(args: argparse.Namespace) -> int:
     channel_slug = recipe_data.get("channel_slug", "default")
     post_slug = recipe_data.get("post_slug", recipe_path.stem)
     recipe_data["post_slug"] = post_slug
+    recipe_data["_recipe_dir"] = str(recipe_path.parent)
 
     print("============================================================")
     print("         OmniPress Universal Carousel Execution Engine      ")
@@ -385,6 +387,10 @@ def cmd_publish(args: argparse.Namespace) -> int:
             print("❌ Error: Must provide either --recipe or --text.")
             return 1
 
+        if args.mode == "customScheduled" and not args.schedule_time:
+            print("❌ Error: --schedule-time is required when --mode is 'customScheduled'.")
+            return 1
+
         channel_slug = args.channel or cm.get_active_channel().get("slug", "default")
         res = engine.publish_social_post(
             channel_slug=channel_slug,
@@ -440,6 +446,7 @@ def main(argv: Optional[list] = None) -> int:
     create_p.add_argument("--category", default="technology", help="Content niche/category")
     create_p.add_argument("--description", default="", help="Channel editorial description")
     create_p.add_argument("--color", default="#00E5FF", help="Primary brand accent color hex (e.g. #00E5FF)")
+    create_p.add_argument("--buffer-id", default="", help="Buffer channel/profile ID for automated publishing")
 
     # info-channel
     info_p = subparsers.add_parser("info-channel", help="Show detailed configuration for a channel")

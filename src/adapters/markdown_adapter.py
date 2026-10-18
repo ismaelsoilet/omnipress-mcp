@@ -17,13 +17,67 @@ def slugify(value: str) -> str:
     return re.sub(r"[-\s]+", "-", value).strip("-")
 
 
-class MarkdownArchiveAdapter:
+from src.adapters.base import BasePublisherAdapter
+
+
+class MarkdownArchiveAdapter(BasePublisherAdapter):
     """Saves long-form articles with YAML frontmatter locally, with multi-channel support."""
 
     def __init__(self, base_dir: Optional[str] = None):
         self.explicit_base_dir = base_dir is not None
         self.default_dir = Path(base_dir or os.getenv("ARTICLES_DIR", "./articles")).resolve()
         self.default_dir.mkdir(parents=True, exist_ok=True)
+
+    def is_configured(self) -> bool:
+        """Local file archive is always configured and ready."""
+        return True
+
+    def queue_social_post(
+        self,
+        text: str,
+        platforms: List[str],
+        media_urls: Optional[List[str]] = None,
+        schedule_time: Optional[str] = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Archives a social post locally as a markdown record."""
+        title = kwargs.get("title", text.split("\n")[0][:50])
+        channel_slug = kwargs.get("channel_slug")
+        res = self.save_article(
+            title=f"Social Post: {title}",
+            content_markdown=text,
+            category="social",
+            tags=platforms,
+            channel_slug=channel_slug,
+        )
+        return {
+            "success": True,
+            "provider": "markdown_archive",
+            "path": res.get("path"),
+            "platforms": platforms,
+        }
+
+    def publish_article(
+        self,
+        title: str,
+        content_markdown: str,
+        category: str = "technology",
+        tags: Optional[List[str]] = None,
+        author: Optional[str] = None,
+        canonical_url: Optional[str] = None,
+        published: bool = False,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Publishes/archives a full article locally."""
+        channel_slug = kwargs.get("channel_slug")
+        return self.save_article(
+            title=title,
+            content_markdown=content_markdown,
+            category=category,
+            tags=tags,
+            author=author,
+            channel_slug=channel_slug,
+        )
 
     def _resolve_target_dir(self, channel_slug: Optional[str] = None) -> Path:
         """Resolves target directory, respecting channel isolation if available."""

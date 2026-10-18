@@ -88,84 +88,98 @@ ghost_adapter = GhostPublisherAdapter()
 # MCP Tool Annotations for 2026 Protocol & TDQS Standards
 MCP_TOOL_ANNOTATIONS = {
     "omnipress_list_channels": {
+        "title": "List Configured Channels",
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
         "openWorldHint": False,
     },
     "omnipress_get_channel": {
+        "title": "Get Channel Configuration",
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
         "openWorldHint": False,
     },
     "omnipress_create_channel": {
+        "title": "Create Channel Workspace",
         "readOnlyHint": False,
         "destructiveHint": False,
         "idempotentHint": False,
         "openWorldHint": False,
     },
     "omnipress_build_carousel": {
+        "title": "Build Social Carousel",
         "readOnlyHint": False,
         "destructiveHint": False,
         "idempotentHint": True,
         "openWorldHint": False,
     },
     "omnipress_publish_article": {
+        "title": "Publish and Archive Article",
         "readOnlyHint": False,
         "destructiveHint": False,
         "idempotentHint": False,
-        "openWorldHint": False,
+        "openWorldHint": True,
     },
     "omnipress_queue_post": {
+        "title": "Queue Social Post or Thread",
         "readOnlyHint": False,
         "destructiveHint": False,
         "idempotentHint": False,
         "openWorldHint": True,
     },
     "omnipress_inspect_content": {
+        "title": "Inspect Content for Sensitive Data",
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
         "openWorldHint": False,
     },
     "omnipress_list_articles": {
+        "title": "List Archived Articles",
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
         "openWorldHint": False,
     },
     "omnipress_list_recent": {
+        "title": "List Recent Articles (Legacy Alias)",
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
         "openWorldHint": False,
     },
     "omnipress_prepare_dark_script": {
+        "title": "Prepare Viral Dark Video Script",
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
         "openWorldHint": False,
     },
     "omnipress_queue_media_post": {
+        "title": "Queue Carousel or Media Post",
         "readOnlyHint": False,
         "destructiveHint": False,
         "idempotentHint": False,
         "openWorldHint": True,
     },
     "omnipress_brainstorm_channel": {
+        "title": "Brainstorm Channel Strategy",
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
         "openWorldHint": False,
     },
     "omnipress_generate_speech": {
+        "title": "Generate Neural Speech Audio",
         "readOnlyHint": False,
         "destructiveHint": False,
         "idempotentHint": False,
-        "openWorldHint": False,
+        "openWorldHint": True,
     },
     "omnipress_render_dark_video": {
+        "title": "Render Cinematic Dark Video",
         "readOnlyHint": False,
         "destructiveHint": False,
         "idempotentHint": False,
@@ -574,17 +588,20 @@ def omnipress_build_carousel(
     if not isinstance(slides_data, list) or not slides_data:
         return "⚠️ slides_json must be a non-empty JSON list of slide objects."
 
-    generated = carousel_builder.build_carousel(
-        channel_slug=channel_slug,
-        post_slug=post_slug,
-        slides_data=slides_data,
-        aspect_ratio=aspect_ratio,
-    )
+    try:
+        generated = carousel_builder.build_carousel(
+            channel_slug=channel_slug,
+            post_slug=post_slug,
+            slides_data=slides_data,
+            aspect_ratio=aspect_ratio,
+        )
 
-    lines = [f"✅ Carousel generated for channel `{channel_slug}` ({len(generated)} slides):"]
-    for path in generated:
-        lines.append(f"- 🖼️ `{path}`")
-    return "\n".join(lines)
+        lines = [f"✅ Carousel generated for channel `{channel_slug}` ({len(generated)} slides):"]
+        for path in generated:
+            lines.append(f"- 🖼️ `{path}`")
+        return "\n".join(lines)
+    except Exception as e:
+        return f"⚠️ Error generating carousel: {e}"
 
 
 @mcp.tool(annotations=get_tool_annotations("omnipress_list_recent"))
@@ -930,20 +947,23 @@ async def omnipress_generate_speech(
     import json
     import time
     from pathlib import Path
-    from scripts.generate_dark_media import generate_tts_audio
+    try:
+        from src.engine.dark_media import generate_tts_audio
 
-    filename = output_filename or f"speech-{int(time.time()*1000)}.mp3"
-    out_path = PROJECT_ROOT / "media" / "output" / filename
-    out_path.parent.mkdir(parents=True, exist_ok=True)
+        filename = output_filename or f"speech-{int(time.time()*1000)}.mp3"
+        out_path = PROJECT_ROOT / "media" / "output" / filename
+        out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    await generate_tts_audio(text, out_path, voice=voice)
-    result = {
-        "success": True,
-        "audio_path": str(out_path.resolve()),
-        "audio_size_bytes": out_path.stat().st_size if out_path.exists() else 0,
-        "voice": voice
-    }
-    return json.dumps(result, indent=2, ensure_ascii=False)
+        await generate_tts_audio(text, out_path, voice=voice)
+        result = {
+            "success": True,
+            "audio_path": str(out_path.resolve()),
+            "audio_size_bytes": out_path.stat().st_size if out_path.exists() else 0,
+            "voice": voice
+        }
+        return json.dumps(result, indent=2, ensure_ascii=False)
+    except Exception as e:
+        return json.dumps({"success": False, "error": str(e)}, indent=2, ensure_ascii=False)
 
 
 @mcp.tool(annotations=get_tool_annotations("omnipress_render_dark_video"))
@@ -972,37 +992,40 @@ async def omnipress_render_dark_video(
     import time
     import shutil
     from pathlib import Path
-    from scripts.generate_dark_media import generate_tts_audio, render_video_with_ffmpeg
+    try:
+        from src.engine.dark_media import generate_tts_audio, render_video_with_ffmpeg
 
-    filename = output_filename or f"video-{int(time.time()*1000)}.mp4"
-    out_path = PROJECT_ROOT / "media" / "output" / filename
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    audio_file = out_path.with_suffix(".mp3")
+        filename = output_filename or f"video-{int(time.time()*1000)}.mp4"
+        out_path = PROJECT_ROOT / "media" / "output" / filename
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        audio_file = out_path.with_suffix(".mp3")
 
-    if audio_path and Path(audio_path).exists():
-        audio_file = Path(audio_path).resolve()
-    elif text:
-        await generate_tts_audio(text, audio_file, voice=voice)
-    else:
-        return json.dumps({"success": False, "error": "Forneça text ou audio_path válido."})
+        if audio_path and Path(audio_path).exists():
+            audio_file = Path(audio_path).resolve()
+        elif text:
+            await generate_tts_audio(text, audio_file, voice=voice)
+        else:
+            return json.dumps({"success": False, "error": "Forneça text ou audio_path válido."})
 
-    ffmpeg_available = bool(shutil.which("ffmpeg"))
-    video_path = None
-    if ffmpeg_available:
-        valid_images = [Path(p).resolve() for p in (image_paths or []) if Path(p).exists()]
-        rendered = render_video_with_ffmpeg(audio_file, valid_images, out_path, aspect_ratio=aspect_ratio)
-        if rendered.suffix == ".mp4" and rendered.exists():
-            video_path = str(rendered.resolve())
+        ffmpeg_available = bool(shutil.which("ffmpeg"))
+        video_path = None
+        if ffmpeg_available:
+            valid_images = [Path(p).resolve() for p in (image_paths or []) if Path(p).exists()]
+            rendered = render_video_with_ffmpeg(audio_file, valid_images, out_path, aspect_ratio=aspect_ratio)
+            if rendered.suffix == ".mp4" and rendered.exists():
+                video_path = str(rendered.resolve())
 
-    result = {
-        "success": True,
-        "audio_path": str(audio_file.resolve()),
-        "video_path": video_path,
-        "ffmpeg_available": ffmpeg_available,
-        "aspect_ratio": aspect_ratio,
-        "voice": voice
-    }
-    return json.dumps(result, indent=2, ensure_ascii=False)
+        result = {
+            "success": True,
+            "audio_path": str(audio_file),
+            "video_path": video_path,
+            "aspect_ratio": aspect_ratio,
+            "voice": voice,
+            "ffmpeg_available": ffmpeg_available,
+        }
+        return json.dumps(result, indent=2, ensure_ascii=False)
+    except Exception as e:
+        return json.dumps({"success": False, "error": str(e)}, indent=2, ensure_ascii=False)
 
 
 def main():

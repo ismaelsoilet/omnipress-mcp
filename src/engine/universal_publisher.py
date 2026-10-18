@@ -17,7 +17,7 @@ from src.utils.sanitizer import sanitize_text
 logger = logging.getLogger("omnipress.universal_publisher")
 
 PLATFORM_LIMITS = {
-    "instagram": 2200,
+    "instagram": 2196,
     "x": 280,
     "twitter": 280,
     "linkedin": 3000,

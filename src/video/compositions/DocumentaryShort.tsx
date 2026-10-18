@@ -16,12 +16,12 @@ import { WordByWordCaptions } from "../components/WordByWordCaptions";
 import { MitoRealidadeOverlays, OverlayEvent } from "../components/MitoRealidadeOverlays";
 
 export interface DocumentaryShortProps {
-  title: string;
+  title?: string;
   badge?: string;
   musicSrc?: string;
   musicVolume?: number;
   voiceoverSrc?: string;
-  scenes: DocumentaryScene[];
+  scenes?: DocumentaryScene[];
   captionsData?: Record<string, ActData>;
   actTimelines?: ActTimeline[];
   captionStyle?: "word-by-word" | "chunk";
@@ -31,7 +31,7 @@ export interface DocumentaryShortProps {
 }
 
 export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
-  title,
+  title = "Título do Short Vertical",
   badge = "CONTEÚDO OFICIAL // SHORTS",
   musicSrc,
   musicVolume = 0.35,

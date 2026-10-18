@@ -133,8 +133,9 @@ class CarouselBuilder:
 
         w, h = img.size
 
-        # Force target aspect ratio (3:4 or 1:1)
-        target_ratio = 3 / 4 if aspect_ratio == "3:4" else 1.0
+        # Force target aspect ratio (3:4, 1:1, 9:16, 16:9)
+        ratio_map = {"3:4": 3 / 4, "1:1": 1.0, "9:16": 9 / 16, "16:9": 16 / 9}
+        target_ratio = ratio_map.get(aspect_ratio, 3 / 4)
         current_ratio = w / h
         if current_ratio < target_ratio - 0.05:
             target_h = int(w / target_ratio)
@@ -204,7 +205,7 @@ class CarouselBuilder:
 
         # 4. Protective Opaque/Translucent Text Backdrop Card (Rule 08)
         # Guarantees 100% legibility over pure white or busy background images
-        if enable_text_card:
+        if enable_text_card and (head_lines or body_lines):
             card_pad_x = int(w * 0.035)
             card_pad_y = int(h * 0.02)
             card_box = [
@@ -298,7 +299,7 @@ class CarouselBuilder:
             page_str = f"{idx:02d}/{total_pages:02d}"
             out_file = out_dir / f"slide_{idx:02d}.jpg"
             
-            swipe_text = slide.get("swipe_str", "Deslize →" if idx < total_pages else "Salve & Siga")
+            swipe_text = slide.get("swipe_str") or ("Deslize →" if idx < total_pages else "Salve & Siga")
             
             bg_path = Path(slide["bg_image_path"])
             self.render_slide(

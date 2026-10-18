@@ -70,7 +70,9 @@ jobs:
     name: Publish to PyPI
     needs: build-wheels
     runs-on: ubuntu-latest
-    continue-on-error: true
+    environment:
+      name: pypi
+      url: https://pypi.org/p/omnipress-mcp
     permissions:
       id-token: write  # Mandatory for PyPI Trusted Publishing (OIDC)
     steps:

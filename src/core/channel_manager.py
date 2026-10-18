@@ -58,7 +58,8 @@ class ChannelManager:
 
     def get_channel(self, slug: str) -> Optional[Dict[str, Any]]:
         """Returns the configuration for a specific channel slug."""
-        target_dir = self.channels_dir / slug
+        clean_slug = slugify_channel(slug)
+        target_dir = self.channels_dir / clean_slug
         config_file = target_dir / "channel.json"
 
         if not config_file.exists():
@@ -74,8 +75,9 @@ class ChannelManager:
 
     def get_active_channel_slug(self) -> str:
         """Determines the active channel based on environment, default, or fallback."""
-        env_channel = os.getenv("OMNIPRESS_ACTIVE_CHANNEL", "").strip()
-        if env_channel and (self.channels_dir / env_channel).exists():
+        env_raw = os.getenv("OMNIPRESS_ACTIVE_CHANNEL", "").strip()
+        env_channel = slugify_channel(env_raw) if env_raw else ""
+        if env_channel and env_channel != "_template" and (self.channels_dir / env_channel).exists():
             return env_channel
 
         channels = self.list_channels(include_templates=False)
@@ -104,12 +106,16 @@ class ChannelManager:
                     "regular_font": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
                 }
             },
+            "video": {
+                "aspect_ratio": "16:9",
+                "soundtrack_volume": 0.16,
+            },
             "path": str(self.channels_dir / slug)
         }
 
     def get_channel_dir(self, slug: Optional[str] = None) -> Path:
         """Resolves the root directory of a channel."""
-        target_slug = slug or self.get_active_channel_slug()
+        target_slug = slugify_channel(slug) if slug else self.get_active_channel_slug()
         c_dir = self.channels_dir / target_slug
         c_dir.mkdir(parents=True, exist_ok=True)
         return c_dir
@@ -124,7 +130,8 @@ class ChannelManager:
         """Returns the media directory (or subfolder) for a channel."""
         m_dir = self.get_channel_dir(slug) / "media"
         if subfolder:
-            m_dir = m_dir / subfolder
+            clean_subfolder = Path(subfolder).name
+            m_dir = m_dir / clean_subfolder
         m_dir.mkdir(parents=True, exist_ok=True)
         return m_dir
 
@@ -152,12 +159,18 @@ class ChannelManager:
         channel_dir = self.channels_dir / clean_slug
         channel_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create structured subdirectories
+        # Create structured subdirectories per Rule 04 & Rule 10
         (channel_dir / "articles").mkdir(parents=True, exist_ok=True)
         (channel_dir / "media" / "raw").mkdir(parents=True, exist_ok=True)
         (channel_dir / "media" / "carousels").mkdir(parents=True, exist_ok=True)
         (channel_dir / "media" / "stories").mkdir(parents=True, exist_ok=True)
         (channel_dir / "media" / "highlights").mkdir(parents=True, exist_ok=True)
+        (channel_dir / "media" / "visuals").mkdir(parents=True, exist_ok=True)
+        (channel_dir / "media" / "voiceover").mkdir(parents=True, exist_ok=True)
+        (channel_dir / "media" / "soundtrack").mkdir(parents=True, exist_ok=True)
+        (channel_dir / "media" / "output").mkdir(parents=True, exist_ok=True)
+        (channel_dir / "documentarios").mkdir(parents=True, exist_ok=True)
+        (channel_dir / "shorts").mkdir(parents=True, exist_ok=True)
         (channel_dir / "scripts").mkdir(parents=True, exist_ok=True)
 
         config: Dict[str, Any] = {
@@ -187,6 +200,11 @@ class ChannelManager:
                     "buffer_channel_id": buffer_channel_id,
                     "default_hashtags": default_hashtags or [f"#{clean_slug.replace('-', '')}", "#conteudo"]
                 }
+            },
+            "video": {
+                "aspect_ratio": "16:9",
+                "soundtrack_volume": 0.16,
+                "fps": 30,
             },
             "settings": {
                 "auto_sanitize": True,

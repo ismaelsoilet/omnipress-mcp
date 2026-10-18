@@ -145,7 +145,7 @@ export const Root: React.FC = () => {
       {/* 7. Short Universal 9:16 (65s Padrão Monetização Vertical) */}
       <Composition
         id="DocumentaryShort-9x16"
-        component={DocumentaryShort as any}
+        component={DocumentaryShort}
         durationInFrames={1950}
         fps={30}
         width={1080}
@@ -168,7 +168,7 @@ export const Root: React.FC = () => {
       {/* 8. Thumbnail Oficial YouTube 16:9 — Alto Impacto */}
       <Composition
         id="Thumbnail-16x9"
-        component={ThumbnailEpisode as any}
+        component={ThumbnailEpisode}
         durationInFrames={30}
         fps={30}
         width={1920}

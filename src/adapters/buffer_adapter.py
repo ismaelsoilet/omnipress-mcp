@@ -330,9 +330,11 @@ class BufferPublisherAdapter(BasePublisherAdapter):
                 if res.status_code == 200:
                     data = res.json().get("data", {}).get("createPost", {})
                     if "post" in data:
-                        created_posts.append(data["post"])
+                        post_obj = data["post"]
+                        if not post_obj.get("channelId"):
+                            post_obj["channelId"] = ch_id
+                        created_posts.append(post_obj)
                     elif "message" in data:
-                        # If error is specific to GraphQL validation or account permissions, report directly
                         msg = data.get("message", "")
                         return {
                             "success": False,
@@ -340,15 +342,26 @@ class BufferPublisherAdapter(BasePublisherAdapter):
                             "error": msg,
                         }
                 else:
-                    return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time, mode=resolved_mode)
+                    remaining_channels = [c for c in target_ids if c not in [p.get("channelId") for p in created_posts]]
+                    if remaining_channels:
+                        fallback_res = self._fallback_rest_queue(text, remaining_channels, media_urls, schedule_time, mode=resolved_mode)
+                        if not created_posts:
+                            return fallback_res
+                    break
             except requests.RequestException:
-                return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time, mode=resolved_mode)
+                remaining_channels = [c for c in target_ids if c not in [p.get("channelId") for p in created_posts]]
+                if remaining_channels:
+                    fallback_res = self._fallback_rest_queue(text, remaining_channels, media_urls, schedule_time, mode=resolved_mode)
+                    if not created_posts:
+                        return fallback_res
+                break
 
         if created_posts:
             from src.core.publishing_shield import PublishingShield
             for p in created_posts:
+                post_ch_id = p.get("channelId") or (target_ids[0] if target_ids else "")
                 PublishingShield.record_published(
-                    channel_id=p.get("channelId") or (target_ids[0] if target_ids else ""),
+                    channel_id=post_ch_id,
                     text=text,
                     media_urls=media_urls,
                     post_id=p.get("id"),

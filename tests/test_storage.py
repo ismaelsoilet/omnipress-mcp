@@ -78,7 +78,7 @@ def test_s3_storage_provider_with_mocked_boto3(tmp_path: Path):
     mock_boto3.client.return_value = mock_s3_client
 
     with patch.dict("sys.modules", {"boto3": mock_boto3}):
-        # Test AWS S3 standard URL
+        # Test AWS S3 standard URL (ACL omitted by default for modern AWS / R2 bucket owner enforced)
         provider = S3StorageProvider(bucket_name="my-bucket")
         url = provider.upload_file(sample_file)
         assert url == "https://my-bucket.s3.amazonaws.com/graphic.jpg"
@@ -86,8 +86,18 @@ def test_s3_storage_provider_with_mocked_boto3(tmp_path: Path):
             str(sample_file),
             "my-bucket",
             "graphic.jpg",
-            ExtraArgs={"ContentType": "image/jpeg", "ACL": "public-read"},
+            ExtraArgs={"ContentType": "image/jpeg"},
         )
+
+        # Test with S3_ACL env override
+        with patch.dict("os.environ", {"S3_ACL": "public-read"}):
+            provider.upload_file(sample_file)
+            mock_s3_client.upload_file.assert_called_with(
+                str(sample_file),
+                "my-bucket",
+                "graphic.jpg",
+                ExtraArgs={"ContentType": "image/jpeg", "ACL": "public-read"},
+            )
 
         # Test Cloudflare R2 / Custom CDN prefix
         r2_provider = S3StorageProvider(

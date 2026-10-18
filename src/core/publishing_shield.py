@@ -129,7 +129,7 @@ class PublishingShield:
     @staticmethod
     def generate_fingerprint(channel_id: str, text: str, media_urls: Optional[List[str]] = None) -> str:
         """Computes a deterministic SHA-256 fingerprint for a post on a specific channel."""
-        normalized_text = " ".join(text.strip().lower().split()[:30])
+        normalized_text = " ".join(text.strip().lower().split())
         sorted_media = sorted(media_urls) if media_urls else []
         raw = f"{channel_id}|{normalized_text}|{','.join(sorted_media)}"
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()

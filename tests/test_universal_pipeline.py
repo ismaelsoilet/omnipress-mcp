@@ -188,12 +188,14 @@ def test_audio_filtergraph_rule10_compliance():
     engine = UniversalAudioEngine(ffmpeg_bin="ffmpeg")
     fg = engine.build_mastering_filtergraph(target_lufs=-14.0)
 
-    # Verify all 6 mandatory stages from Rule 10
+    # Verify all 6 mandatory stages from Rule 10 (including 4-band EQ: 140Hz, 320Hz, 2800Hz, 8500Hz)
     assert "adeclick=" in fg
     assert "highpass=f=80" in fg
     assert "afftdn=" in fg
+    assert "equalizer=f=140" in fg
     assert "equalizer=f=320" in fg
     assert "equalizer=f=2800" in fg
+    assert "highshelf=f=8500" in fg
     assert "acompressor=" in fg
     assert "loudnorm=I=-14.0:LRA=7:TP=-1.2" in fg
 

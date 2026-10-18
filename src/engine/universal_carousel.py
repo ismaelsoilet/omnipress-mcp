@@ -129,7 +129,8 @@ class UniversalCarouselEngine:
     def load_recipe(self, recipe_input: Union[str, Path, Dict[str, Any]]) -> Tuple[Dict[str, Any], Optional[Path]]:
         """Loads and validates a recipe from a JSON file, path string, or dictionary."""
         if isinstance(recipe_input, dict):
-            return recipe_input, None
+            r_dir = recipe_input.get("_recipe_dir")
+            return recipe_input, (Path(r_dir).resolve() if r_dir else None)
 
         recipe_path = Path(recipe_input).resolve()
         if not recipe_path.exists():
@@ -182,17 +183,19 @@ class UniversalCarouselEngine:
                 color_boost=color_boost,
             )
 
-            prepared_slides.append({
+            slide_dict = {
                 "bg_image_path": str(dst_bg),
                 "headline": slide.get("headline", ""),
                 "body": slide.get("body", ""),
                 "badge_text": slide.get("badge_text"),
-                "swipe_str": slide.get("swipe_str"),
                 "gradient_start_ratio": slide.get("gradient_start_ratio", 0.46),
                 "enable_text_card": slide.get("enable_text_card", True),
                 "card_bg_alpha": slide.get("card_bg_alpha", 215),
                 "stroke_width": slide.get("stroke_width", None),
-            })
+            }
+            if slide.get("swipe_str"):
+                slide_dict["swipe_str"] = slide["swipe_str"]
+            prepared_slides.append(slide_dict)
 
         rendered_paths = self.carousel_builder.build_carousel(
             channel_slug=channel_slug,
@@ -244,8 +247,8 @@ class UniversalCarouselEngine:
 
         # Platform length validation (Rule 09)
         platforms = publish_config.get("platforms", ["instagram"])
-        if "instagram" in platforms and len(clean_caption) > 2200:
-            return {"success": False, "error": f"Caption exceeds Instagram 2,200 char limit ({len(clean_caption)})"}
+        if "instagram" in platforms and len(clean_caption) > 2196:
+            return {"success": False, "error": f"Caption exceeds Instagram 2,196 char limit ({len(clean_caption)})"}
 
         # Pre-flight duplicate check (Rule 09)
         is_dup, reason = PublishingShield.check_duplicate(

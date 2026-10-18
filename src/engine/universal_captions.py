@@ -69,10 +69,15 @@ class UniversalCaptionsEngine:
                             })
             return words
 
-        # Case 3: Wrapped inside episode key (e.g. {"short_01": {"words": [...]}})
+        # Case 3: Wrapped inside episode/act key (e.g. {"act_01": {"words": [...]}, "act_02": {"words": [...]}})
+        nested_words = []
         for val in data.values():
-            if isinstance(val, dict) and "words" in val:
-                return UniversalCaptionsEngine.parse_raw_whisper(val)
+            if isinstance(val, dict):
+                act_words = UniversalCaptionsEngine.parse_raw_whisper(val)
+                if act_words:
+                    nested_words.extend(act_words)
+        if nested_words:
+            return nested_words
 
         return words
 

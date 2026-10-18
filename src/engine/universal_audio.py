@@ -76,14 +76,16 @@ class UniversalAudioEngine:
         if enable_denoise:
             filters.append("afftdn=nf=-25")
 
-        # 4. 4-band surgical EQ
+        # 4. 4-band surgical EQ (Rule 10)
         if enable_eq:
-            # Cut boxiness at 320Hz (-5.5dB)
+            # Body warmth at 140Hz (+2.5dB)
+            filters.append("equalizer=f=140:width_type=q:w=1.2:g=2.5")
+            # Cut nasal boxiness at 320Hz (-5.5dB)
             filters.append("equalizer=f=320:width_type=q:w=1.4:g=-5.5")
             # Boost speech clarity and presence at 2.8kHz (+3.5dB)
             filters.append("equalizer=f=2800:width_type=q:w=1.4:g=3.5")
-            # Silky studio air at 6.5kHz (+4.0dB)
-            filters.append("highshelf=f=6500:g=4.0")
+            # Silky studio air at 8.5kHz (+4.0dB)
+            filters.append("highshelf=f=8500:g=4.0")
 
         # 5. Broadcast studio compression
         if enable_compression:
@@ -189,10 +191,15 @@ class UniversalAudioEngine:
         out_wav.parent.mkdir(parents=True, exist_ok=True)
 
         sr, data = wavfile.read(raw_wav)
-        if data.ndim == 2:
-            data_f = data.astype(np.float32) / 32768.0
+        if np.issubdtype(data.dtype, np.floating):
+            data_f = data.astype(np.float32)
+        elif data.dtype == np.int32:
+            data_f = data.astype(np.float32) / 2147483648.0
         else:
-            data_f = (data.astype(np.float32) / 32768.0)[:, np.newaxis]
+            data_f = data.astype(np.float32) / 32768.0
+
+        if data_f.ndim == 1:
+            data_f = data_f[:, np.newaxis]
 
         num_samples = len(data_f)
 
@@ -206,7 +213,7 @@ class UniversalAudioEngine:
         elif "short_01" in captions_data and "words" in captions_data["short_01"]:
             words = captions_data["short_01"]["words"]
         else:
-            first_act = next(iter(captions_data.values()), {})
+            first_act = next(iter(captions_data.values()), {}) if captions_data else {}
             words = first_act.get("words", []) if isinstance(first_act, dict) else []
 
         if not words:
