@@ -33,17 +33,17 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
   const scenes = config?.scenes || [];
 
   // Função de Ducking Dinâmico da Trilha Sonora
-  // Mantém a música envolvente em ~-16dB (volume 0.16) durante a fala do narrador
-  // e eleva para ~-7dB (volume 0.45) nas transições e cartelas de impacto
+  // Aumentada conforme solicitação do criador: música envolvente em ~-11dB (0.29) sob a fala
+  // e ~-4.5dB (0.60) nas transições e cartelas de impacto para presença cinematográfica
   const getMusicVolume = (frame: number): number => {
     if (frame < introDurationFrames) {
-      return 0.25;
+      return 0.35;
     }
     const currentSec = (frame - introDurationFrames) / fps;
     const isSpeaking = config?.voiceovers?.some((vox) => {
       return currentSec >= vox.startInSeconds && currentSec <= (vox.startInSeconds + vox.durationInSeconds);
     });
-    return isSpeaking ? 0.23 : 0.55;
+    return isSpeaking ? 0.29 : 0.60;
   };
 
   return (

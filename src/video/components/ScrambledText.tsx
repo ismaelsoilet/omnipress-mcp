@@ -26,7 +26,8 @@ export const ScrambledText: React.FC<ScrambledTextProps> = ({
 
   const displayedText = useMemo(() => {
     return text.split("").map((char, index) => {
-      if (char === " ") return { char: " ", locked: true };
+      // Usa espaço sem quebra para garantir que espaços entre palavras nunca colapsem
+      if (char === " " || char === "\u00A0") return { char: "\u00A0", locked: true };
 
       // Revelação progressiva da esquerda para a direita
       const charDelay = (index / text.length) * (durationInFrames * 0.65);
@@ -53,9 +54,10 @@ export const ScrambledText: React.FC<ScrambledTextProps> = ({
   return (
     <span
       style={{
-        fontFamily: "'Courier New', Courier, monospace",
-        display: "inline-flex",
-        flexWrap: "wrap",
+        fontFamily: style?.fontFamily || "inherit",
+        display: "inline-block",
+        whiteSpace: "pre-wrap",
+        wordBreak: "break-word",
         ...style,
       }}
     >
@@ -63,6 +65,8 @@ export const ScrambledText: React.FC<ScrambledTextProps> = ({
         <span
           key={idx}
           style={{
+            display: "inline-block",
+            whiteSpace: "pre",
             color: item.locked
               ? style?.color || "#FFFFFF"
               : goldGlitch

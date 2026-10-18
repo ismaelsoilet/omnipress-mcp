@@ -954,6 +954,221 @@ export const Root: React.FC = () => {
         }}
       />
 
+      {/* 8D. Short Vertical 9:16 (Short 05 - Operação Mincemeat: O Homem que Nunca Existiu — 13 Cenas Dinâmicas) */}
+      <Composition
+        id="Short-Mincemeat-9x16"
+        component={DocumentaryShort as any}
+        durationInFrames={1935} // 64.5s @ 30fps — Padrão TikTok Creator Rewards (>60s) & Instagram Reels (<90s)
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={{
+          title: "Operação Mincemeat: O Corpo que Enganou Adolf Hitler",
+          badge: "DOSSIÊ // OPERAÇÃO MINCEMEAT 1943",
+          voiceoverSrc: "dossie/ep05/short_05_voiceover_mastered.mp3",
+          voiceoverVolume: 1.0,
+          musicSrc: "dossie/ep05/short_05_soundtrack.mp3",
+          musicVolume: 0.15, // Teto rigoroso de 0.15 sob a fala (Rule 10)
+          captionStyle: "word-by-word",
+          captionsBottomPosition: 420,
+          showSceneMetadata: false, // Mantém o topo desobstruído evitando colisão com o HUD
+          captionsData: [], // Captions serão sincronizadas após o áudio gravado pelo usuário
+          actTimelines: [
+            {
+              id: "short_05",
+              globalStart: 0,
+              globalEnd: 64.5,
+            },
+          ],
+          impactOverlays: [
+            {
+              startSec: 0.5,
+              durationSec: 4.5,
+              type: "question-card",
+              top: 150,
+              text: "COMO UM CADÁVER ENGANOU O COMANDO NAZISTA?",
+            },
+            {
+              startSec: 15.0,
+              durationSec: 4.2,
+              type: "stamp-mito",
+              top: 240,
+              text: "O HOMEM QUE NUNCA EXISTIU!",
+              subtext: "A IDENTIDADE FORJADA PELA INTELIGÊNCIA BRITÂNICA",
+            },
+            {
+              startSec: 19.2,
+              durationSec: 0.15,
+              type: "flash-cut",
+            },
+            {
+              startSec: 19.5,
+              durationSec: 5.0,
+              type: "question-card",
+              top: 150,
+              text: "O PLANO FOI CRIADO PELO AUTOR DE JAMES BOND?",
+            },
+            {
+              startSec: 25.2,
+              durationSec: 5.0,
+              type: "stamp-realidade",
+              top: 990,
+              text: "GLYNDWR MICHAEL",
+              subtext: "UM SEM-TETO GALÊS QUE MUDOU O RUMO DA GUERRA",
+            },
+            {
+              startSec: 36.8,
+              durationSec: 4.5,
+              type: "question-card",
+              top: 150,
+              text: "O SUBMARINO SECRETO NA COSTA DA ESPANHA",
+            },
+            {
+              startSec: 46.8,
+              durationSec: 5.0,
+              type: "stamp-mito",
+              top: 980,
+              text: "HITLER CAIU NO GOLPE!",
+              subtext: "DIVISÕES PANZER ENVIADAS PARA A GRÉCIA",
+            },
+            {
+              startSec: 57.5,
+              durationSec: 5.0,
+              type: "stamp-realidade",
+              top: 990,
+              text: "HONRAS MILITARES",
+              subtext: "SEPULTADO COMO HERÓI BRITÂNICO NA ESPANHA",
+            },
+            {
+              startSec: 62.0,
+              durationSec: 2.5,
+              type: "question-card",
+              top: 150,
+              text: "VOCÊ JÁ CONHECIA A OPERAÇÃO MINCEMEAT?",
+            },
+          ],
+          scenes: [
+            {
+              id: "short5-slide-1",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep05/scene_01_corpo_mar_espanha.jpg",
+              durationInSeconds: 5.0,
+              headline: "O CORPO NO ATLÂNTICO",
+              badge: "PUNTA UMBRÍA • 1943",
+              notes: "Em abril de 1943, pescadores da Espanha avistaram um corpo boiando nas águas do Atlântico.",
+            },
+            {
+              id: "short5-slide-2",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep05/scene_02_maleta_algemada_doc.jpg",
+              durationInSeconds: 4.5,
+              headline: "DOCUMENTOS SECRETOS",
+              badge: "MALETA ALGEMADA",
+              notes: "Ao pulso do oficial, estava algemada uma pasta de couro com documentos secretos.",
+            },
+            {
+              id: "short5-slide-3",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep05/scene_03_hitler_mapa_sicilia.jpg",
+              durationInSeconds: 5.5,
+              headline: "O ENGANO DO FÜHRER",
+              badge: "BERLIM // OKW",
+              notes: "Os papéis revelavam onde os Aliados invadiriam. Quando as cópias chegaram a Hitler, ele acreditou.",
+            },
+            {
+              id: "short5-slide-4",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep05/scene_04_winston_churchill.jpg",
+              durationInSeconds: 4.5,
+              headline: "O HOMEM INEXISTENTE",
+              badge: "WAR ROOMS // LONDRES",
+              notes: "Só havia um pequeno detalhe: aquele oficial britânico nunca existiu.",
+            },
+            {
+              id: "short5-slide-5",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep05/scene_05_ian_fleming_trout.jpg",
+              durationInSeconds: 5.5,
+              headline: "A MENTE DE IAN FLEMING",
+              badge: "O PAI DE 007",
+              notes: "O plano genial nasceu da mente de Ian Fleming — o futuro criador de James Bond. Codinome: Operação Mincemeat.",
+            },
+            {
+              id: "short5-slide-6",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep05/scene_06_glyndwr_michael.jpg",
+              durationInSeconds: 5.5,
+              headline: "GLYNDWR MICHAEL",
+              badge: "O HERÓI DESCONHECIDO",
+              notes: "A inteligência britânica precisava de um cadáver sem marcas. Encontraram Glyndwr Michael, um sem-teto galês.",
+            },
+            {
+              id: "short5-slide-7",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep05/scene_07_vida_falsa_pam.jpg",
+              durationInSeconds: 6.0,
+              headline: "MAJOR WILLIAM MARTIN",
+              badge: "IDENTIDADE FORJADA",
+              notes: "Forjaram uma vida: batizaram-no de Major William Martin, cartas da noiva Pam e ingressos de teatro.",
+            },
+            {
+              id: "short5-slide-8",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep05/scene_08_submarino_hms_seraph.jpg",
+              durationInSeconds: 5.0,
+              headline: "LANÇADO AO OCEANO",
+              badge: "HMS SERAPH // P219",
+              notes: "No submarino HMS Seraph, soltaram o corpo nas correntes que o levariam às praias da Espanha.",
+            },
+            {
+              id: "short5-slide-9",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep05/scene_09_espioes_nazistas_huelva.jpg",
+              durationInSeconds: 5.0,
+              headline: "ESPIÕES DA ABWEHR",
+              badge: "AGULHAS E CÂMERAS",
+              notes: "A costa estava infestada de espiões nazistas. Fotografaram cada página forjada e enviaram a Berlim.",
+            },
+            {
+              id: "short5-slide-10",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep05/scene_10_divisoes_panzer_grecia.jpg",
+              durationInSeconds: 5.5,
+              headline: "DIVISÕES PANZER EM MARCHA",
+              badge: "DESVIO PARA A GRÉCIA",
+              notes: "Hitler caiu no golpe. Convencido de que o ataque seria na Grécia, deslocou divisões Panzer para longe da Sicília.",
+            },
+            {
+              id: "short5-slide-11",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep05/scene_11_invasao_sicilia.jpg",
+              durationInSeconds: 5.5,
+              headline: "OPERAÇÃO HUSKY",
+              badge: "INVASÃO DA SICÍLIA",
+              notes: "Quando os Aliados desembarcaram na Sicília, a ilha estava vulnerável. A batalha foi vencida em semanas.",
+            },
+            {
+              id: "short5-slide-12",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep05/scene_12_lapide_huelva_espanha.jpg",
+              durationInSeconds: 5.0,
+              headline: "HONRAS MILITARES",
+              badge: "TÚMULO EM HUELVA",
+              notes: "O homem que viveu como mendigo foi sepultado com honras militares plenas como o herói que enganou o Reich.",
+            },
+            {
+              id: "short5-slide-13",
+              type: "ken-burns",
+              mediaSrc: "dossie/ep05/scene_13_dossie_final_debate.jpg",
+              durationInSeconds: 7.0,
+              headline: "OPERAÇÃO MINCEMEAT",
+              badge: "DOSSIÊ HISTÓRICO",
+              notes: "Você já conhecia a Operação Mincemeat? Deixe sua opinião nos comentários e siga o Dossiê Histórico.",
+            },
+          ],
+        }}
+      />
+
       {/* 9. Documentário Longo 16:9 — Episódio 02: O Exército de Borracha */}
       <Composition
         id="DocumentaryEpisode-02-ExercitoBorracha-16x9"

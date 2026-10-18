@@ -60,6 +60,19 @@ All programmatic video code written by AI agents must strictly comply with the 1
 - **Inline Shorthands over Matrix Transforms**: Prefer CSS `scale`, `translate`, and `rotate` inline in the `style` prop over complex `transform` strings to maintain full editability in Remotion Studio.
 - **Real-Time Documentation Discovery**: When researching new Remotion APIs, query the Algolia Search API directly or append `.md` to docs URLs (e.g., `https://www.remotion.dev/docs/interpolate.md`). Never guess deprecated props.
 
+### 9. Image Sourcing, Quota Fallback & Collaborative External Generation Protocol
+When AI image generation models (Gemini Flash Image, Imagen, OpenAI, etc.) encounter quota exhaustion (HTTP 429), rate limits, or unavailability, agents must NEVER stall or block video production:
+1. **Authentic Internet & Archive Search**:
+   - Proactively query open public archives, museum records, Wikimedia Commons, the National Archives, Imperial War Museum, Library of Congress, and web search for genuine historical or real-world photographs/illustrations.
+   - Download high-resolution originals, crop/center or apply blurred backdrop letterboxing to match the composition's target aspect ratio (16:9 or 9:16), and place them in the channel's media directory.
+2. **Collaborative External Generation Prompts for the User**:
+   - Simultaneously formulate a dedicated prompt document (e.g. `roteiros/PROMPTS_IMAGENS_EXTERNAS.md`) containing production-ready, hyper-detailed prompts tailored for external generators (Midjourney v6, FLUX.1 [dev], Stable Diffusion XL, Ideogram, Leonardo AI).
+   - Each prompt must specify:
+     - Exact aspect ratio tag (e.g. `--ar 16:9` or `--ar 9:16`).
+     - Subject, historical authenticity, uniform/gear details, lighting, camera lens/focal length, sensor/film stock grain.
+     - Target save path (e.g. `channels/<slug>/documentarios/<ep>/midias/cinematic_16x9/scene_XX.jpg`).
+   - Present these prompts clearly to the user so they can generate and provide the assets back into the project for instant integration.
+
 ---
 
 ## 🇧🇷 Diretrizes em Português
@@ -128,3 +141,16 @@ Todo código de vídeo programático gerado por agentes deve cumprir as 12 Agent
 - **Animações Frame a Frame**: Utilize exclusivamente `useCurrentFrame()`, `interpolate()` e `spring()` do Remotion. É proibido usar transições CSS nativas ou classes de animação do Tailwind, pois colapsam na renderização estática quadro a quadro.
 - **Propriedades Inline (`scale`, `translate`, `rotate`)**: Prefira shorthands CSS inline em vez de strings compostas de `transform`, garantindo compatibilidade e edição visual no Studio.
 - **Consulta em Tempo Real**: Consulte a documentação oficial via endpoint Algolia ou adicionando `.md` às URLs oficiais (ex.: `https://www.remotion.dev/docs/interpolate.md`), sem alucinar props obsoletas.
+
+### 9. Protocolo de Aquisição de Imagens, Fallback de Cotas e Geração Externa Colaborativa
+Caso os modelos de geração de imagens por IA (Gemini Flash Image, Imagen, etc.) atinjam exaustão de cota (HTTP 429), limites de taxa ou indisponibilidade, é TERMINANTEMENTE PROIBIDO ao agente de IA interromper a produção ou ficar ocioso:
+1. **Busca Ativa de Imagens Reais na Internet e Arquivos Públicos**:
+   - O agente deve proativamente pesquisar em arquivos públicos desclassificados, acervos de museus, Wikimedia Commons, National Archives, Imperial War Museum, Library of Congress e busca na web por fotografias e ilustrações históricas autênticas em alta resolução.
+   - Baixar os arquivos originais, processar enquadramentos ou aplicar letterbox com fundo difuso/desfocado para adequação estrita à proporção alvo (16:9 ou 9:16), salvando-os na biblioteca de mídia do canal.
+2. **Geração Estruturada de Prompts para o Usuário (Geração Externa)**:
+   - Simultaneamente, o agente deve gerar um manifesto de prompts prontos para uso (ex.: `roteiros/PROMPTS_IMAGENS_EXTERNAS.md`) otimizados para ferramentas externas de ponta (Midjourney v6, FLUX.1 [dev], Stable Diffusion XL, Ideogram, Leonardo AI).
+   - Cada prompt deve incluir obrigatoriamente:
+     - Parâmetro de aspecto explícito (`--ar 16:9` ou `--ar 9:16`).
+     - Descrição cinematográfica minuciosa (iluminação, lente, enquadramento, textura de filme de época, detalhes de figurino e equipamentos).
+     - Caminho exato de destino onde o usuário deve salvar a imagem (ex.: `channels/<slug>/documentarios/<ep>/midias/cinematic_16x9/scene_XX.jpg`).
+   - Apresentar esses prompts de forma limpa e organizada no chat e no repositório, permitindo que o usuário gere as imagens em outras ferramentas e as entregue para incorporação imediata na esteira do Remotion.
