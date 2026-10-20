@@ -1,0 +1,32 @@
+{
+  "channel_slug": "_template",
+  "post_slug": "exemplo_tweet_card",
+  "aspect_ratio": "4:5",
+  "preset": "tweet_card",
+  "theme_override": {
+    "background": "#FFFFFF",
+    "text": "#0F172A"
+  },
+  "author_override": {
+    "name": "Thiago Ramos",
+    "handle": "@thiagoramos.mkt",
+    "verified": true
+  },
+  "slides": [
+    {
+      "headline": "Não fazer campanha foi a melhor campanha de Tarcísio!",
+      "body": "Entenda por que é preciso construir uma base muito antes da eleição.",
+      "swipe_str": "Deslize →"
+    },
+    {
+      "headline": "Quando Tarcísio assumiu o governo, seu perfil parecia o de uma construtora.",
+      "body": "Passou a mostrar obras, entregas e ações do governo, evitando confrontos e mostrando gestão técnica.",
+      "swipe_str": "Salve o post"
+    }
+  ],
+  "publish": {
+    "caption": "Construir posicionamento com base em entregas reais é mais eficiente do que discurso político vazio.\n\n#marketing #gestao #estrategia #posicionamento",
+    "platforms": ["linkedin", "instagram"],
+    "mode": "shareNow"
+  }
+}

@@ -26,6 +26,38 @@
       "regular_font": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
     }
   },
+  "visual_identity": {
+    "default_preset": "tweet_card",
+    "palette": {
+      "primary": "#3B82F6",
+      "background": "#FFFFFF",
+      "card_background": "#F8FAFC",
+      "text": "#0F172A",
+      "secondary_text": "#64748B",
+      "accent": "#F59E0B",
+      "border": "#E2E8F0"
+    },
+    "typography": {
+      "font_family": "sans",
+      "bold_font": "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+      "regular_font": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+      "serif_bold_font": "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf",
+      "serif_regular_font": "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",
+      "mono_font": "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"
+    },
+    "author": {
+      "name": "Nome do Autor",
+      "handle": "@seuperfil",
+      "title": "Engenheiro de Software & Criador",
+      "avatar_path": "media/raw/avatar.jpg",
+      "verified": true
+    },
+    "elements": {
+      "bullet_style": "square",
+      "watermark_text": "OMNIPRESS",
+      "enable_shadow": true
+    }
+  },
   "social": {
     "linkedin": {
       "handle": "seunome",

@@ -1,0 +1,29 @@
+{
+  "channel_slug": "_template",
+  "post_slug": "exemplo_minimal_dark",
+  "aspect_ratio": "4:5",
+  "preset": "minimal_dark",
+  "slides": [
+    {
+      "step_number": "Passo 1.",
+      "headline": "Pesquise por boring history for sleep.",
+      "body": "Encontre o que está funcionando, de preferência um canal com uma relação inscritos / views com bastante disparidade.",
+      "ui_mockup": {
+        "type": "search_bar",
+        "query": "boring history for sleep"
+      },
+      "swipe_str": "Deslize →"
+    },
+    {
+      "step_number": "Passo 2.",
+      "headline": "Isole os tópicos com maior retenção orgânica.",
+      "body": "Analise a estrutura dos 3 vídeos mais assistidos: o gancho dos primeiros 5 segundos e o tom de voz da narração.",
+      "swipe_str": "Salve o post"
+    }
+  ],
+  "publish": {
+    "caption": "Como encontrar oportunidades inexploradas no YouTube usando engenharia reversa de busca.\n\n#youtube #automacao #criacaodeconteudo #estrategia",
+    "platforms": ["linkedin", "instagram"],
+    "mode": "shareNow"
+  }
+}

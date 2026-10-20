@@ -208,6 +208,38 @@ class ChannelManager:
                     "regular_font": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
                 }
             },
+            "visual_identity": {
+                "default_preset": "tweet_card" if archetype == "personal_brand" else "classic_card",
+                "palette": {
+                    "primary": primary_color,
+                    "background": "#FFFFFF" if archetype == "personal_brand" else "#0A0C10",
+                    "card_background": "#F8FAFC" if archetype == "personal_brand" else "#080A0E",
+                    "text": "#0F172A" if archetype == "personal_brand" else "#FFFFFF",
+                    "secondary_text": "#64748B" if archetype == "personal_brand" else "#E1E6EB",
+                    "accent": primary_color,
+                    "border": "#E2E8F0" if archetype == "personal_brand" else primary_color,
+                },
+                "typography": {
+                    "font_family": "sans" if archetype == "personal_brand" else "serif",
+                    "bold_font": "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+                    "regular_font": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                    "serif_bold_font": "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf",
+                    "serif_regular_font": "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",
+                    "mono_font": "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+                },
+                "author": {
+                    "name": name,
+                    "handle": handle if handle.startswith("@") else f"@{handle}",
+                    "title": description or name,
+                    "avatar_path": "media/raw/avatar.jpg",
+                    "verified": archetype == "personal_brand",
+                },
+                "elements": {
+                    "bullet_style": "square",
+                    "watermark_text": name.upper(),
+                    "enable_shadow": True,
+                },
+            },
             "social": {
                 "linkedin": {
                     "handle": handle.replace("@", ""),
@@ -248,6 +280,16 @@ class ChannelManager:
         config_path = channel_dir / "channel.json"
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
+
+        # Automatically generate channel style_guide.md
+        style_guide_path = channel_dir / "style_guide.md"
+        if not style_guide_path.exists():
+            template_sg = self.channels_dir / "_template" / "style_guide.md"
+            if template_sg.exists():
+                sg_content = template_sg.read_text(encoding="utf-8")
+                sg_content = sg_content.replace("@seuperfil", handle if handle.startswith("@") else f"@{handle}")
+                sg_content = sg_content.replace("Nome Oficial ou Marca", name)
+                style_guide_path.write_text(sg_content, encoding="utf-8")
 
         config["path"] = str(channel_dir)
         return config

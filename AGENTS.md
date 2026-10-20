@@ -84,7 +84,17 @@ When an agent generates a content campaign, it must produce three synchronized a
   - `omnipress master-audio <input> -o <output>` (Rule 10 studio mastering chain & -14.0 LUFS EBU R128).
   - `omnipress align-captions <whisper.json> -o <output.json>` (Whisper timestamp standardization & 2-4 word chunking).
   - `omnipress publish --recipe ...` (privacy sanitization & PublishingShield duplicate protection).
-- **Channel Flexibility Preserved**: Custom scripts in `channels/<slug>/scripts/` are strictly reserved for bespoke non-standard tasks (e.g. specialized scrapers or custom interactive visualizations).
+### 10. Continuous Documentation, Semantic Versioning & Release Standards (Rule 13)
+- **Mandatory Synchronized Documentation**: Any architectural change, new feature, engine expansion, template modification, or adapter addition MUST be simultaneously documented across:
+  - `README.md` (architecture, capabilities, examples, diagrams, badges)
+  - `CHANGELOG.md` (version bump, date, `Added`, `Changed`, `Fixed`, `Deprecated`, `Removed`)
+  - `docs/AGENT_MANUAL.md` (tool guides, operational playbooks, CLI references)
+  - Canonical version files (`pyproject.toml`, `package.json`, `package-lock.json`, `server.json`, `plugin.json`, `src/__init__.py`, `src/cli.py`, `src/server.py`, `config/openapi.json`).
+- **Zero Undocumented Code Policy**: Agents are strictly forbidden from committing or pushing code changes without updating documentation, bumping the SemVer version, and recording the changelog.
+- **Semantic Versioning (SemVer 2.0.0)**:
+  - PATCH (`x.y.Z`): bug fixes, refactors, internal test improvements with no breaking changes.
+  - MINOR (`x.Y.0`): new features, new visual presets, new adapters, new CLI engines, backward-compatible schema enhancements.
+  - MAJOR (`X.0.0`): breaking changes to MCP contracts, CLI command signature overhauls, incompatible channel workspace structures.
 
 ---
 
@@ -167,4 +177,16 @@ Ao gerar campanhas de conteúdo, o agente deve produzir 3 formatos integrados:
   - `omnipress align-captions <whisper.json> -o <output.json>`: padroniza timestamps do Whisper em blocos dinâmicos de 2 a 4 palavras para Remotion.
   - `omnipress publish --recipe ...`: executa higienização LGPD e proteção anti-duplicação via `PublishingShield` (Regra 09).
 - **Flexibilidade Preservada**: Scripts customizados em `channels/<slug>/scripts/` são estritamente reservados para tarefas verdadeiramente atípicas (como raspagem de dados especializada ou testes gráficos interativos fora do padrão).
+
+### 10. Padrão de Atualização Contínua de Documentação, Versionamento Semântico e Release (Regra 13)
+- **Documentação Sincronizada Obrigatória**: Qualquer alteração arquitetural, novo recurso, expansão de motores, modificação de templates ou adição de adaptadores DEVE ser simultaneamente documentada em:
+  - `README.md` (arquitetura, motores, capacidades, diagramas, exemplos)
+  - `CHANGELOG.md` (bump de versão, data, seções `Added`, `Changed`, `Fixed`)
+  - `docs/AGENT_MANUAL.md` (playbooks operacionais, comandos de CLI, referências de ferramentas)
+  - Arquivos canônicos de versão (`pyproject.toml`, `package.json`, `package-lock.json`, `server.json`, `plugin.json`, `src/__init__.py`, `src/cli.py`, `src/server.py`, `config/openapi.json`).
+- **Política de Código Zero Sem Documentação**: É terminantemente proibido commitar e realizar push de código novo sem atualizar a documentação correspondente, incrementar a versão (SemVer) e registrar o changelog.
+- **Versionamento Semântico (SemVer 2.0.0)**:
+  - PATCH (`x.y.Z`): correções de bugs, refatorações internas ou melhorias de testes sem quebra de compatibilidade.
+  - MINOR (`x.Y.0`): novos recursos, novos presets visuais, novos adaptadores, expansão de motores CLI ou melhorias compatíveis de schema.
+  - MAJOR (`X.0.0`): mudanças com quebra de contrato MCP, alterações incompatíveis na CLI ou reestruturação irreversível de canais.
 

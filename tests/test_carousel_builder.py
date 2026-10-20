@@ -83,7 +83,110 @@ def test_render_slide_and_build_carousel(tmp_path: Path):
         assert "post-teste-01" in str(cf)
 
 
+def test_render_tweet_card_preset(tmp_path: Path):
+    cm = ChannelManager(root_dir=tmp_path)
+    cm.create_channel(
+        slug="thiago-mkt",
+        name="Thiago Ramos",
+        primary_color="#1D9BF0",
+        handle="@thiagoramos.mkt",
+        archetype="personal_brand"
+    )
+    builder = CarouselBuilder(channel_manager=cm)
+
+    out_file = tmp_path / "slide_tweet.jpg"
+    res = builder.render_slide(
+        bg_image_path=None,
+        output_path=out_file,
+        channel_slug="thiago-mkt",
+        headline="Não fazer campanha foi a melhor campanha de Tarcísio!",
+        body="Entenda por que é preciso construir uma base muito antes da eleição.",
+        preset="tweet_card",
+        aspect_ratio="4:5",
+        slide_data={
+            "author": {
+                "name": "Thiago Ramos",
+                "handle": "@thiagoramos.mkt",
+                "verified": True
+            }
+        }
+    )
+    assert res.exists()
+    img = Image.open(res)
+    assert img.size == (1080, 1350)  # 4:5 aspect ratio
+
+
+def test_render_minimal_dark_preset(tmp_path: Path):
+    cm = ChannelManager(root_dir=tmp_path)
+    cm.create_channel(
+        slug="rhaj-dark",
+        name="Rhaj Teixeira",
+        primary_color="#FFFFFF",
+        handle="@rhajtxeira",
+        archetype="personal_brand"
+    )
+    builder = CarouselBuilder(channel_manager=cm)
+
+    out_file = tmp_path / "slide_minimal.jpg"
+    res = builder.render_slide(
+        bg_image_path=None,
+        output_path=out_file,
+        channel_slug="rhaj-dark",
+        headline="Pesquise por boring history for sleep.",
+        body="Encontre o que está funcionando, com disparidade de inscritos e visualizações.",
+        preset="minimal_dark",
+        aspect_ratio="4:5",
+        slide_data={
+            "step_number": "Passo 1.",
+            "ui_mockup": {
+                "type": "search_bar",
+                "query": "boring history for sleep"
+            }
+        }
+    )
+    assert res.exists()
+    img = Image.open(res)
+    assert img.size == (1080, 1350)  # 4:5 aspect ratio
+
+
+def test_render_split_editorial_preset(tmp_path: Path):
+    cm = ChannelManager(root_dir=tmp_path)
+    cm.create_channel(
+        slug="portal-tributario",
+        name="Portal da Reforma Tributária",
+        primary_color="#F59E0B",
+        handle="@portaldareformatributaria",
+        archetype="media_channel"
+    )
+    builder = CarouselBuilder(channel_manager=cm)
+
+    # Fake top photo
+    top_img = tmp_path / "brasilia.jpg"
+    Image.new("RGB", (1080, 600), (40, 60, 90)).save(top_img)
+
+    out_file = tmp_path / "slide_split.jpg"
+    res = builder.render_slide(
+        bg_image_path=None,
+        output_path=out_file,
+        channel_slug="portal-tributario",
+        headline="CBS e anterioridade\nnonagesimal.\nO Executivo dormiu\nno ponto?",
+        body="Uma análise detalhada sobre os prazos de vigência da nova tributação sobre o consumo.",
+        preset="split_editorial",
+        aspect_ratio="4:5",
+        slide_data={
+            "top_image": str(top_img),
+            "badge_text": "PAULO ANDRADE | OPINIÃO",
+            "bullet_style": "square",
+            "watermark_text": "RT"
+        }
+    )
+    assert res.exists()
+    img = Image.open(res)
+    assert img.size == (1080, 1350)  # 4:5 aspect ratio
+
+
 if __name__ == "__main__":
     import pytest
     import sys
     sys.exit(pytest.main([__file__, "-v"]))
+

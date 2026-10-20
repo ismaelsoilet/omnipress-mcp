@@ -1,0 +1,29 @@
+{
+  "channel_slug": "_template",
+  "post_slug": "exemplo_split_editorial",
+  "aspect_ratio": "4:5",
+  "preset": "split_editorial",
+  "slides": [
+    {
+      "badge_text": "PORTAL DA REFORMA TRIBUTÁRIA | OPINIÃO",
+      "headline": "CBS e anterioridade\nnonagesimal.\nO Executivo dormiu\nno ponto?",
+      "body": "Uma análise detalhada sobre os prazos de vigência da nova tributação sobre o consumo.",
+      "bullet_style": "square",
+      "watermark_text": "RT",
+      "swipe_str": "Deslize →"
+    },
+    {
+      "badge_text": "TRANSIÇÃO FEDERAL 2027",
+      "headline": "A CBS já está batendo\nàs nossas portas.",
+      "body": "A virada de chave federal será feita de uma só vez a partir de 1º de janeiro de 2027.",
+      "bullet_style": "square",
+      "watermark_text": "RT",
+      "swipe_str": "Salve o post"
+    }
+  ],
+  "publish": {
+    "caption": "Análise sobre a anterioridade nonagesimal na CBS e o impacto da virada de chave federal em 2027.\n\n#tributario #reformatributaria #direito #cbs #ibs",
+    "platforms": ["linkedin", "instagram"],
+    "mode": "shareNow"
+  }
+}

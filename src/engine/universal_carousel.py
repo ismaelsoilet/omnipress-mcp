@@ -162,29 +162,52 @@ class UniversalCarouselEngine:
         bgs_dir = post_dir / "prepared_bgs"
         bgs_dir.mkdir(parents=True, exist_ok=True)
 
+        default_preset = recipe.get("preset")
         prepared_slides = []
         for idx, slide in enumerate(slides, start=1):
+            slide_layout = slide.get("layout") or default_preset
             bg_ref = slide.get("bg_image") or slide.get("bg_image_path")
-            if not bg_ref:
+            dst_bg = None
+
+            if bg_ref:
+                src_bg = self.resolve_background_image(bg_ref, channel_slug, recipe_dir)
+                dst_bg = bgs_dir / f"bg_slide_{idx:02d}.jpg"
+
+                top_bias = slide.get("top_bias", 0.20)
+                contrast_boost = slide.get("contrast_boost", 1.15)
+                color_boost = slide.get("color_boost", 1.0)
+                self.prepare_background(
+                    src_path=src_bg,
+                    dst_path=dst_bg,
+                    aspect_ratio=aspect_ratio,
+                    top_bias=top_bias,
+                    contrast_boost=contrast_boost,
+                    color_boost=color_boost,
+                )
+            elif slide_layout in ("minimal_dark", "tweet_card", "split_editorial"):
+                # Canvas-based layout preset, full background image is optional
+                dst_bg = None
+            else:
                 raise ValueError(f"Slide {idx} is missing 'bg_image' or 'bg_image_path'.")
 
-            src_bg = self.resolve_background_image(bg_ref, channel_slug, recipe_dir)
-            dst_bg = bgs_dir / f"bg_slide_{idx:02d}.jpg"
+            # Resolve secondary images (e.g. top_image, author_avatar, image_asset, images)
+            resolved_images = []
+            raw_images = slide.get("images") or []
+            if slide.get("image_asset"):
+                raw_images = [slide["image_asset"]]
+            for r_img in raw_images:
+                resolved_images.append(str(self.resolve_background_image(r_img, channel_slug, recipe_dir)))
 
-            top_bias = slide.get("top_bias", 0.20)
-            contrast_boost = slide.get("contrast_boost", 1.15)
-            color_boost = slide.get("color_boost", 1.0)
-            self.prepare_background(
-                src_path=src_bg,
-                dst_path=dst_bg,
-                aspect_ratio=aspect_ratio,
-                top_bias=top_bias,
-                contrast_boost=contrast_boost,
-                color_boost=color_boost,
-            )
+            resolved_top_img = None
+            if slide.get("top_image"):
+                resolved_top_img = str(self.resolve_background_image(slide["top_image"], channel_slug, recipe_dir))
+
+            resolved_avatar = None
+            if slide.get("author_avatar"):
+                resolved_avatar = str(self.resolve_background_image(slide["author_avatar"], channel_slug, recipe_dir))
 
             slide_dict = {
-                "bg_image_path": str(dst_bg),
+                "bg_image_path": str(dst_bg) if dst_bg else None,
                 "headline": slide.get("headline", ""),
                 "body": slide.get("body", ""),
                 "badge_text": slide.get("badge_text"),
@@ -192,6 +215,17 @@ class UniversalCarouselEngine:
                 "enable_text_card": slide.get("enable_text_card", True),
                 "card_bg_alpha": slide.get("card_bg_alpha", 215),
                 "stroke_width": slide.get("stroke_width", None),
+                "layout": slide_layout,
+                "step_number": slide.get("step_number"),
+                "ui_mockup": slide.get("ui_mockup"),
+                "images": resolved_images,
+                "top_image": resolved_top_img,
+                "author_avatar": resolved_avatar,
+                "bullet_style": slide.get("bullet_style"),
+                "watermark_text": slide.get("watermark_text"),
+                "author": slide.get("author") or recipe.get("author_override"),
+                "background": slide.get("background") or (recipe.get("theme_override", {}).get("background")),
+                "accent": slide.get("accent") or (recipe.get("theme_override", {}).get("accent")),
             }
             if slide.get("swipe_str"):
                 slide_dict["swipe_str"] = slide["swipe_str"]
@@ -202,6 +236,7 @@ class UniversalCarouselEngine:
             post_slug=post_slug,
             slides_data=prepared_slides,
             aspect_ratio=aspect_ratio,
+            default_preset=default_preset,
         )
         return rendered_paths
 

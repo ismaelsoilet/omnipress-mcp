@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] — 2026-10-20
+
+### Added
+- **Multi-Preset Visual Carousel System (4 Presets)**:
+  - `tweet_card` (Thiago Ramos style): Social-proof layout with circular author avatar, Twitter blue verified badge, `@handle`, bold statement headline, subtitle, and single/dual comparison photo frames with rounded corners (`radius=18`).
+  - `minimal_dark` (Rhaj Teixeira style): Minimalist dark-mode editorial with pure dark background (`#08080A`), elegant serif typography (`DejaVuSerif`), step counter ("Passo 1."), high-contrast text, and vector search bar mockup with magnifying glass and clear icons.
+  - `split_editorial` (Portal da Reforma Tributária style): Corporate & GovTech authority layout with top contextual photo (45%), deep navy blue solid block (55%), circular author cutout overlapping the division line, opinion badge, square bullet markers (`■`), and watermark logo.
+  - `classic_card` (Rule 08 Dossiê Histórico style): Full-screen archival background photo, top badge pill, protective dark translucent backdrop card (`rgba(8, 10, 14, 215)`), and dark safety stroke on fonts.
+  - Multi-family TrueType font loader (`load_font_by_family`) safely supporting `sans`, `serif`, and `mono` font families with cross-platform fallbacks.
+  - Vector drawing primitives in `CarouselBuilder`: `_draw_verified_badge`, `_draw_search_bar_mockup`, `_draw_circular_avatar`, `_draw_rounded_image`.
+- **Channel Archetypes (`personal_brand` vs. `media_channel`)**:
+  - `personal_brand` archetype: Lightweight workspace (`campanhas/`, `articles/`, `media/`) focused on LinkedIn, X, Instagram, and technical articles with zero Remotion/video overhead.
+  - `media_channel` archetype: Full documentary workspace (`episodios/`, `documentarios/`, `shorts/`, `media/`) with 16:9 Remotion pipelines and -14 LUFS audio mastering.
+- **Canonical Channel Style Guides & Design Tokens**:
+  - `channels/_template/style_guide.md`: Complete human- and AI-readable style guide defining visual moodboards, palette tokens, typography rules, and editorial dos/don'ts.
+  - `channels/dossie-historico/style_guide.md`: Channel-specific style guide for Dossiê Histórico.
+  - `visual_identity` block in `channel.json` with customizable palettes, typography paths, author metadata, and UI elements.
+- **Continuous Documentation, SemVer & Release Policy (Rule 13)**:
+  - Normative rule in `.agents/rules/13_continuous_documentation_versioning_and_release_policy.md`.
+  - Added to `AGENTS.md` (English & Portuguese sections) and `.agents/rules/README.md`.
+  - Enforces mandatory synchronized documentation, SemVer version bump, and changelog updates on every change.
+- **Example Declarative Recipes**:
+  - Added `recipe_tweet_card.json`, `recipe_minimal_dark.json`, and `recipe_split_editorial.json` in `channels/_template/campanhas/_template_campanha/exemplos_presets/`.
+
+### Changed
+- **Modular Carousel Engine (`CarouselBuilder` & `UniversalCarouselEngine`)**:
+  - `CarouselBuilder.render_slide` dynamically routes to preset renderers based on recipe, slide, or channel defaults.
+  - `UniversalCarouselEngine.build_from_recipe` supports solid canvas backgrounds and recipe-level overrides without failing on missing background image files.
+  - `ChannelManager.create_channel` automatically generates `visual_identity` and creates `style_guide.md`.
+- **Root Directory Decoupling & Sanitization**:
+  - Eliminated legacy root `articles/` and `media/assets/` folders.
+  - Configured `media/staging/` as volatile runtime cache in `.gitignore`.
+
+---
+
 ## [0.3.0] — 2026-10-18
 
 ### Added

@@ -17,6 +17,7 @@ Este diretório contém os padrões e regras operacionais para agentes de IA e d
 | **Diretriz 07 / Regra 10** | Motor de Vídeo Remotion | [`10_programmatic_video_and_remotion_engine.md`](./10_programmatic_video_and_remotion_engine.md) | Resolução dupla (16:9 e 9:16), duração padrão de 65s para monetização vertical, agnosticismo de marca por props e áudio com ducking cinemático. |
 | **Diretriz 08 / Regra 11** | Sindicação Multi-CMS & CLI | [`AGENTS.md`](../../AGENTS.md#8-multi-cms-article-syndication--cli-standards-rule-11) | Contrato universal de artigos, sanitização de tags/tokens, diagnósticos com `doctor` e `status`. |
 | **Diretriz 09 / Regra 12** | Motores Universais & Receitas | [`12_declarative_recipes_and_universal_engines.md`](./12_declarative_recipes_and_universal_engines.md) | Padrão declarativo anti-scripts; motores universais de carrossel, áudio broadcast (-14 LUFS), legendas e publicação. |
+| **Diretriz 10 / Regra 13** | Documentação Contínua, SemVer & Release | [`13_continuous_documentation_versioning_and_release_policy.md`](./13_continuous_documentation_versioning_and_release_policy.md) | Atualização documental obrigatória e sincronizada, SemVer e registro detalhado no CHANGELOG.md a cada ciclo. |
 
 ---
 

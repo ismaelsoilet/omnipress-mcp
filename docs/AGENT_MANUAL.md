@@ -437,3 +437,36 @@ Scripts em `channels/<slug>/scripts/` continuam plenamente suportados e recomend
 3. Processamento estatístico de dados jurídicos, fiscais ou científicos exclusivos daquela publicação.
 Para todas as publicações e carrosséis padrão, utilize exclusivamente as receitas declarativas e os motores universais.
 
+---
+
+## 8. Padrão de Presets Visuais & Guia de Estilo (v0.4.0)
+
+O OmniPress v0.4.0 introduz o suporte nativo a múltiplos presets de layout e instruções de estilo por canal:
+
+### 8.1. Arquétipos de Canal (`personal_brand` vs. `media_channel`)
+- **`personal_brand`**: Ideal para perfis pessoais de liderança técnica no LinkedIn, X, Instagram e artigos no Dev.to. Foco em velocidade editorial, posts sociais e carrosséis sem pipeline pesado de vídeo. Pasta de trabalho: `channels/<slug>/campanhas/`.
+- **`media_channel`**: Ideal para canais de mídia, produtoras e projetos documentais (ex: Dossiê Histórico). Habilita pipelines de vídeo Remotion (16:9), shorts verticais (9:16) e masterização de locução (-14 LUFS). Pasta de trabalho: `channels/<slug>/episodios/`.
+
+### 8.2. Os 4 Presets Visuais Nativos
+1. **`tweet_card` (Thiago Ramos / Social Proof)**: Fundo claro ou escuro, cabeçalho de rede social com avatar circular, nome em negrito, selo azul de verificado, handle cinza, headline punchy e imagens arredondadas abaixo (1 foto ampla ou 2 fotos lado a lado).
+2. **`minimal_dark` (Rhaj Teixeira / Dark Editorial)**: Fundo preto puro (`#08080A`), tipografia serifada de alto padrão (`DejaVuSerif`), numeração de etapas ("Passo 1."), espaçamento generoso e mockup de interface (ex.: barra de busca com lupa, texto e botão de fechar).
+3. **`split_editorial` (Portal da Reforma Tributária / Autoridade Corporativa)**: Layout bipartido com foto real de contexto no topo (45%), container sólido em azul marinho corporativo (55%), foto do autor em recorte circular sobrepondo o corte, marcadores quadrados dourados (`■`) e marca d'água no rodapé.
+4. **`classic_card` (Dossiê Histórico / Regra 08)**: Foto de arquivo em tela cheia com vinheta, selo superior em pílula, card protetor translúcido escuro (`rgba(8, 10, 14, 215)`) e contorno de segurança nas fontes.
+
+### 8.3. Instruções de Estilo & Herança
+- Antes de gerar qualquer criativo, o agente deve obrigatoriamente inspecionar o arquivo `channels/<slug>/style_guide.md` e o bloco `visual_identity` em `channels/<slug>/channel.json`.
+- É possível sobrescrever o preset no nível da campanha (no topo do `carousel_recipe.json`) ou individualmente em cada lâmina (`"layout": "minimal_dark"`).
+
+---
+
+## 9. Padrão de Atualização Contínua de Documentação, SemVer e Release (Regra 13)
+
+É **norma operacional estrita** que nenhum agente submeta código novo ou alterações estruturais sem cumprir o ciclo de release sincronizado:
+
+1. **Versionamento Semântico (SemVer)**: Atualizar a versão em todos os 10 arquivos canônicos (`pyproject.toml`, `package.json`, `package-lock.json`, `server.json`, `plugin.json`, `src/__init__.py`, `src/cli.py`, `src/server.py`, `config/openapi.json`, `CHANGELOG.md`).
+2. **Changelog**: Registrar a nova versão em `CHANGELOG.md` no formato Keep a Changelog.
+3. **Documentação Viva**: Refletir imediatamente as novas ferramentas, comandos e presets em `README.md` e `docs/AGENT_MANUAL.md`.
+4. **Testes Unitários & Integração**: Validar a execução completa com `pytest`.
+5. **Commit & Push**: Commitar com mensagem descritiva no padrão Conventional Commits e disparar push para `origin main`.
+
+

@@ -200,6 +200,8 @@ def test_channel_archetypes(tmp_path: Path):
     assert personal["archetype"] == "personal_brand"
     assert personal["features"]["video"] is False
     assert personal["features"]["social_posts"] is True
+    assert "visual_identity" in personal
+    assert personal["visual_identity"]["default_preset"] == "tweet_card"
     p_dir = tmp_path / "channels" / "ismael-tech"
     assert (p_dir / "campanhas").exists()
     assert (p_dir / "articles").exists()
@@ -214,6 +216,8 @@ def test_channel_archetypes(tmp_path: Path):
     )
     assert media["archetype"] == "media_channel"
     assert media["features"]["video"] is True
+    assert "visual_identity" in media
+    assert media["visual_identity"]["default_preset"] == "classic_card"
     m_dir = tmp_path / "channels" / "sci-doc"
     assert (m_dir / "episodios").exists()
     assert (m_dir / "documentarios").exists()

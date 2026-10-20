@@ -717,3 +717,44 @@ def test_surgical_debreather_pause_gating(tmp_path):
     assert clean_wav.exists()
     assert res["pauses_cleaned"] >= 1
 
+
+def test_universal_carousel_recipe_with_presets(temp_workspace):
+    """Verifies that UniversalCarouselEngine can process recipes using presets without requiring background image files."""
+    root, ch_dir = temp_workspace
+    cm = ChannelManager(root_dir=root)
+    engine = UniversalCarouselEngine(channel_manager=cm)
+
+    recipe_path = ch_dir / "minimal_recipe.json"
+    recipe = {
+        "channel_slug": "test-channel",
+        "post_slug": "post_minimal_test",
+        "aspect_ratio": "4:5",
+        "preset": "minimal_dark",
+        "slides": [
+            {
+                "step_number": "Passo 1.",
+                "headline": "Primeiro passo importante",
+                "body": "Descrição detalhada do processo.",
+                "ui_mockup": {
+                    "type": "search_bar",
+                    "query": "busca de teste"
+                }
+            },
+            {
+                "step_number": "Passo 2.",
+                "headline": "Segundo passo importante",
+                "body": "Continuação da explicação prática."
+            }
+        ]
+    }
+    with open(recipe_path, "w", encoding="utf-8") as f:
+        json.dump(recipe, f)
+
+    slide_paths = engine.build_from_recipe(recipe_path)
+    assert len(slide_paths) == 2
+    for p in slide_paths:
+        assert p.exists()
+        img = Image.open(p)
+        assert img.size == (1080, 1350)  # 4:5 aspect ratio
+
+

@@ -269,33 +269,39 @@ When you ask the AI to draft an article:
 3. Runs the privacy and secrets scanner.
 4. Invokes `omnipress_publish_article`, saving to `channels/<slug>/articles/YYYY/MM/article-title.md`.
 
-#### Workflow B: Universal Carousel Engine & Declarative Recipes (v0.3.0)
+#### Workflow B: Universal Carousel Engine, Multi-Presets & Archetypes (v0.4.0)
+OmniPress v0.4.0 features native support for **Channel Archetypes** (`personal_brand` vs. `media_channel`) and **4 Modular Visual Presets**:
+- **`tweet_card`** (Thiago Ramos style): Social-proof card with author avatar, Twitter blue verified badge, `@handle`, punchy headline, and single/dual comparison photo frames (`radius=18`).
+- **`minimal_dark`** (Rhaj Teixeira style): Minimalist dark-mode editorial with pure dark canvas (`#08080A`), elegant serif typography (`DejaVuSerif`), step counter ("Passo 1."), and vector search bar mockup with magnifying glass and clear icons.
+- **`split_editorial`** (Portal da Reforma Tributária style): Corporate & GovTech authority layout with top contextual photo (45%), deep navy blue solid block (55%), circular author cutout overlapping the division line, opinion badge, square bullet markers (`■`), and watermark logo.
+- **`classic_card`** (Dossiê Histórico / Rule 08): Full-screen archival background photo, top badge pill, protective dark translucent backdrop card (`rgba(8, 10, 14, 215)`), and dark safety stroke on fonts.
+
 Instead of writing repetitive Python scripts, create a declarative `carousel_recipe.json`:
 ```json
 {
   "channel_slug": "tech-insights",
   "post_slug": "death-of-monoliths",
-  "aspect_ratio": "3:4",
+  "aspect_ratio": "4:5",
+  "preset": "tweet_card",
   "slides": [
     {
       "headline": "The Death of Monoliths?",
       "body": "Why poorly designed distributed systems cost 10x more to maintain.",
-      "badge_text": "SYSTEM ARCHITECTURE",
-      "bg_image": "channels/tech-insights/media/raw/bg_slide1.jpg",
-      "top_bias": 0.20
+      "images": ["architecture_diagram.jpg"],
+      "swipe_str": "Deslize →"
     }
   ],
   "publish": {
     "caption": "Why distributed systems cost 10x more when done wrong...\n\n#architecture #microservices #devops",
-    "platforms": ["instagram"],
-    "schedule_time": "2026-10-31T20:00:00.000Z"
+    "platforms": ["linkedin", "instagram"],
+    "mode": "shareNow"
   }
 }
 ```
 
 Run the complete pipeline (background prep + contrast rendering + CDN upload + Buffer scheduling):
 ```bash
-omnipress carousel --recipe channels/tech-insights/media/carousels/death-of-monoliths/carousel_recipe.json --all
+omnipress carousel --recipe channels/tech-insights/campanhas/death-of-monoliths/carousel_recipe.json --all
 ```
 
 #### Workflow C: Studio Broadcast Audio Mastering (Rule 10)
@@ -395,9 +401,12 @@ Include scene-by-scene AI image prompts and TTS voice direction with a cinematic
 
 ## 📚 Documentation & Resources
 
-- **[GitHub Wiki](https://github.com/ismaelsoilet/omnipress-mcp/wiki)**: Architectural deep dives and operational runbooks.
+- **[Agent Manual (docs/AGENT_MANUAL.md)](docs/AGENT_MANUAL.md)**: Complete operational manual, tool guides, execution playbooks, and preset recipes.
+- **[Agent Guidelines (AGENTS.md)](AGENTS.md)**: Architectural, TDQS standards, and normative rules for AI assistants.
+- **[Rule 13 Policy (.agents/rules/13_continuous_documentation_versioning_and_release_policy.md)](.agents/rules/13_continuous_documentation_versioning_and_release_policy.md)**: Mandatory documentation, changelog, and SemVer versioning synchronization gate.
+- **[Changelog (CHANGELOG.md)](CHANGELOG.md)**: Complete release history and version notes.
 - **[Setup Guide (English)](docs/SETUP_GUIDE.md)** | **[Guia em Português](docs/SETUP_GUIDE.pt-BR.md)**: Credentials setup for Buffer, Instagram, and Reddit.
-- **[Agent Guidelines (AGENTS.md)](AGENTS.md)**: Architectural and TDQS standards for AI assistants.
+- **[GitHub Wiki](https://github.com/ismaelsoilet/omnipress-mcp/wiki)**: Architectural deep dives and operational runbooks.
 - **[Creating Niche Skills Guide](https://github.com/ismaelsoilet/omnipress-mcp/wiki/Creating-Niche-Skills)**: How to build custom skills for new industries.
 
 ---
