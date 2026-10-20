@@ -1,0 +1,44 @@
+{
+  "channel_slug": "_template",
+  "post_slug": "carousel_episodio",
+  "aspect_ratio": "3:4",
+  "slides": [
+    {
+      "headline": "O DOCUMENTO QUE MUDOU A HISTÓRIA",
+      "body": "Por décadas, a versão oficial ensinada nas escolas escondeu o verdadeiro relatório desclassificado recentemente.",
+      "badge_text": "DOSSIÊ • ARQUIVO SECRETO",
+      "bg_image": "slide_01_capa.jpg",
+      "top_bias": 0.20,
+      "swipe_str": "Deslize →"
+    },
+    {
+      "headline": "A PRIMEIRA CONTRADIÇÃO",
+      "body": "Nos registros originais de inteligência, os fatos narrados contradizem os depoimentos públicos da época.",
+      "badge_text": "EVIDÊNCIA 01",
+      "bg_image": "slide_02_evidencia.jpg",
+      "top_bias": 0.15,
+      "swipe_str": "Deslize →"
+    },
+    {
+      "headline": "A PROVA MATERIAL",
+      "body": "Fotografias e laudos mostram detalhes que permaneceram sob sigilo de estado durante 50 anos.",
+      "badge_text": "PROVA DOCUMENTAL",
+      "bg_image": "slide_03_laudo.jpg",
+      "top_bias": 0.15,
+      "swipe_str": "Deslize →"
+    },
+    {
+      "headline": "QUER SABER A VERDADE COMPLETA?",
+      "body": "O documentário completo já está disponível no canal do YouTube. Link direto na bio.",
+      "badge_text": "DOSSIÊ COMPLETO",
+      "bg_image": "slide_04_cta.jpg",
+      "top_bias": 0.20,
+      "swipe_str": "Salve & Siga"
+    }
+  ],
+  "publish": {
+    "caption": "📁 O documento que você nunca viu nos livros de história.\n\nInvestigamos as fontes primárias e registros desclassificados para entender o que realmente aconteceu.\n\nAssista à investigação documental completa no YouTube (link na bio @dossiehistorico.canal).\n\n#historia #documentario #curiosidadeshistoricas #dossiehistorico",
+    "platforms": ["instagram", "linkedin"],
+    "mode": "shareNow"
+  }
+}

@@ -6,37 +6,41 @@ Toda produção de conteúdo (artigos, carrosséis, vídeos longos, shorts, locu
 
 ---
 
-## 📁 Estrutura Canônica de Diretórios
+## 📁 Estrutura Canônica de Diretórios (Arquitetura Episódica Unificada)
 
 ```
 channels/<channel-slug>/
 ├── channel.json                     # Metadados, branding, cores, tipografia, redes sociais e configurações de vídeo
 ├── README.md                        # Manifesto editorial, diretrizes de tom e checklist do canal
 │
-├── articles/                        # Artigos long-form em Markdown com YAML frontmatter
-│   └── AAAA/MM/                     # Organização recomendada por ano e mês
+├── episodios/                       # Dossiês e episódios autocontidos (unifica todos os formatos)
+│   └── <slug_episodio>/             # Workspace completo do episódio
+│       ├── README.md                # Sinopse, ganchos CTR, fontes desclassificadas e status dos entregáveis
+│       ├── documentario/            # Formato Widescreen 16:9 (YouTube Principal, 11 a 14 min)
+│       │   ├── roteiros/            # Roteiro 16:9, teleprompter calibrado e plano de B-Roll
+│       │   ├── audios/              # Locução bruta (raw/) e masterizada (-14 LUFS)
+│       │   ├── midias/              # Cenas 16:9, recortes de arquivo e thumbnails de alto CTR
+│       │   ├── outputs/             # Vídeo final renderizado (.mp4)
+│       │   └── scripts/             # Scripts dedicados de montagem ou alinhamento Whisper
+│       ├── shorts/                  # Formato Vertical 9:16 (Shorts / Reels / TikTok, ~65s)
+│       │   ├── short_01/            # Short principal com indicação de "Vídeo Relacionado"
+│       │   └── short_02/            # Segundo corte ou ângulo investigativo alternativo
+│       ├── carrossel/               # Formato 3:4 / 4:5 (Instagram / LinkedIn)
+│       │   ├── carousel_recipe.json # Receita declarativa de lâminas com cards de contraste (Regra 08)
+│       │   ├── slides/              # Lâminas renderizadas em alta resolução
+│       │   └── midias/              # Elementos visuais e catbox_urls.json
+│       ├── artigos/                 # Artigo longo de pesquisa com YAML frontmatter (Substack / Jusbrasil / Medium)
+│       ├── midias/                  # Acervo compartilhado do episódio (fotos reais, documentos históricos originais)
+│       └── posts/                   # Textos prontos para distribuição
+│           ├── youtube_description.md # Título CTR, capítulos cronometrados e links de fontes
+│           ├── shorts_copy.md       # Legenda otimizada apontando para o vídeo longo
+│           └── social_copy.md       # Copys para Instagram, LinkedIn e Thread do X
 │
-├── media/                           # Biblioteca e pipeline de ativos de mídia
-│   ├── raw/                         # Imagens brutas, documentos históricos e fontes originais
-│   ├── carousels/                   # Lâminas geradas pelo CarouselBuilder (Pillow)
-│   ├── stories/                     # Criativos verticais 9:16
-│   ├── visuals/                     # Imagens tratadas, recortes e B-roll para composições de vídeo
-│   ├── voiceover/                   # Locuções brutas e faixas masterizadas (-14 LUFS)
-│   ├── soundtrack/                  # Trilhas sonoras brutas (raw/) e cortes pontuais (cuts/)
-│   └── output/                      # Vídeos finais renderizados (.mp4) prontos para distribuição
-│
-├── documentarios/                   # Episódios longos em widescreen 16:9 (YouTube)
-│   └── <slug_episodio>/             # Workspace isolado de cada episódio
-│       ├── roteiros/                # Roteiros Markdown, guia teleprompter, legendas Whisper (.json)
-│       ├── midias/                  # Ativos visuais e sonoros exclusivos do episódio
-│       └── scripts/                 # Scripts auxiliares de masterização, montagem ou exportação
-│
-├── shorts/                          # Vídeos curtos verticais 9:16 (Shorts / Reels / TikTok, ~65s)
-│   └── <slug_short>/                # Workspace isolado de cada short
-│       ├── roteiros/                # Roteiro, cards de impacto e legendas sincronizadas (.json)
-│       ├── audios/                  # Locução masterizada e cortes de áudio
-│       ├── midias/                  # B-roll vertical, imagens 9:16 e capas
-│       └── scripts/                 # Scripts específicos de renderização ou montagem
+├── recursos_globais/                # Ativos compartilhados e utilitários da marca
+│   ├── branding/                    # Banner e avatar oficial do canal
+│   ├── vinhetas/                    # Vinhetas oficiais 16:9 e 9:16 com áudio broadcast
+│   ├── trilhas_sonoras/             # Acervo de trilhas sonoras autorizadas
+│   └── utilitarios/                 # Scripts auxiliares e ferramentas de conversão
 │
 └── scripts/                         # Automações e utilitários exclusivos do canal
     └── example_runner.py            # Exemplo de pipeline programático do canal
