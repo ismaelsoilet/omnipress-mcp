@@ -1,0 +1,44 @@
+{
+  "channel_slug": "_template",
+  "post_slug": "insight_semanal",
+  "aspect_ratio": "4:5",
+  "slides": [
+    {
+      "headline": "A DECISÃO TÉCNICA QUE MUDOU NOSSA VELOCIDADE",
+      "body": "Por que abandonamos scripts descartáveis e adotamos uma arquitetura declarativa de publicação.",
+      "badge_text": "ARQUITETURA • INSIGHT",
+      "bg_image": "capa.jpg",
+      "top_bias": 0.20,
+      "swipe_str": "Deslize →"
+    },
+    {
+      "headline": "O GARGALO DE PRODUÇÃO",
+      "body": "Antes, cada post exigia montagem manual e testes repetitivos. O resultado era inconsistência visual e fadiga de contexto.",
+      "badge_text": "O PROBLEMA",
+      "bg_image": "fundo_02.jpg",
+      "top_bias": 0.15,
+      "swipe_str": "Deslize →"
+    },
+    {
+      "headline": "A SOLUÇÃO DECLARATIVA",
+      "body": "Com contratos únicos de publicação, o mesmo raciocínio gera post no LinkedIn, thread no X e artigo no Dev.to.",
+      "badge_text": "O MÉTODO",
+      "bg_image": "fundo_03.jpg",
+      "top_bias": 0.15,
+      "swipe_str": "Deslize →"
+    },
+    {
+      "headline": "COMO APLICAR NO SEU FLUXO",
+      "body": "1. Isole a lógica no motor central.\n2. Crie templates desacoplados por perfil.\n3. Publique exatamente uma vez.",
+      "badge_text": "PASSO A PASSO",
+      "bg_image": "fundo_04.jpg",
+      "top_bias": 0.15,
+      "swipe_str": "Salve o post"
+    }
+  ],
+  "publish": {
+    "caption": "💡 Decisões arquiteturais importam mais que ferramentas isoladas.\n\nNeste carrossel, explico como unificamos a esteira de publicação sem retrabalho manual.\n\nQual tem sido o maior desafio no seu fluxo de distribuição de conteúdo técnico? Comente abaixo.\n\n#engenharia #software #arquitetura #liderancatecnica",
+    "platforms": ["linkedin", "instagram"],
+    "mode": "shareNow"
+  }
+}

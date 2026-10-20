@@ -1,13 +1,20 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "id": "template-channel",
-  "name": "Nome do Canal",
+  "name": "Nome do Perfil ou Canal",
   "slug": "template-channel",
-  "description": "Descrição do propósito e foco temático do canal.",
-  "category": "general",
+  "archetype": "personal_brand",
+  "description": "Perfil pessoal ou canal de conteúdo para distribuição multicanal.",
+  "category": "tecnologia",
+  "features": {
+    "articles": true,
+    "carousels": true,
+    "social_posts": true,
+    "video": false
+  },
   "branding": {
-    "handle": "@canal.oficial",
-    "badge_text": "CATEGORIA DO CANAL",
+    "handle": "@seuperfil",
+    "badge_text": "TECH & ARQUITETURA",
     "theme_colors": {
       "primary": "#3B82F6",
       "background": "#0F172A",
@@ -19,7 +26,44 @@
       "regular_font": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
     }
   },
+  "social": {
+    "linkedin": {
+      "handle": "seunome",
+      "profile_id": "",
+      "buffer_channel_id": ""
+    },
+    "x_twitter": {
+      "handle": "seunome",
+      "buffer_channel_id": ""
+    },
+    "instagram": {
+      "handle": "seunome",
+      "buffer_channel_id": "",
+      "default_hashtags": [
+        "#tecnologia",
+        "#software",
+        "#desenvolvimento"
+      ]
+    },
+    "threads": {
+      "handle": "seunome",
+      "buffer_channel_id": ""
+    },
+    "youtube": {
+      "channel_id": "",
+      "buffer_channel_id": "",
+      "default_privacy": "public"
+    },
+    "devto": {
+      "username": "seunome",
+      "organization": ""
+    },
+    "ghost_substack": {
+      "publication_url": ""
+    }
+  },
   "video": {
+    "enabled": false,
     "channel_name": "NOME DO CANAL",
     "badge_text": "CONTEÚDO OFICIAL // NÍVEL 1",
     "sub_text": "HISTÓRIAS, CURIOSIDADES E INVESTIGAÇÕES",
@@ -29,32 +73,8 @@
     "default_aspect_ratio": "9:16",
     "standard_short_duration_sec": 65.0
   },
-  "social": {
-    "instagram": {
-      "handle": "canal.oficial",
-      "buffer_channel_id": "",
-      "default_hashtags": [
-        "#canal",
-        "#conteudo",
-        "#curiosidades"
-      ]
-    },
-    "youtube": {
-      "channel_id": "",
-      "buffer_channel_id": "",
-      "default_privacy": "public"
-    },
-    "x_twitter": {
-      "handle": "canal_oficial",
-      "buffer_channel_id": ""
-    },
-    "linkedin": {
-      "profile_id": "",
-      "buffer_channel_id": ""
-    }
-  },
   "settings": {
     "auto_sanitize": true,
-    "default_aspect_ratio": "3:4"
+    "default_aspect_ratio": "4:5"
   }
 }

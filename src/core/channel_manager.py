@@ -151,16 +151,21 @@ class ChannelManager:
         primary_color: str = "#D4AF37",
         buffer_channel_id: str = "",
         default_hashtags: Optional[List[str]] = None,
+        archetype: str = "personal_brand",
     ) -> Dict[str, Any]:
         """
         Scaffolds a new, isolated channel workspace with folders and channel.json.
+        Supports both personal brand profiles and media channels.
         """
         clean_slug = slugify_channel(slug)
         channel_dir = self.channels_dir / clean_slug
         channel_dir.mkdir(parents=True, exist_ok=True)
 
+        is_media = archetype in ("media_channel", "media_house", "hybrid")
+
         # Create structured subdirectories per Rule 04 & Rule 10
         (channel_dir / "articles").mkdir(parents=True, exist_ok=True)
+        (channel_dir / "campanhas").mkdir(parents=True, exist_ok=True)
         (channel_dir / "media" / "raw").mkdir(parents=True, exist_ok=True)
         (channel_dir / "media" / "carousels").mkdir(parents=True, exist_ok=True)
         (channel_dir / "media" / "stories").mkdir(parents=True, exist_ok=True)
@@ -169,8 +174,10 @@ class ChannelManager:
         (channel_dir / "media" / "voiceover").mkdir(parents=True, exist_ok=True)
         (channel_dir / "media" / "soundtrack").mkdir(parents=True, exist_ok=True)
         (channel_dir / "media" / "output").mkdir(parents=True, exist_ok=True)
-        (channel_dir / "documentarios").mkdir(parents=True, exist_ok=True)
-        (channel_dir / "shorts").mkdir(parents=True, exist_ok=True)
+        if is_media:
+            (channel_dir / "episodios").mkdir(parents=True, exist_ok=True)
+            (channel_dir / "documentarios").mkdir(parents=True, exist_ok=True)
+            (channel_dir / "shorts").mkdir(parents=True, exist_ok=True)
         (channel_dir / "scripts").mkdir(parents=True, exist_ok=True)
 
         config: Dict[str, Any] = {
@@ -178,8 +185,15 @@ class ChannelManager:
             "id": clean_slug,
             "name": name,
             "slug": clean_slug,
+            "archetype": archetype,
             "description": description or f"Canal de conteúdo {name}.",
             "category": category,
+            "features": {
+                "articles": True,
+                "carousels": True,
+                "social_posts": True,
+                "video": is_media,
+            },
             "branding": {
                 "handle": handle if handle.startswith("@") else f"@{handle}",
                 "badge_text": name.upper(),
@@ -195,20 +209,39 @@ class ChannelManager:
                 }
             },
             "social": {
+                "linkedin": {
+                    "handle": handle.replace("@", ""),
+                    "profile_id": "",
+                    "buffer_channel_id": ""
+                },
+                "x_twitter": {
+                    "handle": handle.replace("@", ""),
+                    "buffer_channel_id": ""
+                },
                 "instagram": {
                     "handle": handle.replace("@", ""),
                     "buffer_channel_id": buffer_channel_id,
                     "default_hashtags": default_hashtags or [f"#{clean_slug.replace('-', '')}", "#conteudo"]
+                },
+                "threads": {
+                    "handle": handle.replace("@", ""),
+                    "buffer_channel_id": ""
+                },
+                "youtube": {
+                    "channel_id": "",
+                    "buffer_channel_id": "",
+                    "default_privacy": "public"
                 }
             },
             "video": {
+                "enabled": is_media,
                 "aspect_ratio": "16:9",
                 "soundtrack_volume": 0.16,
                 "fps": 30,
             },
             "settings": {
                 "auto_sanitize": True,
-                "default_aspect_ratio": "3:4"
+                "default_aspect_ratio": "4:5" if archetype == "personal_brand" else "3:4"
             }
         }
 

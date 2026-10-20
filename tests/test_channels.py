@@ -187,6 +187,39 @@ def test_dossie_historico_channel_config():
     assert dossie["social"]["youtube"]["buffer_channel_id"] == "6acd4b28778b240e2feca987"
 
 
+def test_channel_archetypes(tmp_path: Path):
+    cm = ChannelManager(root_dir=tmp_path)
+    
+    # 1. Personal Brand / Social-First
+    personal = cm.create_channel(
+        slug="ismael-tech",
+        name="Ismael Soilet Tech",
+        handle="@ismaelsoilet",
+        archetype="personal_brand",
+    )
+    assert personal["archetype"] == "personal_brand"
+    assert personal["features"]["video"] is False
+    assert personal["features"]["social_posts"] is True
+    p_dir = tmp_path / "channels" / "ismael-tech"
+    assert (p_dir / "campanhas").exists()
+    assert (p_dir / "articles").exists()
+    assert not (p_dir / "documentarios").exists()
+
+    # 2. Media Channel / Video-First
+    media = cm.create_channel(
+        slug="sci-doc",
+        name="Sci Docs",
+        handle="@scidocs",
+        archetype="media_channel",
+    )
+    assert media["archetype"] == "media_channel"
+    assert media["features"]["video"] is True
+    m_dir = tmp_path / "channels" / "sci-doc"
+    assert (m_dir / "episodios").exists()
+    assert (m_dir / "documentarios").exists()
+    assert (m_dir / "shorts").exists()
+
+
 if __name__ == "__main__":
     import pytest
     import sys

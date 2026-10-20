@@ -526,12 +526,13 @@ def omnipress_create_channel(
     description: str = "",
     primary_color: str = "#D4AF37",
     buffer_channel_id: str = "",
+    archetype: str = "personal_brand",
 ) -> str:
     """
-    Scaffolds a new isolated channel workspace with dedicated articles, media, and scripts directories.
+    Scaffolds a new isolated channel workspace for personal brands, thought leadership, or media channels.
 
     Use when:
-    - Creating a new content channel (e.g. tech, finance, legal, dark channel).
+    - Creating a new content channel or personal brand (e.g. personal profiles, tech, finance, legal, dark channel).
     - Setting up a distinct brand identity with its own handle and Buffer channel ID.
 
     Do NOT use when:
@@ -548,13 +549,16 @@ def omnipress_create_channel(
         description=description,
         primary_color=primary_color,
         buffer_channel_id=buffer_channel_id,
+        archetype=archetype,
     )
+    dirs = "campanhas/, articles/, media/, scripts/" if archetype == "personal_brand" else "episodios/, documentarios/, shorts/, articles/, media/, scripts/"
     return (
         f"✅ Channel **{name}** (`{config['slug']}`) created successfully!\n"
+        f"🏛️ Arquétipo: `{config['archetype']}` | Categoria: `{category}`\n"
         f"📁 Workspace: `{config['path']}`\n"
-        f"🏷️ Handle: `{config['branding']['handle']}` | Categoria: `{category}`\n"
+        f"🏷️ Handle: `{config['branding']['handle']}`\n"
         f"⚙️ Config: `{config['path']}/channel.json`\n"
-        f"Diretórios prontos: `articles/`, `media/carousels/`, `media/stories/`, `media/raw/`, `scripts/`"
+        f"Diretórios prontos: `{dirs}`"
     )
 
 

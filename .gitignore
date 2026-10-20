@@ -27,17 +27,10 @@ venv/
 .env
 .env.local
 
-# Generated content archives (keep only directory structure)
-articles/*
-!articles/.gitkeep
-
-# Local media assets & private historical materials
-media/assets/*
-!media/assets/.gitkeep
-media/historical/
+# Local runtime media cache & web-server staging (Rule 04: content belongs in channels/<slug>/)
 media/output/*
 media/staging/*
-!media/.gitkeep
+media/historical/
 
 # Channel workspaces: custom/private channels are strictly ignored, keeping only the generic template
 channels/*
