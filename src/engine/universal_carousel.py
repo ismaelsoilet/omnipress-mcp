@@ -240,6 +240,18 @@ class UniversalCarouselEngine:
         )
         return rendered_paths
 
+    def build_from_recipe(
+        self,
+        recipe_input: Union[str, Path, Dict[str, Any]],
+    ) -> List[Path]:
+        """Loads a carousel recipe and renders all slide images.
+
+        Supports solid canvas backgrounds and recipe-level overrides
+        without requiring background image files.
+        """
+        recipe, recipe_dir = self.load_recipe(recipe_input)
+        return self.render_recipe_slides(recipe, recipe_dir)
+
     def upload_slides(
         self,
         slide_paths: List[Path],

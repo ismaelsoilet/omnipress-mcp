@@ -720,9 +720,8 @@ def test_surgical_debreather_pause_gating(tmp_path):
 
 def test_universal_carousel_recipe_with_presets(temp_workspace):
     """Verifies that UniversalCarouselEngine can process recipes using presets without requiring background image files."""
-    root, ch_dir = temp_workspace
-    cm = ChannelManager(root_dir=root)
-    engine = UniversalCarouselEngine(channel_manager=cm)
+    ch_dir = temp_workspace["ch_dir"]
+    engine = UniversalCarouselEngine(channel_manager=temp_workspace["cm"])
 
     recipe_path = ch_dir / "minimal_recipe.json"
     recipe = {

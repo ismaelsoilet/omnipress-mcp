@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] — 2026-10-21
+
+### Fixed
+- **UniversalCarouselEngine (`build_from_recipe`)**: Added `build_from_recipe(recipe_input)` method to load and compile carousel recipes into slide images directly.
+- **Universal Pipeline Test Suite**: Fixed fixture unpacking error in `tests/test_universal_pipeline.py::test_universal_carousel_recipe_with_presets` (`ValueError: too many values to unpack`) by reading channel and manager from dictionary mapping.
+
 ## [0.4.0] — 2026-10-20
 
 ### Added
