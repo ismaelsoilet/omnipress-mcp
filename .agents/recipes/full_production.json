@@ -1,0 +1,45 @@
+{
+  "$schema": "../schemas/recipe.schema.json",
+  "nome": "Full Production",
+  "descricao": "Esteira audiovisual completa com os 12 agentes especializados. Indicada para episódios documentais longos (16:9), investigações históricas, dossiês e conteúdos premium.",
+  "tempo_estimado_min": 75,
+  "modo": "full_production",
+  "agentes": [
+    "ag12", "ag01", "ag02", "ag03", "ag04", "ag05",
+    "ag06", "ag07", "ag08", "ag09", "ag10", "ag11"
+  ],
+  "grafo_execucao": [
+    { "etapa": 1, "agentes": ["ag01"], "descricao": "Pesquisa aprofundada de fontes, documentos desclassificados e proposta de 3 atos/estruturas", "tipo": "execucao" },
+    { "etapa": 2, "agentes": ["ag12"], "descricao": "Gate 1: Usuário escolhe formato, tese narrativa e escopo", "tipo": "gate_usuario" },
+    { "etapa": 3, "agentes": ["ag01"], "descricao": "Geração do roteiro dois-colunas com beat-sheet por cena e marcações de emoção/SFX", "tipo": "execucao" },
+    { "etapa": 4, "agentes": ["ag02", "ag10"], "descricao": "Paralelo: AG02 curadoria de acervos públicos/prompts + AG10 avaliação de locução", "tipo": "paralelo" },
+    { "etapa": 5, "agentes": ["ag03"], "descricao": "Masterização broadcast de áudio (-14.0 LUFS, corte de plosivas e ruído de mesa)", "tipo": "execucao" },
+    { "etapa": 6, "agentes": ["ag04", "ag05", "ag06"], "descricao": "Paralelo QA: AG04 revisão editorial + AG05 validação de timing fala-cena + AG06 validação visual e contraste (Regra 08)", "tipo": "revisao" },
+    { "etapa": 7, "agentes": ["ag07", "ag08"], "descricao": "Paralelo Criativo: AG07 montagem de efeitos Remotion (spring/whip pan) + AG08 design de SFX imersivos", "tipo": "paralelo" },
+    { "etapa": 8, "agentes": ["ag09"], "descricao": "Curadoria de 5 sugestões de trilha sonora com verificação de licença e Content ID", "tipo": "execucao" },
+    { "etapa": 9, "agentes": ["ag12"], "descricao": "Gate 2 (Soberania do Usuário): Escolha explícita da trilha ou opção por Modo B (limpo)", "tipo": "gate_usuario" },
+    { "etapa": 10, "agentes": ["ag11"], "descricao": "Auditoria adversarial cega independente (score 0–100, threshold >= 80 para liberação)", "tipo": "revisao" },
+    { "etapa": 11, "agentes": ["ag12"], "descricao": "Entrega consolidada ao usuário com production_log.json e assets prontos", "tipo": "gate_usuario" }
+  ],
+  "artefatos_obrigatorios": [
+    "roteiro.json",
+    "roteiro.md",
+    "image_manifest.json",
+    "audio_report.json",
+    "language_review.json",
+    "timing_report.json",
+    "visual_qa_report.json",
+    "vfx_map.json",
+    "sfx_manifest.json",
+    "soundtrack_config.json",
+    "audit_report.json",
+    "production_log.json"
+  ],
+  "artefatos_opcionais": [
+    "narration_report.json"
+  ],
+  "gate_usuario": ["ag01_formato", "ag09_trilha_sonora", "publicacao_final"],
+  "publicacao_automatica": false,
+  "formatos_suportados": ["documentario_16_9", "short_9_16"],
+  "notas": "Exige aprovação explícita do usuário em dois gates críticos (formato e trilha sonora). A masterização a -14.0 LUFS e o teto de trilha sob voz (0.12 a 0.18) são mandatórios sob a Regra 10."
+}

@@ -13,7 +13,52 @@ import { ScrambledText } from "../components/ScrambledText";
 import { TacticalGrid } from "../components/TacticalGrid";
 import { FilmGrain } from "../components/FilmGrain";
 import { SynchronizedCaptions } from "../components/SynchronizedCaptions";
-import { EpisodeConfig } from "../types";
+import { DocumentaryScene, EpisodeConfig, KenBurnsSceneProps } from "../types";
+
+export const getCameraPreset = (
+  index: number,
+  headline?: string,
+  badge?: string
+): NonNullable<KenBurnsSceneProps["direction"]> => {
+  const text = `${headline || ""} ${badge || ""}`.toUpperCase();
+  if (
+    text.includes("MENTIRA") ||
+    text.includes("FALSIFICAÇÃO") ||
+    text.includes("VETO") ||
+    text.includes("GOLPE") ||
+    text.includes("REVELAÇÃO")
+  ) {
+    return "snap-zoom";
+  }
+  if (
+    text.includes("GUERRA") ||
+    text.includes("BATALHA") ||
+    text.includes("NAPOLEÃO") ||
+    text.includes("DECRETO")
+  ) {
+    return "dramatic-push";
+  }
+  if (
+    text.includes("DOCUMENTO") ||
+    text.includes("CONSTITUIÇÃO") ||
+    text.includes("LEI") ||
+    text.includes("PINTURA") ||
+    text.includes("RETRATO")
+  ) {
+    return "tilt-down";
+  }
+
+  const presets: NonNullable<KenBurnsSceneProps["direction"]>[] = [
+    "zoom-in",
+    "pan-left",
+    "zoom-out",
+    "snap-zoom",
+    "pan-right",
+    "dramatic-push",
+    "tilt-down",
+  ];
+  return presets[index % presets.length];
+};
 
 export interface DocumentaryEpisodeProps {
   config?: EpisodeConfig;
@@ -35,13 +80,16 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
   // Função de Ducking Dinâmico da Trilha Sonora (Regra 10: teto de 0.12 a 0.18 sob a fala)
   const getMusicVolume = (frame: number): number => {
     if (frame < introDurationFrames) {
-      return 0.25;
+      return 0.28;
     }
     const currentSec = (frame - introDurationFrames) / fps;
     const isSpeaking = config?.voiceovers?.some((vox) => {
-      return currentSec >= vox.startInSeconds && currentSec <= (vox.startInSeconds + vox.durationInSeconds);
+      return (
+        currentSec >= vox.startInSeconds &&
+        currentSec <= vox.startInSeconds + vox.durationInSeconds
+      );
     });
-    return isSpeaking ? 0.16 : 0.45;
+    return isSpeaking ? 0.14 : 0.28;
   };
 
   return (
@@ -82,14 +130,15 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
         );
       })}
 
-      {/* 4. Sequência de Cenas e Dossiês */}
+      {/* 4. Sequência de Cenas e Dossiês (Sincronização 1:1 Estrita Fala-Frame) */}
       {scenes.map((scene, index) => {
-        // Calcula o offset acumulado dos frames das cenas anteriores
-        let startFrame = enableIntro ? introDurationFrames : 0;
-        for (let i = 0; i < index; i++) {
-          startFrame += Math.round(scenes[i].durationInSeconds * fps);
-        }
-        const sceneDurationFrames = Math.round(scene.durationInSeconds * fps);
+        // Cálculo direto a partir do início da fala no áudio (Regra 10: Speech-to-Frame Lock)
+        const sceneOffsetSec = (scene as DocumentaryScene).startInSeconds !== undefined
+          ? (scene as DocumentaryScene).startInSeconds!
+          : scenes.slice(0, index).reduce((acc, s) => acc + (s.durationInSeconds || 0), 0);
+        
+        const startFrame = (enableIntro ? introDurationFrames : 0) + Math.round(sceneOffsetSec * fps);
+        const sceneDurationFrames = Math.round((scene.durationInSeconds || 3.0) * fps);
 
         return (
           <Sequence
@@ -179,13 +228,11 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
                 </div>
               </AbsoluteFill>
             ) : (
-              // Imagem Documental em Movimento Suave (Ken Burns)
+              // Imagem Documental com Movimento Sutil (Começa em scale 1.0, sem cobrir rostos)
               <KenBurnsImage
                 imageSrc={staticFile(scene.mediaSrc)}
                 durationInFrames={sceneDurationFrames}
-                direction={index % 2 === 0 ? "zoom-in" : "zoom-out"}
-                headline={scene.headline}
-                caption={scene.notes}
+                direction={getCameraPreset(index, scene.headline, scene.badge)}
                 badge={scene.badge}
               />
             )}

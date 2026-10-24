@@ -75,6 +75,17 @@ When AI image generation models (Gemini Flash Image, Imagen, OpenAI, etc.) encou
 
 ---
 
+### 10. Audio-First Synchronization & Visual Dynamics Standard (Speech-to-Frame Lock)
+- **Audio as the Master Timeline**: The recorded voiceover narration track is the absolute, authoritative master clock of the entire video. Visual scene cuts, b-roll switches, document reveals, text overlays, and graphic transitions must be strictly frame-locked to the exact millisecond when the corresponding topic or phrase is uttered in the speech.
+- **Strict Prohibition of Arbitrary Durations**: Agents are strictly forbidden from distributing scene durations uniformly, estimating time slices linearly, or using arbitrary timestamps when an audio track exists. Scene start and end points must be derived directly from speech alignment (e.g., Whisper word/segment timestamps or acoustic speech detection).
+- **Remotion Visual Dynamics & Anti-Static Rule**: A documentary or short must never devolve into a passive or static photo slideshow with slow linear zooms. Compositions must harness Remotion's programmatic engine for dynamic retention:
+  1. **Spring-Based Camera Dynamics**: Utilize `spring()` and multi-point `interpolate()` for rapid push-ins on punchy words, camera whip-pans, and subtle directional drifting.
+  2. **Tactile Optical Transitions**: Pair scene cuts with dynamic flash frames, subtle light leaks, optical lens flares, and vignette pulses to create fluid motion between historical assets.
+  3. **Kinetic Typography & Badges**: Lower-thirds, classified stamps, and evidence tags must enter with spring physics, typewriter reveals, or scrambled text decoders, accompanied by subtle dark contrast backing cards (Rule 08).
+  4. **Tactical Overlays & Atmosphere**: Combine tactical grid borders, scanning reticles, ambient dust particles, and organic 35mm film grain (`<FilmGrain />`) to maintain deep cinematic atmosphere.
+
+---
+
 ## 🇧🇷 Diretrizes em Português
 
 ### 1. Separação Motor Universal vs. Ativos do Canal
@@ -154,3 +165,13 @@ Caso os modelos de geração de imagens por IA (Gemini Flash Image, Imagen, etc.
      - Descrição cinematográfica minuciosa (iluminação, lente, enquadramento, textura de filme de época, detalhes de figurino e equipamentos).
      - Caminho exato de destino onde o usuário deve salvar a imagem (ex.: `channels/<slug>/documentarios/<ep>/midias/cinematic_16x9/scene_XX.jpg`).
    - Apresentar esses prompts de forma limpa e organizada no chat e no repositório, permitindo que o usuário gere as imagens em outras ferramentas e as entregue para incorporação imediata na esteira do Remotion.
+
+### 10. Padrão de Linha do Tempo Guiada pelo Áudio & Dinâmica Visual do Remotion (Casamento Estrito Fala-Frame)
+- **O Áudio como Relógio Mestre Absoluto**: A gravação de locução de voz é o relógio mestre irrevogável de toda a composição. Cada corte de imagem, mudança de plano, entrada de documento, carimbo pericial e transição visual deve estar milimetricamente travado no frame exato em que a respectiva palavra ou assunto é pronunciado pelo narrador.
+- **Proibição Estrita de Durações Arbitrárias**: É expressamente proibido aos agentes definir durações uniformes, dividir o tempo total linearmente por estimativa ou usar tempos arbitrários quando houver áudio gravado. O início e o término de cada beat visual devem ser obrigatoriamente extraídos do alinhamento fonético da fala (timestamps de frases e palavras via Whisper ou segmentação acústica).
+- **Dinâmica Visual do Remotion (Regra Anti-Estática)**: Documentários e shorts jamais devem parecer apresentações lentas de slides estáticos com zoom linear simples. O motor programático do Remotion deve ser utilizado para retenção visual dinâmica e ritmo de cinema:
+  1. **Movimentos de Câmera com Física Spring**: Uso de `spring()` e `interpolate()` multi-ponto para zoom-in dinâmico em palavras-chave enfáticas, whip-pans direcionais e micro-drifts orgânicos.
+  2. **Transições Ópticas e Flashes**: Cortes entre cenas devem receber flashes sutis de transição, vazamentos de luz (light leaks) e pulsações de vinheta escura para conectar os ativos históricos sem cortes duros monótonos.
+  3. **Tipografia Cinética e Badges**: Lower-thirds, carimbos confidenciais e etiquetas de arquivo devem entrar com física de mola (spring), efeito datilográfico ou decodificação de texto cifrado (`ScrambledText`), sempre sobre cards protetores de alto contraste (Regra 08).
+  4. **Atmosfera Tátil & HUD Investigativo**: Sobreposição contínua de granulação de filme 35mm (`<FilmGrain />`), partículas de poeira suspensa (`<DustParticles />`) e retículas táticas de arquivo (`<TacticalGrid />`).
+

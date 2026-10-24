@@ -37,7 +37,10 @@ channels/*
 !channels/_template/
 !channels/_template/**
 !channels/.gitkeep
-public/dossie/
+# Remotion public directory: local assets & mounts are strictly ignored, keeping only the root structure
+public/*
+!public/.gitkeep
+
 
 # IDE & OS
 .vscode/

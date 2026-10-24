@@ -1,0 +1,34 @@
+{
+  "$schema": "../schemas/recipe.schema.json",
+  "nome": "Remix",
+  "descricao": "Reedição e refinamento dinâmico de episódios existentes. Atualiza recursos visuais, efeitos Remotion, trilhas e sonoplastia sem regravar a locução masterizada.",
+  "tempo_estimado_min": 30,
+  "modo": "remix",
+  "agentes": ["ag12", "ag01", "ag02", "ag06", "ag07", "ag08", "ag09", "ag11"],
+  "grafo_execucao": [
+    { "etapa": 1, "agentes": ["ag12"], "descricao": "Carregamento do roteiro e áudio masterizado já existentes no workspace", "tipo": "execucao" },
+    { "etapa": 2, "agentes": ["ag02"], "descricao": "Curadoria de novas imagens e b-roll histórico alinhados às cenas", "tipo": "execucao" },
+    { "etapa": 3, "agentes": ["ag06"], "descricao": "Verificação visual, conformidade de resolução e cartões de proteção (Regra 08)", "tipo": "revisao" },
+    { "etapa": 4, "agentes": ["ag07", "ag08"], "descricao": "Paralelo: Modernização de transições Remotion (spring/whip pan) + atualização de SFX", "tipo": "paralelo" },
+    { "etapa": 5, "agentes": ["ag09"], "descricao": "Seleção ou substituição de trilha sonora com ducking automático", "tipo": "execucao" },
+    { "etapa": 6, "agentes": ["ag12"], "descricao": "Gate: Usuário confirma a nova ambientação musical ou mantém trilha original", "tipo": "gate_usuario" },
+    { "etapa": 7, "agentes": ["ag11"], "descricao": "Auditoria de integridade final e conformidade geral", "tipo": "revisao" },
+    { "etapa": 8, "agentes": ["ag12"], "descricao": "Entrega do novo corte remasterizado com relatório comparativo", "tipo": "gate_usuario" }
+  ],
+  "artefatos_obrigatorios": [
+    "image_manifest.json",
+    "visual_qa_report.json",
+    "vfx_map.json",
+    "sfx_manifest.json",
+    "soundtrack_config.json",
+    "audit_report.json"
+  ],
+  "artefatos_opcionais": [
+    "roteiro_v2.json",
+    "production_log.json"
+  ],
+  "gate_usuario": ["ag09_trilha_sonora", "publicacao_final"],
+  "publicacao_automatica": false,
+  "formatos_suportados": ["documentario_16_9", "short_9_16"],
+  "notas": "Reaproveita o áudio broadcast previamente masterizado (-14 LUFS) poupando tempo de estúdio e focando na retenção visual e acústica."
+}

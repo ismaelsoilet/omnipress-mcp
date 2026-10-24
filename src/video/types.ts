@@ -15,11 +15,14 @@ export interface ChannelIntroProps {
 export interface KenBurnsSceneProps {
   imageSrc: string;
   durationInFrames: number;
-  direction?: "zoom-in" | "zoom-out" | "pan-left" | "pan-right";
+  direction?: "zoom-in" | "zoom-out" | "pan-left" | "pan-right" | "snap-zoom" | "dramatic-push" | "tilt-down";
   headline?: string;
   caption?: string;
   badge?: string;
   showFilmGrain?: boolean;
+  showDust?: boolean;
+  showCornerBrackets?: boolean;
+  cameraShake?: boolean;
   brightness?: number;
   contrast?: number;
 }
@@ -29,6 +32,7 @@ export interface DocumentaryScene {
   type: "ken-burns" | "document-reveal" | "tactical-map" | "stat-counter" | "video-clip";
   mediaSrc: string;
   durationInSeconds: number;
+  startInSeconds?: number;
   voiceoverAudioSrc?: string;
   headline?: string;
   subheadline?: string;

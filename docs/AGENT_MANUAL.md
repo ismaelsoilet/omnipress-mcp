@@ -469,4 +469,41 @@ O OmniPress v0.4.0 introduz o suporte nativo a múltiplos presets de layout e in
 4. **Testes Unitários & Integração**: Validar a execução completa com `pytest`.
 5. **Commit & Push**: Commitar com mensagem descritiva no padrão Conventional Commits e disparar push para `origin main`.
 
+---
+
+## 10. OmniPress Content Factory — Esteira de 12 Agentes Especializados (v0.5.0)
+
+A partir da versão v0.5.0, o OmniPress introduz a **Content Factory**: uma arquitetura agêntica modular composta por **12 subagentes especializados** orquestrados pelo Diretor Central (AG12). A fábrica opera em pipeline variável: conteúdos simples ativam poucos agentes, enquanto documentários e produções de cinema ativam a esteira completa.
+
+### 10.1. Visão Geral dos 12 Agentes
+| ID | Arquivo Canônico | Papel | Modos Ativos |
+|---|---|---|---|
+| **AG01** | `.agents/agents/01_researcher_scriptwriter.md` | Pesquisador de Acervos & Roteirista (roteiro dois-colunas) | Todos |
+| **AG02** | `.agents/agents/02_image_curator.md` | Curador de Imagens por Cena & Prompter Visual | Standard, Full, Remix |
+| **AG03** | `.agents/agents/03_audio_engineer.md` | Engenheiro de Áudio Broadcast (-14 LUFS, EBU R128) | Standard, Full |
+| **AG04** | `.agents/agents/04_language_reviewer.md` | Revisor Linguístico & Guardião Editorial | Todos |
+| **AG05** | `.agents/agents/05_timing_checker.md` | Checker de Timing (Legendas e Trocas de Cena ±0.5s) | Standard, Full |
+| **AG06** | `.agents/agents/06_visual_verifier.md` | Auditor de Qualidade Visual & Contraste (Regra 08) | Standard, Full, Remix |
+| **AG07** | `.agents/agents/07_vfx_remotion.md` | Especialista em Efeitos Especiais & Remotion Dinâmico | Full, Remix |
+| **AG08** | `.agents/agents/08_sfx_designer.md` | Designer de Efeitos Sonoros Imersivos | Full, Remix |
+| **AG09** | `.agents/agents/09_soundtrack_director.md` | Diretor de Trilha Sonora (Gate de Soberania do Usuário) | Full, Remix |
+| **AG10** | `.agents/agents/10_narration_director.md` | Diretor de Narração (Dicção, Ritmo e Coerência de Roteiro) | Standard, Full |
+| **AG11** | `.agents/agents/11_adversarial_auditor.md` | Auditor Adversarial Independente (Score 0-100, Anti-Duplicação) | Full, Standard |
+| **AG12** | `.agents/agents/12_director_orchestrator.md` | Diretor Delegador (Orquestrador Único e Interface com Usuário) | **SEMPRE** |
+
+### 10.2. Os 4 Modos Operacionais & Receitas Declarativas
+As receitas em `.agents/recipes/` definem os grafos de dependência e agentes ativados:
+1. **`express.json` (Express - ~5 min)**: AG12 → AG01 → Gate Usuário → AG04 → Entrega. Para microposts, threads no X e artigos Markdown.
+2. **`standard.json` (Standard - ~20 min)**: AG12 → AG01 → Gate Usuário → AG02 + AG10 (paralelo) → AG03 → AG04 + AG05 (paralelo) → AG11 → Entrega. Para Shorts/Reels/TikTok de 62 a 68s com locução masterizada.
+3. **`full_production.json` (Full Production - ~75 min)**: Todos os 12 agentes ativados com 2 gates obrigatórios do usuário (formato e trilha sonora). Para episódios documentais 16:9 de 10 a 30 minutos.
+4. **`remix.json` (Remix - ~30 min)**: Reaproveita o áudio broadcast masterizado já existente, ativando AG02, AG06, AG07, AG08, AG09 e AG11 para modernização de assets visuais, sonoplastia e efeitos Remotion.
+
+### 10.3. Schemas de Handoff Contratual
+Os artefatos intermediários trocados entre agentes são rigidamente validados contra os schemas em `.agents/schemas/`:
+- `roteiro.schema.json`: Contrato mestre de roteiro dois-colunas com timestamps, emoções e notas de produção.
+- `recipe.schema.json`: Contrato de receitas declarativas para esteiras.
+- `audit_report.schema.json`: Relatório de conformidade cega com bloqueadores e score.
+- `production_log.schema.json`: Livro de registros de sessão e tempos operacionais mantido pelo AG12.
+
+
 

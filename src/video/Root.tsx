@@ -1,7 +1,8 @@
 import React from "react";
 import { Composition } from "remotion";
 import { ChannelIntro } from "./compositions/ChannelIntro";
-import { DocumentaryEpisode } from "./compositions/DocumentaryEpisode";
+import { DocumentaryEpisode, DocumentaryEpisodeProps } from "./compositions/DocumentaryEpisode";
+import { DocumentaryScene } from "./types";
 import { DocumentaryShort, DocumentaryShortProps } from "./compositions/DocumentaryShort";
 import { ThumbnailEpisode, ThumbnailEpisodeProps } from "./compositions/ThumbnailEpisode";
 import { sampleShortCaptions, sampleEpisodeCaptions } from "./fixtures/sampleCaptions";
@@ -91,13 +92,30 @@ export const Root: React.FC = () => {
       />
 
       {/* 5. Episódio Documental Universal 16:9 (YouTube Widescreen) */}
-      <Composition
+      <Composition<any, any>
         id="DocumentaryEpisode-16x9"
         component={DocumentaryEpisode}
-        durationInFrames={1800}
+        durationInFrames={25083}
         fps={30}
         width={1920}
         height={1080}
+        calculateMetadata={({ props }) => {
+          const epProps = props as DocumentaryEpisodeProps;
+          const introFrames = epProps.enableIntro ? (epProps.introDurationFrames ?? 120) : 0;
+          const scenesFrames = (epProps.config?.scenes || []).reduce(
+            (acc: number, s: DocumentaryScene) => acc + Math.round((s.durationInSeconds || 0) * 30),
+            0
+          );
+          const totalFrames = scenesFrames > 0
+            ? introFrames + scenesFrames
+            : (epProps.config?.voiceovers?.[0]
+                ? Math.round((epProps.config.voiceovers[0].durationInSeconds || 0) * 30) + introFrames
+                : 25083);
+          return {
+            durationInFrames: totalFrames,
+            props,
+          };
+        }}
         defaultProps={{
           enableIntro: true,
           introDurationFrames: 120,

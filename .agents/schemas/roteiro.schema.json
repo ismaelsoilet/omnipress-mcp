@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "omnipress:roteiro:v1",
+  "title": "OmniPress Roteiro Schema",
+  "description": "Schema universal de handoff entre agentes da Content Factory. Produzido pelo AG01 e consumido por AG02, AG05, AG06, AG07, AG10.",
+  "type": "object",
+  "required": ["meta", "formato", "cenas"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["channel_slug", "titulo", "modo", "duracao_estimada_s", "idioma", "criado_em"],
+      "properties": {
+        "channel_slug": { "type": "string" },
+        "titulo": { "type": "string" },
+        "modo": { "enum": ["express", "standard", "full_production", "remix"] },
+        "duracao_estimada_s": { "type": "number" },
+        "idioma": { "type": "string", "default": "pt-BR" },
+        "criado_em": { "type": "string", "format": "date-time" },
+        "versao": { "type": "string", "default": "1.0.0" }
+      }
+    },
+    "formato": {
+      "type": "object",
+      "required": ["tipo", "aspect_ratio", "fps"],
+      "properties": {
+        "tipo": { "enum": ["short_9_16", "documentario_16_9", "carrossel", "artigo", "thread"] },
+        "aspect_ratio": { "type": "string" },
+        "fps": { "type": "number", "default": 30 },
+        "largura": { "type": "integer" },
+        "altura": { "type": "integer" }
+      }
+    },
+    "cenas": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "inicio_s", "fim_s", "narracao", "visual"],
+        "properties": {
+          "id": { "type": "integer" },
+          "inicio_s": { "type": "number" },
+          "fim_s": { "type": "number" },
+          "narracao": {
+            "type": "string",
+            "description": "Texto exato que será narrado nesta cena"
+          },
+          "visual": {
+            "type": "string",
+            "description": "Descrição do que deve aparecer na tela durante a narração"
+          },
+          "emocao": {
+            "type": "string",
+            "enum": ["neutro", "tenso", "epico", "misterioso", "inspirador", "sombrio", "urgente"]
+          },
+          "tipo_cena": {
+            "type": "string",
+            "enum": ["hook", "contexto", "desenvolvimento", "climax", "conclusao", "cta"]
+          },
+          "sfx_sugerido": {
+            "type": "string",
+            "description": "Tipo de efeito sonoro sugerido para esta cena"
+          },
+          "notas_producao": {
+            "type": "string",
+            "description": "Instruções especiais para AG07 (VFX) ou AG08 (SFX)"
+          }
+        }
+      }
+    },
+    "trilha_sonora": {
+      "type": "object",
+      "properties": {
+        "mood_geral": { "type": "string" },
+        "sugestoes_ag09": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "aprovada_pelo_usuario": { "type": "boolean", "default": false },
+        "faixa_aprovada": { "type": "string" }
+      }
+    },
+    "narrador": {
+      "type": "object",
+      "properties": {
+        "voz": { "type": "string" },
+        "ritmo_wpm": { "type": "integer", "default": 110 },
+        "arquivo_bruto": { "type": "string" },
+        "arquivo_masterizado": { "type": "string" }
+      }
+    }
+  }
+}

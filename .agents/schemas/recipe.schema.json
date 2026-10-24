@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "omnipress:recipe:v1",
+  "title": "OmniPress Content Factory Recipe Schema",
+  "description": "Schema para receitas declarativas de execução da OmniPress Content Factory (Regra 12).",
+  "type": "object",
+  "required": ["nome", "descricao", "tempo_estimado_min", "modo", "agentes", "grafo_execucao", "artefatos_obrigatorios"],
+  "properties": {
+    "nome": { "type": "string" },
+    "descricao": { "type": "string" },
+    "tempo_estimado_min": { "type": "integer" },
+    "modo": { "enum": ["express", "standard", "full_production", "remix"] },
+    "agentes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "grafo_execucao": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["etapa", "agentes", "descricao"],
+        "properties": {
+          "etapa": { "type": "integer" },
+          "agentes": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "descricao": { "type": "string" },
+          "tipo": { "enum": ["execucao", "gate_usuario", "paralelo", "revisao"] }
+        }
+      }
+    },
+    "artefatos_obrigatorios": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "artefatos_opcionais": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "gate_usuario": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "publicacao_automatica": { "type": "boolean", "default": false },
+    "formatos_suportados": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "notas": { "type": "string" }
+  }
+}

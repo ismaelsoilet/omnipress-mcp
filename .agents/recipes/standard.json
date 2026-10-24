@@ -1,0 +1,34 @@
+{
+  "$schema": "../schemas/recipe.schema.json",
+  "nome": "Standard",
+  "descricao": "Vídeo curto vertical (Shorts / Reels / TikTok de 62–68s) com narração masterizada (-14 LUFS), curadoria de imagens sincronizadas, legendas kinetic e revisão de timing.",
+  "tempo_estimado_min": 20,
+  "modo": "standard",
+  "agentes": ["ag12", "ag01", "ag02", "ag03", "ag04", "ag05", "ag10", "ag11"],
+  "grafo_execucao": [
+    { "etapa": 1, "agentes": ["ag01"], "descricao": "Pesquisa do canal e proposta de 3 ângulos/ganchos para Short 9:16", "tipo": "execucao" },
+    { "etapa": 2, "agentes": ["ag12"], "descricao": "Gate: usuário aprova tema e ângulo do roteiro", "tipo": "gate_usuario" },
+    { "etapa": 3, "agentes": ["ag01"], "descricao": "Geração do roteiro dois-colunas (roteiro.json e roteiro.md)", "tipo": "execucao" },
+    { "etapa": 4, "agentes": ["ag02", "ag10"], "descricao": "Paralelo: AG02 pesquisa imagens alinhadas por cena + AG10 audita narração/locução", "tipo": "paralelo" },
+    { "etapa": 5, "agentes": ["ag03"], "descricao": "Masterização broadcast de áudio (-14.0 LUFS, corte de plosivas, denoise e EQ cirúrgica)", "tipo": "execucao" },
+    { "etapa": 6, "agentes": ["ag04", "ag05"], "descricao": "Paralelo: AG04 revisão de texto/legendas + AG05 verificação de timing fala-imagem (±0.5s)", "tipo": "revisao" },
+    { "etapa": 7, "agentes": ["ag11"], "descricao": "Auditoria de conformidade e anti-duplicação (PublishingShield)", "tipo": "revisao" },
+    { "etapa": 8, "agentes": ["ag12"], "descricao": "Apresentação do pacote e solicitação de autorização para publicação", "tipo": "gate_usuario" }
+  ],
+  "artefatos_obrigatorios": [
+    "roteiro.json",
+    "roteiro.md",
+    "image_manifest.json",
+    "audio_report.json",
+    "timing_report.json",
+    "language_review.json",
+    "audit_report.json"
+  ],
+  "artefatos_opcionais": [
+    "narration_report.json"
+  ],
+  "gate_usuario": ["ag01_formato", "publicacao_final"],
+  "publicacao_automatica": false,
+  "formatos_suportados": ["short_9_16"],
+  "notas": "Duração estrita entre 62 e 68 segundos para atender TikTok Creator Rewards Program e YouTube Shorts. Volume de narração dominante (1.0). Se houver música em Modo B, esta é adicionada nativamente no app."
+}

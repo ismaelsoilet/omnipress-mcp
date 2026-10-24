@@ -1,0 +1,19 @@
+{
+  "$schema": "../schemas/recipe.schema.json",
+  "nome": "Express",
+  "descricao": "Post rápido, thread ou artigo sem áudio nem vídeo. Ideal para publicação imediata de conteúdo textual.",
+  "tempo_estimado_min": 5,
+  "modo": "express",
+  "agentes": ["ag12", "ag01", "ag04"],
+  "grafo_execucao": [
+    { "etapa": 1, "agentes": ["ag01"], "descricao": "Geração de 3 opções de formato (artigo, thread, post)" },
+    { "etapa": 2, "agentes": ["ag12"], "descricao": "Gate: usuário aprova formato", "tipo": "gate_usuario" },
+    { "etapa": 3, "agentes": ["ag04"], "descricao": "Revisão de linguagem e sanitização LGPD" }
+  ],
+  "artefatos_obrigatorios": ["roteiro.md", "language_review.json"],
+  "artefatos_opcionais": [],
+  "gate_usuario": ["ag01_formato"],
+  "publicacao_automatica": false,
+  "formatos_suportados": ["artigo", "thread", "carrossel", "post_linkedin"],
+  "notas": "Não requer áudio, vídeo, Remotion ou Whisper. Publicação via omnipress_publish_article ou omnipress_queue_post somente após instrução explícita do usuário."
+}

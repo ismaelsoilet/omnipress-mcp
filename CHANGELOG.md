@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] — 2026-10-24
+
+### Added
+- **OmniPress Content Factory — Sistema de 12 Agentes Especializados**:
+  - AG01 `01_researcher_scriptwriter.md`: Agente Pesquisador & Roteirista — analisa canal, pesquisa tema, propõe 3 formatos e escreve roteiro completo dois-colunas com `roteiro.json` e `roteiro.md`.
+  - AG02 `02_image_curator.md`: Agente Curador de Imagens — busca imagens cena a cena (Wikimedia, Unsplash, Pexels, Internet Archive) com fallback para prompts Midjourney/FLUX e produz `image_manifest.json`.
+  - AG03 `03_audio_engineer.md`: Agente Engenheiro de Áudio — executa pipeline broadcast completo (adeclick, highpass 80Hz, afftdn, EQ 4-bandas, compressão 3:1, EBU R128 -14 LUFS) produzindo `audio_report.json`.
+  - AG04 `04_language_reviewer.md`: Agente Revisor Linguístico — revisa roteiro, legendas, hashtags e CTAs sem alterar o tom do canal; produz `language_review.json` com score de qualidade.
+  - AG05 `05_timing_checker.md`: Agente Checker de Timing — valida sincronização imagem/fala (±0.5s), duração de shorts (62–68s), chunks de legenda (2–4 palavras); produz `timing_report.json`.
+  - AG06 `06_visual_verifier.md`: Agente Verificador Visual — audita relevância semântica, resolução mínima (1080p), ausência de watermarks e conformidade com Regra 08; produz `visual_qa_report.json`.
+  - AG07 `07_vfx_remotion.md`: Agente de Efeitos Especiais (Remotion) — implementa Ken Burns `spring()`, whip pans, kinetic typography, HUD overlays, PiP e camera shake via `useCurrentFrame()`/`interpolate()`/`spring()`; produz `vfx_map.json`.
+  - AG08 `08_sfx_designer.md`: Agente de Efeitos Sonoros — mapeia transições para SFX (whoosh, impact, glitch, ping), busca em Freesound/Pixabay/ZapSplat, normaliza a -12dBFS; produz `sfx_manifest.json`.
+  - AG09 `09_soundtrack_director.md`: Agente Diretor de Trilha Sonora — sugere 5 trilhas com mood/licença/risco Content ID, aguarda aprovação explícita do usuário (gate obrigatório), define ducking 0.12–0.18 sob voz; produz `soundtrack_config.json`.
+  - AG10 `10_narration_director.md`: Agente Diretor de Narração — analisa ritmo/dicção/ênfases, compara com roteiro, classifica problemas por severidade (CRÍTICO/MODERADO/LEVE); produz `narration_report.json`.
+  - AG11 `11_adversarial_auditor.md`: Agente Auditor Adversarial — auditoria cruzada de todos os relatórios, score 0–100, threshold ≥ 80 para aprovação, checklist de conformidade Regras 07–13; produz `audit_report.json`.
+  - AG12 `12_director_orchestrator.md`: Agente Diretor Delegador — ponto de entrada único, determina modo (Express/Standard/Full/Remix), orquestra delegação paralela, gerencia gates de aprovação e entrega; mantém `production_log.json`.
+- **Schemas de Handoff Universal** em `.agents/schemas/`:
+  - `roteiro.schema.json` — Schema JSON Draft-07 para o roteiro dois-colunas (contrato AG01 → AG02/05/06/07/10).
+  - `production_log.schema.json` — Schema do log de produção com rastreamento de etapas e artefatos (AG12).
+  - `audit_report.schema.json` — Schema do relatório adversarial com score, bloqueadores e advertências (AG11).
+- **Skill Mestre** `.agents/skills/content-factory/SKILL.md` — Runbook completo de orquestração com modos, fluxos, gates, critérios de entrega e tabela de handoff de artefatos.
+- **Receitas Declarativas** em `.agents/recipes/` — `express.json`, `standard.json`, `full_production.json`, `remix.json` (conforme Regra 12 — anti-script declarativo-first).
+- **Índice da Factory** em `.agents/agents/README.md` — Tabela de todos os agentes, modos de ativação e mapa completo de artefatos por episódio.
+
+### Changed
+- Versão MINOR bump: `0.4.1` → `0.5.0` (nova feature arquitetural sem breaking changes de MCP).
+
+---
+
 ## [0.4.1] — 2026-10-21
 
 ### Fixed

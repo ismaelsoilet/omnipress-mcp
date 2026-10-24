@@ -121,6 +121,14 @@ Motor de vídeo de alta fidelidade em React & TypeScript (`src/video/`) projetad
 - **Integração Nativa com YouTube**: Conexão direta com canais do YouTube através do Buffer (`buffer_channel_id` configurado em `channel.json`).
 - **Escalabilidade Multi-Marcas**: Expansão instantânea para múltiplos nichos (História, Geopolítica, Engenharia de Software, Direito Tributário e Gestão Pública) sem duplicar código.
 
+### 7. OmniPress Content Factory — 12 Subagentes Especializados e Modos de Produção (v0.5.0)
+Esteira modular de geração de conteúdo orquestrada pelo Diretor Central (AG12), operando em 4 modos de execução baseados em receitas declarativas:
+- **`Express` (~5 min)**: Publicação ágil (AG12 → AG01 → Gate Usuário → AG04). Indicado para artigos Markdown, posts de autoridade no LinkedIn e threads conectadas no X.
+- **`Standard` (~20 min)**: Vídeos verticais de alta retenção (Shorts / Reels / TikTok de 62 a 68s). Ativa pesquisa, curadoria de imagens sincronizadas (AG02), masterização broadcast de áudio (-14 LUFS, AG03), auditoria de narração (AG10), timing fala-imagem (AG05) e revisão editorial (AG04).
+- **`Full Production` (~75 min)**: Produção audiovisual completa 16:9 em Remotion com todos os 12 subagentes: efeitos visuais (AG07), sonoplastia imersiva (AG08), curadoria musical com soberania do usuário (AG09) e auditoria adversarial independente (AG11).
+- **`Remix` (~30 min)**: Modernização visual e acústica reaproveitando a locução pré-masterizada para atualizar B-roll, efeitos sonoros e transições.
+- **Contratos de Handoff Rigorosos**: Schemas padronizados (`.agents/schemas/`) garantem integração fluida entre agentes (`roteiro.json`, `image_manifest.json`, `timing_report.json`, `audit_report.json`, `production_log.json`).
+
 ---
 
 ## 🚀 Guia Passo a Passo de Uso (Hands-on)

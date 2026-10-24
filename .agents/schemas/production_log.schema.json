@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "omnipress:production_log:v1",
+  "title": "OmniPress Production Log Schema",
+  "description": "Log de produção gerado pelo AG12 (Diretor) — rastreia todos os agentes ativados, artefatos produzidos e status de cada etapa.",
+  "type": "object",
+  "required": ["session_id", "canal", "modo", "iniciado_em", "etapas"],
+  "properties": {
+    "session_id": { "type": "string" },
+    "canal": { "type": "string" },
+    "modo": { "enum": ["express", "standard", "full_production", "remix"] },
+    "iniciado_em": { "type": "string", "format": "date-time" },
+    "concluido_em": { "type": "string", "format": "date-time" },
+    "score_final": { "type": "number", "minimum": 0, "maximum": 100 },
+    "etapas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["agente", "status", "inicio", "artefatos"],
+        "properties": {
+          "agente": { "type": "string" },
+          "status": { "enum": ["pendente", "em_andamento", "aprovado", "rejeitado", "bloqueado"] },
+          "inicio": { "type": "string", "format": "date-time" },
+          "fim": { "type": "string", "format": "date-time" },
+          "artefatos": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "notas": { "type": "string" }
+        }
+      }
+    },
+    "artefatos_finais": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tipo": { "type": "string" },
+          "path": { "type": "string" },
+          "plataforma": { "type": "string" }
+        }
+      }
+    }
+  }
+}

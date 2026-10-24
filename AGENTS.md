@@ -71,6 +71,11 @@ When an agent generates a content campaign, it must produce three synchronized a
   1. Proactively search public archives, open museum collections, Wikimedia Commons, and the web for authentic, high-resolution historical/real-world assets, downloading, cropping/letterboxing them into 16:9 or 9:16 format with high visual fidelity.
   2. Simultaneously generate structured, production-ready prompts tailored for external AI generators (Midjourney, FLUX, Stable Diffusion, Ideogram, Leonardo AI) with explicit aspect ratios (`--ar 16:9` / `--ar 9:16`), cinematography tags, and target destination paths in the channel directory, so the user can easily render and deliver them back into the workspace.
 
+- **Audio-First Synchronization & Visual Dynamics Standard (Speech-to-Frame Lock)**:
+  - The recorded voiceover narration track is the absolute, authoritative master clock of the entire video. Visual scene cuts, b-roll switches, document reveals, text overlays, and graphic transitions must be strictly frame-locked to the exact millisecond when the corresponding topic or phrase is uttered in the speech.
+  - Estimating, interpolating, or uniformly distributing scene durations is strictly prohibited when an audio track exists. Scene start and end points must derive directly from speech alignment (Whisper word/segment timestamps or acoustic speech detection).
+  - Compositions must leverage Remotion for dynamic viewer retention: spring-based camera moves (`spring()`), directional whip pans, optical flash transitions, animated badges/lower-thirds, kinetic typography, tactical HUD scanning overlays, and camera shake on emphatic moments.
+
 ### 8. Multi-CMS Article Syndication & CLI Standards (Rule 11)
 - **Universal Article Contract**: Any long-form article adapter must inherit from `BasePublisherAdapter` and implement `publish_article(title, content_markdown, category, tags, author, canonical_url, published, force_duplicate, **kwargs)`.
 - **Pre-Flight Idempotency Shield**: All article dispatches must call `PublishingShield.check_duplicate()` before touching remote network APIs and call `PublishingShield.record_published()` upon success.
@@ -162,6 +167,11 @@ Ao gerar campanhas de conteúdo, o agente deve produzir 3 formatos integrados:
 - **Protocolo de Aquisição de Imagens, Fallback de Cotas e Geração Externa Colaborativa**: Caso as cotas de geração de imagens por IA estejam esgotadas (HTTP 429), restritas ou indisponíveis, é TERMINANTEMENTE PROIBIDO travar a esteira:
   1. O agente deve proativamente pesquisar e obter imagens reais/históricas na internet (arquivos públicos, Wikimedia Commons, National Archives, Library of Congress, etc.), baixando-as e formatando-as no padrão 16:9 ou 9:16 com tratamento visual adequado (letterbox difuso, enquadramento cinematográfico).
   2. Simultaneamente, o agente deve gerar prompts estruturados e de alto nível para programas externos (Midjourney, FLUX, Stable Diffusion, Ideogram, Leonardo AI) contendo proporções exatas (`--ar 16:9` / `--ar 9:16`), direção de fotografia, iluminação, estilo e o caminho exato onde o usuário deve salvar os arquivos para integração imediata.
+
+- **Padrão de Linha do Tempo Guiada pelo Áudio & Dinâmica Visual do Remotion (Casamento Estrito Fala-Frame)**:
+  - A gravação de locução de voz é o relógio mestre irrevogável de toda a composição. Cada corte de imagem, mudança de plano, entrada de documento, carimbo pericial e transição visual deve estar milimetricamente travado no frame exato em que a respectiva palavra ou assunto é pronunciado pelo narrador.
+  - É terminantemente proibido definir durações uniformes, dividir o tempo total linearmente por estimativa ou usar tempos arbitrários quando houver áudio gravado. O início e o término de cada beat visual devem ser obrigatoriamente extraídos do alinhamento fonético da fala (timestamps de frases e palavras via Whisper ou segmentação acústica).
+  - O motor programático do Remotion deve ser utilizado para retenção visual dinâmica e ritmo de cinema: movimentos de câmera com física spring (`spring()`), whip-pans direcionais, flashes ópticos de transição, tipografia cinética, badges animados com decodificação (`ScrambledText`), retículas táticas de arquivo (`<TacticalGrid />`) e granulação de película 35mm (`<FilmGrain />`).
 
 ### 8. Padrão de Sindicação Multi-CMS & Ferramental CLI (Regra 11)
 - **Contrato Universal de Artigos**: Qualquer adaptador de artigos long-form deve herdar de `BasePublisherAdapter` e implementar `publish_article(title, content_markdown, category, tags, author, canonical_url, published, force_duplicate, **kwargs)`.

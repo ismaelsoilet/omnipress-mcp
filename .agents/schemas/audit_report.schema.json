@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "omnipress:audit_report:v1",
+  "title": "OmniPress Audit Report Schema",
+  "description": "Relatório do AG11 (Auditor Adversarial). Score 0–100. Bloqueadores impedem entrega.",
+  "type": "object",
+  "required": ["session_id", "score", "aprovado", "checklist"],
+  "properties": {
+    "session_id": { "type": "string" },
+    "score": { "type": "number", "minimum": 0, "maximum": 100 },
+    "aprovado": { "type": "boolean" },
+    "threshold_aprovacao": { "type": "number", "default": 80 },
+    "auditado_em": { "type": "string", "format": "date-time" },
+    "checklist": {
+      "type": "object",
+      "properties": {
+        "audio": {
+          "type": "object",
+          "properties": {
+            "lufs_ok": { "type": "boolean" },
+            "lufs_valor": { "type": "number" },
+            "true_peak_ok": { "type": "boolean" },
+            "sem_cliques": { "type": "boolean" },
+            "sem_ruido": { "type": "boolean" }
+          }
+        },
+        "visual": {
+          "type": "object",
+          "properties": {
+            "sem_watermarks": { "type": "boolean" },
+            "resolucao_minima_ok": { "type": "boolean" },
+            "contraste_ok": { "type": "boolean" },
+            "licencas_ok": { "type": "boolean" }
+          }
+        },
+        "sincronizacao": {
+          "type": "object",
+          "properties": {
+            "legendas_sincronizadas": { "type": "boolean" },
+            "imagens_sincronizadas": { "type": "boolean" },
+            "duracao_ok": { "type": "boolean" }
+          }
+        },
+        "conteudo": {
+          "type": "object",
+          "properties": {
+            "gramatica_ok": { "type": "boolean" },
+            "consistencia_roteiro_ok": { "type": "boolean" },
+            "pii_limpo": { "type": "boolean" },
+            "sem_duplicatas": { "type": "boolean" }
+          }
+        },
+        "conformidade": {
+          "type": "object",
+          "properties": {
+            "regra_07_ok": { "type": "boolean" },
+            "regra_08_ok": { "type": "boolean" },
+            "regra_09_ok": { "type": "boolean" },
+            "regra_10_ok": { "type": "boolean" },
+            "regra_12_ok": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "bloqueadores": {
+      "type": "array",
+      "description": "Problemas críticos que impedem entrega. Score = 0 se houver qualquer bloqueador.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "codigo": { "type": "string" },
+          "descricao": { "type": "string" },
+          "agente_responsavel": { "type": "string" }
+        }
+      }
+    },
+    "advertencias": {
+      "type": "array",
+      "description": "Problemas não-críticos que reduzem o score mas não bloqueiam entrega.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "codigo": { "type": "string" },
+          "descricao": { "type": "string" },
+          "impacto_score": { "type": "number" }
+        }
+      }
+    }
+  }
+}

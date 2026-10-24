@@ -121,6 +121,14 @@ Full React & TypeScript video engine (`src/video/`) engineered for YouTube Docum
 - **YouTube Direct Integration**: Connects seamlessly with YouTube via Buffer (`buffer_channel_id` mapped in `channel.json`).
 - **Multi-Brand Scalability**: Easily expand across multiple verticals (History, Geopolitics, Software Architecture, and Tax Law / Public Governance) with zero code duplication.
 
+### 7. OmniPress Content Factory — 12 Specialized Subagents & Production Modes (v0.5.0)
+A modular, assembly-line content generation factory driven by **12 specialized subagents** orchestrated by the Central Director (AG12). Operates across 4 execution modes configured via declarative recipes:
+- **`Express` (~5 min)**: Rapid publishing (AG12 → AG01 → User Gate → AG04). Designed for Markdown articles, LinkedIn authority posts, and connected X threads.
+- **`Standard` (~20 min)**: High-retention vertical videos (Shorts / Reels / TikTok). Activates research, synchronized imagery curation (AG02), audio broadcast mastering (-14 LUFS, AG03), narration audit (AG10), timing verification (AG05), and editorial QA (AG04).
+- **`Full Production` (~75 min)**: Broadcast-grade 16:9 documentary production orchestrating all 12 subagents: Remotion visual effects (AG07), immersive sound design (AG08), user-sovereign soundtrack curation (AG09), and adversarial quality review (AG11).
+- **`Remix` (~30 min)**: Visual and acoustic modernizer reusing pre-mastered voice tracks to refresh B-roll, SFX, and Remotion motion dynamics.
+- **Strict Contract Handoffs**: Standardized JSON schemas (`.agents/schemas/`) guarantee seamless data flow across agents (`roteiro.json`, `image_manifest.json`, `timing_report.json`, `audit_report.json`, `production_log.json`).
+
 ---
 
 ## 🚀 Step-by-Step Hands-On Guide
