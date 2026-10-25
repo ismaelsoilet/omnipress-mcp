@@ -25,7 +25,7 @@ Vertical cuts (9:16) for TikTok, YouTube Shorts, and Instagram Reels must adopt 
 ### 4. Cinematic Components Library
 The Remotion engine provides pre-built cinematic components:
 - [`KenBurnsImage`](file:///home/ismaelsoilet/omnipress-mcp/src/video/components/KenBurnsImage.tsx): Smooth slow-zoom and pan movements with dynamic headline scaling and high-contrast badges.
-- [`SynchronizedCaptions`](file:///home/ismaelsoilet/omnipress-mcp/src/video/components/SynchronizedCaptions.tsx): Word-by-word dynamic subtitle highlighting powered by Whisper timestamps, wrapped in a frosted dark backdrop container with gold border accents.
+- [`SynchronizedCaptions`](file:///home/ismaelsoilet/omnipress-mcp/src/video/components/SynchronizedCaptions.tsx): Word-by-word dynamic subtitle highlighting powered by Whisper speech timestamps aligned strictly with the official script text (script text authority, speech timing lock, active word `#FFD700` karaoke highlight with WordTiming objects), wrapped in a frosted dark backdrop container with gold border accents.
 - [`TacticalGrid`](file:///home/ismaelsoilet/omnipress-mcp/src/video/components/TacticalGrid.tsx) & [`FilmGrain`](file:///home/ismaelsoilet/omnipress-mcp/src/video/components/FilmGrain.tsx): Atmospheric tactile overlays for investigative and historical documentary aesthetics.
 - [`ThumbnailEpisode`](file:///home/ismaelsoilet/omnipress-mcp/src/video/compositions/ThumbnailEpisode.tsx): High-CTR programmatic thumbnail generator in 16:9 with dramatic badges, typography stroke, and cinematic vignette.
 
@@ -174,4 +174,13 @@ Caso os modelos de geração de imagens por IA (Gemini Flash Image, Imagen, etc.
   2. **Transições Ópticas e Flashes**: Cortes entre cenas devem receber flashes sutis de transição, vazamentos de luz (light leaks) e pulsações de vinheta escura para conectar os ativos históricos sem cortes duros monótonos.
   3. **Tipografia Cinética e Badges**: Lower-thirds, carimbos confidenciais e etiquetas de arquivo devem entrar com física de mola (spring), efeito datilográfico ou decodificação de texto cifrado (`ScrambledText`), sempre sobre cards protetores de alto contraste (Regra 08).
   4. **Atmosfera Tátil & HUD Investigativo**: Sobreposição contínua de granulação de filme 35mm (`<FilmGrain />`), partículas de poeira suspensa (`<DustParticles />`) e retículas táticas de arquivo (`<TacticalGrid />`).
+
+### 11. Padrão de Iluminação Documental, Luminância Mínima & Verificação Anti-Anacronismo
+- **Proibição Estrita de Imagens Escuras / Vazio Negro**: Qualquer cena com luminância média inferior a **45.0** (em escala de 0 a 255) é sumariamente rejeitada pelo motor de QA. Texturas de fundo devem empregar ardósia escura sutil (`#12161F` / `#161B22`) em vez de preto puro opaco (`#000000`). Os assuntos principais (retratos, pinturas, documentos) devem permanecer radiantes, bem contrastados e iluminados.
+- **Tolerância Zero a Anacronismos Históricos**:
+  - Armamentos: Proibido o uso de armas de fogo ou mosquetes em períodos medievais pré-pólvora (ex.: 1385 na Batalha de Aljubarrota).
+  - Vexilologia: Proibido utilizar pavilhões republicanos pós-1889 ou pós-1910 em contextos da monarquia portuguesa medieval ou do Império do Brasil de 1822.
+  - Personalidades: A imagem deve corresponder indubitavelmente à figura citada na locução (ex.: retrato autêntico de Dom João I, José Bonifácio, Napoleão Bonaparte).
+- **Coerência de Fase Narrativa**: O selo ou arte de "CASO ENCERRADO" é restrito exclusivamente aos 5% finais do vídeo (Ato de Conclusão). Em introduções ou no meio da investigação, deve-se empregar "DOSSIÊ ABERTO / INVESTIGAÇÃO EM ANDAMENTO".
+- **Padrão Broadcast para Telas Finais**: Telas de encerramento devem adotar o design premium de produções do YouTube (branding em alta definição, chamadas dinâmicas para inscrição e compartilhamento), sendo proibidos layouts rústicos estáticos semelhantes a caixas de texto de menus de jogos retrô.
 

@@ -224,6 +224,54 @@ def test_channel_archetypes(tmp_path: Path):
     assert (m_dir / "shorts").exists()
 
 
+def test_channel_env_isolation(tmp_path: Path):
+    cm = ChannelManager(root_dir=tmp_path)
+    res = cm.create_channel(
+        slug="my-brand",
+        name="My Brand",
+        handle="@mybrand",
+        archetype="personal_brand",
+    )
+    ch_dir = tmp_path / "channels" / "my-brand"
+    assert (ch_dir / ".env").exists()
+    assert (ch_dir / ".env.example").exists()
+
+    # Initially empty BUFFER_API_KEY
+    env_vars = cm.get_channel_env("my-brand")
+    assert env_vars.get("BUFFER_API_KEY") == ""
+
+    # Populate with channel-specific secret
+    (ch_dir / ".env").write_text("BUFFER_API_KEY=channel_secret_key_123\nBUFFER_INSTAGRAM_PROFILE_ID=ig_456\n", encoding="utf-8")
+    loaded = cm.get_channel_env("my-brand")
+    assert loaded["BUFFER_API_KEY"] == "channel_secret_key_123"
+    assert loaded["BUFFER_INSTAGRAM_PROFILE_ID"] == "ig_456"
+
+
+def test_buffer_adapter_per_channel_api_key(tmp_path: Path, monkeypatch):
+    from src.adapters.buffer_adapter import BufferPublisherAdapter
+    cm = ChannelManager(root_dir=tmp_path)
+    cm.create_channel(slug="personal", name="Personal", handle="@personal")
+    ch_dir = tmp_path / "channels" / "personal"
+    (ch_dir / ".env").write_text("BUFFER_API_KEY=key_for_personal_channel\nBUFFER_INSTAGRAM_PROFILE_ID=p_ig_123\n", encoding="utf-8")
+
+    monkeypatch.setenv("BUFFER_API_KEY", "global_default_key")
+
+    # Patch ChannelManager inside buffer_adapter to use tmp_path
+    monkeypatch.setattr("src.core.channel_manager.PROJECT_ROOT", tmp_path)
+
+    adapter = BufferPublisherAdapter()
+    # Global fallback
+    assert adapter.get_api_key() == "global_default_key"
+
+    # Channel-specific key
+    assert adapter.get_api_key("personal") == "key_for_personal_channel"
+    assert adapter.is_configured("personal") is True
+
+    # Check ID resolution uses channel .env
+    target_ids = adapter._resolve_channel_ids(["instagram"], channel_slug="personal")
+    assert "p_ig_123" in target_ids
+
+
 if __name__ == "__main__":
     import pytest
     import sys

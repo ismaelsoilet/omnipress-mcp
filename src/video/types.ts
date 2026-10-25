@@ -15,7 +15,7 @@ export interface ChannelIntroProps {
 export interface KenBurnsSceneProps {
   imageSrc: string;
   durationInFrames: number;
-  direction?: "zoom-in" | "zoom-out" | "pan-left" | "pan-right" | "snap-zoom" | "dramatic-push" | "tilt-down";
+  direction?: "zoom-in" | "zoom-out" | "pan-left" | "pan-right" | "snap-zoom" | "dramatic-push" | "tilt-down" | "subtle-zoom";
   headline?: string;
   caption?: string;
   badge?: string;
@@ -29,11 +29,15 @@ export interface KenBurnsSceneProps {
 
 export interface DocumentaryScene {
   id: string;
-  type: "ken-burns" | "document-reveal" | "tactical-map" | "stat-counter" | "video-clip";
+  type: "ken-burns" | "document-reveal" | "tactical-map" | "stat-counter" | "video-clip" | "channel-outro" | "heraldic-surgery";
   mediaSrc: string;
   durationInSeconds: number;
   startInSeconds?: number;
   voiceoverAudioSrc?: string;
+  sfxSrc?: string;
+  sfxVolume?: number;
+  cameraDirection?: "zoom-in" | "zoom-out" | "pan-left" | "pan-right" | "snap-zoom" | "dramatic-push" | "tilt-down";
+  transitionType?: "fade" | "shutter-flash" | "whip-pan" | "cross-dissolve";
   headline?: string;
   subheadline?: string;
   badge?: string;

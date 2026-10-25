@@ -5,6 +5,62 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] — 2026-10-24
+
+### Added
+- **Isolamento de Credenciais Multi-Canal (`channels/<slug>/.env`)**:
+  - Suporte a arquivos `.env` dedicados e isolados dentro de cada workspace de canal (`channels/<slug>/.env`), garantindo isolamento total de chaves de API, contas Buffer e perfis sociais entre marcas e canais diferentes (Regra 04).
+  - O arquivo `.env` na raiz do repositório foi formalmente dedicado ao canal flagship **Dossiê Histórico** (`OMNIPRESS_ACTIVE_CHANNEL=dossie-historico`).
+  - Ordem de precedência estrita: `channels/<slug>/.env` → variáveis com prefixo do canal (`<SLUG>_BUFFER_API_KEY`) → `.env` da raiz do projeto.
+- **CLI Subcommand `omnipress sync-buffer` (`src/cli.py`)**:
+  - Descoberta automática de canais conectados no Buffer usando a API Key isolada do canal, sincronizando instantaneamente os IDs de Instagram, LinkedIn, X (Twitter), Threads e YouTube diretamente no `channel.json`.
+- **Criação do Canal Pessoal `channels/ismael-soilet/`**:
+  - Workspace canônico com arquétipo `personal_brand` (LinkedIn, X, Instagram) pré-configurado com presets `tweet_card`, templates de campanha e `.env` isolado.
+- **Universal 3D Engine & Blender Headless Integration (`src/engine/universal_3d.py`)**:
+  - Motor central declarativo para renderização 3D fotorrealista isolada com canal alfa transparente (PNG/WebM) via Blender 4.2+ LTS headless.
+  - Suporte completo a render engines `BLENDER_EEVEE_NEXT` e `CYCLES`.
+  - Descoberta automática do binário do Blender em PATH e diretórios de usuário (`~/.local/bin/blender`).
+- **Templates Procedurais 3D em Python (`src/engine/blender_templates/`)**:
+  - `device_mockup.py`: Smartphone moderno em perspectiva com chassi chanfrado em titânio escuro, mapeamento de textura dinâmica UV para captura de tela do artigo/carrossel, iluminação de estúdio 3 pontos e fundo transparente.
+  - `rotating_badge.py`: Moeda/medalhão 3D chanfrado com acabamentos metálicos (`gold`, `silver`, `bronze`, `obsidian`), rotação configurável e emblema frontal opcional.
+  - `kinetic_title.py`: Tipografia 3D extrudada e chanfrada com reflexos especulares e iluminação volumétrica.
+  - `brazil_flag.py`: Bandeira do Brasil 3D ondulante em tecido de seda/cetim com deslocamento harmônico de ondas, mastro dourado polido e fundo transparente com canal alfa.
+- **Componentes Avançados e Dinâmica no Motor Remotion (`src/video/components/`)**:
+  - `ChannelOutro.tsx`: Vinheta oficial de encerramento agnóstica de canal estruturada em 2 fases (Fase 1: chamada nobre para compartilhamento de verdade histórica; Fase 2: inscrição no canal com branding oficial e zonas de YouTube End Screen).
+  - `HeraldicSurgery.tsx`: Animação dinâmica da "Cirurgia Heráldica de 1889", com substituição cirúrgica em tempo real do Brasão Imperial de 1822 pela Esfera Celeste Republicana com flash óptico e badge evolutivo.
+  - `DocumentaryEpisode.tsx` & `types.ts`: Suporte nativo a cenas do tipo `channel-outro` e `heraldic-surgery`, integração de efeitos sonoros táteis por cena (`sfxSrc`, `sfxVolume`), novas direções dinâmicas de câmera (`subtle-zoom`), e crossfade com fade-in/fade-out de trilha sonora de encerramento (`Signal to Noise`).
+  - `DustParticles.tsx`: Refatoração para alta performance substituindo filtros caros de `blur` e `boxShadow` por gradiente radial nativo.
+  - `KenBurnsImage.tsx`: Presets refinados de movimento de câmera e tratamento visual aprimorado.
+- **Aprimoramentos no Motor Universal de Carrosséis (`src/engine/carousel_builder.py`)**:
+  - Sanitização de emojis em headlines e corpos de texto para evitar caracteres ausentes (tofu boxes) em fontes do Pillow.
+  - Suporte inteligente a quebras de parágrafo preservadas e blocos temáticos com marcadores coloridos `MITO:` e `VERDADE:` e numeração com destaque na cor accent da marca.
+  - Resolução robusta de caminhos relativos para avatares e imagens incorporadas dentro do workspace do canal ativo (`channels/<slug>/...`).
+- **Padrões de Governança Editorial e Qualidade nos Agentes (AG02, AG04, AG06 e Regra 10)**:
+  - **Regra de Ouro das Legendas**: Texto exibido estritamente do roteiro oficial aprovado (`roteiro.json`), Whisper utilizado exclusivamente para extração dos timestamps de timing da fala real, chunks de 2 a 4 palavras, e destaque dinâmico da palavra ativa em karaoke (`#FFD700`, escala `1.06x` e sublinhado dourado) via objetos `WordTiming` no componente `SynchronizedCaptions`.
+  - **Portão de Luminância & Anti-Vazio Negro (Anti-Dark Void Gate)**: Luminância média mínima obrigatória de 45.0 (escala 0-255) em imagens e cenas; fundos em ardósia escura (`#12161F` / `#161B22`) em vez de preto puro opaco (`#000000`).
+  - **Portão Anti-Anacronismo e Fidelidade Histórica**: Banimento estrito de armas ou bandeiras anacrônicas e validação de correspondência documental autêntica de personalidades históricas.
+  - **Padrão Broadcast para Telas Finais e Mosaicos**: Proibição de caixas cinzas rudimentares ou menus retrô; uso obrigatório de artes de alta definição e tipografia oficial do canal.
+- **Estrutura Canônica de Recursos Globais e SFX (`channels/_template/`)**:
+  - Inclusão da taxonomia profissional de diretórios com `.gitkeep` em `channels/_template/recursos_globais/` (`branding`, `fontes`, `sfx`, `trilhas_sonoras`, `utilitarios`, `vinhetas`) e `channels/_template/media/sfx/` (`01_transicoes`, `02_impactos`, `03_documentos_foley`, `04_epoca_tecnologia`, `05_tensao_risers`, `README.md`).
+- **CLI Subcommand `omnipress render-3d` (`src/cli.py`)**:
+  - Execução declarativa por arquivo de receita (`omnipress render-3d --recipe recipe_3d.json`) ou parâmetros diretos (`--template`, `--texture`, `--text`, `--material`, `--output`, `--engine`, `--resolution`, `--samples`).
+- **Ferramenta MCP Canônica `omnipress_render_3d` (`src/server.py`)**:
+  - Registrada com anotações de protocolo MCP 2026 e conformidade Glama TDQS A+ (5.0): `readOnlyHint=False`, `destructiveHint=False`, `idempotentHint=True`, `openWorldHint=False`.
+- **Diagnóstico no `omnipress doctor` (`src/utils/runtime_checker.py`)**:
+  - Detecção ativa e verificação de prontidão para Blender 3D.
+- **Otimização de Performance da Engine Remotion (`remotion.config.ts` & `FilmGrain.tsx`)**:
+  - Ativação de cache persistente de compilação Webpack (`Config.setCachingEnabled(true)`), eliminando recompilações redundantes de 7 a 9s.
+  - Otimização do pipeline de frames intermediários com `Config.setJpegQuality(80)` e codificação H.264 acelerada com `Config.setX264Preset("fast")`.
+  - Multi-processamento ativo no Linux (`Config.setChromiumMultiProcessOnLinux(true)`) e concorrência calibrada em 4 instâncias para evitar swap de disco no WSL2.
+  - Refatoração do componente [`FilmGrain.tsx`](src/video/components/FilmGrain.tsx): substituição do filtro procedural SVG `<feTurbulence>` dinâmico na CPU por textura seamless SVG base64 (200x200) cacheada em bitmap com deslocamento analógico leve, reduzindo o tempo de renderização de frames em ~31.2% e o tempo de codificação em ~62.7%.
+- **Suíte de Testes Automatizados (`tests/test_universal_3d.py` e `tests/test_channels.py`)**:
+  - Testes cobrindo isolamento de `.env` por canal, precedência de chave de API no `BufferPublisherAdapter`, renderização 3D e anotações MCP.
+
+### Changed
+- Versão MINOR bump: `0.5.0` → `0.6.0` (novo motor declarativo 3D, isolamento de credenciais por canal e ferramenta MCP sem quebra retroativa).
+
+---
+
 ## [0.5.0] — 2026-10-24
 
 ### Added

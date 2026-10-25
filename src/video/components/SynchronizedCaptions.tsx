@@ -85,8 +85,7 @@ export const SynchronizedCaptions: React.FC<SynchronizedCaptionsProps> = ({
       >
         <div
           style={{
-            backgroundColor: "rgba(8, 10, 14, 0.90)",
-            backdropFilter: "blur(12px)",
+            backgroundColor: "rgba(8, 10, 14, 0.92)",
             border: "1.2px solid rgba(212, 175, 55, 0.40)",
             boxShadow:
               "0 8px 24px rgba(0, 0, 0, 0.85), 0 0 16px rgba(212, 175, 55, 0.12)",

@@ -231,11 +231,35 @@ Renderiza vídeos MP4 em proporção 9:16 (Shorts/Reels/TikTok) ou 16:9 (YouTube
 
 ---
 
-### 2.14. Suíte CLI de Diagnóstico e Onboarding (`omnipress`)
+### 2.14. `omnipress_render_3d`
+Renderiza assets 3D fotorrealistas isolados com canal alfa transparente (PNG/WebM) via Blender 4.2+ LTS headless.
+
+* **Anotações**: `readOnlyHint=False`, `destructiveHint=False`, `idempotentHint=True`, `openWorldHint=False`.
+* **Quando USAR**:
+  - Para criar mockups 3D de smartphones com textura dinâmica UV exibindo artigos ou carrosséis.
+  - Para gerar moedas/medalhões metálicos 3D giratórios ou insígnias para b-rolls de vídeos.
+  - Para criar títulos em tipografia 3D extrudada e chanfrada com reflexos de estúdio.
+* **Parâmetros**:
+  | Parâmetro | Tipo | Obrigatório | Descrição |
+  |---|---|---|---|
+  | `template` | `string` | Não | Nome do template (`device_mockup`, `rotating_badge`, `kinetic_title`). Padrão: `"device_mockup"`. |
+  | `output_filename` | `string` | Não | Nome do arquivo de saída (ex: `hero_mockup.png`). Padrão: `"asset_3d.png"`. |
+  | `texture_path` | `string` | Não | Caminho da imagem para textura de tela ou emblema frontal. |
+  | `text` | `string` | Não | Texto para o template de tipografia 3D (`kinetic_title`). |
+  | `material` | `string` | Não | Preset de material (`gold`, `silver`, `chrome`, `obsidian`, `bronze`). |
+  | `channel_slug` | `string` | Não | Slug do canal de destino (salva em `channels/<slug>/media/visuals/3d/`). |
+  | `resolution` | `string` | Não | Dimensões do render (`"1080x1080"`, `"1920x1080"`, `"1080x1920"`). |
+  | `engine` | `string` | Não | Motor de render (`"BLENDER_EEVEE_NEXT"` ou `"CYCLES"`). Padrão: `"BLENDER_EEVEE_NEXT"`. |
+  | `samples` | `int` | Não | Quantidade de samples de renderização. Padrão: `32`. |
+* **Retorno**: JSON com status, caminho do arquivo gerado (`output_path`), template, resolução, engine e tamanho do arquivo.
+
+---
+
+### 2.15. Suíte CLI de Diagnóstico e Onboarding (`omnipress`)
 Para inspeção e configuração interativa fora do contexto de chat do MCP, utilize o comando CLI `omnipress`:
 
 ```bash
-# Diagnóstico completo de runtimes (Python, Node.js, FFmpeg, Edge-TTS):
+# Diagnóstico completo de runtimes (Python, Node.js, FFmpeg, Edge-TTS, Blender 3D):
 omnipress doctor
 
 # Status do canal ativo e histórico do ledger PublishingShield:
@@ -293,8 +317,10 @@ Quando o usuário pedir: *"Renderize a vinheta ou o episódio de vídeo do canal
 2. **Padrão de Duração de Vídeos Verticais (Monetização e Retenção)**:
    - Vídeos verticais (9:16) para TikTok, YouTube Shorts e Instagram Reels devem adotar duração padrão entre **62 e 68 segundos (alvo: ~65s / 1.950 frames a 30fps)**.
    - Isso cumpre o requisito de monetização obrigatória do TikTok Creator Rewards (>60s com margem contra arredondamento para 59s), enquadra-se no novo limite do YouTube Shorts (até 180s) e fica dentro do teto do Instagram Reels (90s).
-3. **Legendas Dinâmicas Sincronizadas (Whisper)**:
-   - Utilize [`SynchronizedCaptions`](../src/video/components/SynchronizedCaptions.tsx) com transcrição palavra por palavra alimentada por timestamps JSON do Whisper. As palavras ativas recebem destaque em ouro (`#FFD700`) e animação de escala (`1.08x`), encapsuladas em card protetor escuro (`rgba(8, 10, 14, 0.90)`).
+3. **Legendas Dinâmicas Sincronizadas (Regra de Ouro: Timing da Fala, Texto do Roteiro & Destaque Ativo)**:
+   - **Origem Estrita do Texto**: O texto da legenda deve vir **sempre do roteiro oficial aprovado (`roteiro.json` / `roteiro_revisado.md`)**, garantindo 100% de correção gramatical, concordância e nomes próprios perfeitos. O texto cru ou fonético do Whisper nunca deve ser exibido diretamente.
+   - **Origem Estrita do Timing**: O Whisper é usado exclusivamente para extrair os timestamps de início e fim da fala real.
+   - **Destaque Dinâmico Palavra por Palavra (Active Word Highlight)**: Utilize [`SynchronizedCaptions`](../src/video/components/SynchronizedCaptions.tsx) fornecendo o array `words` com `{ word, start, end }`. A palavra ativa falada no momento recebe destaque em ouro (`#FFD700`), escala (`1.06x`) e sublinhado dourado sobre o card protetor escuro (`rgba(8, 10, 14, 0.90)`). Chunks de 2 a 4 palavras.
 4. **Agnosticismo de Marca**:
    - Nunca altere o código em `src/video/` para colocar o nome de um canal específico.
    - Passe os dados da marca via propriedades (`props`):
@@ -320,12 +346,33 @@ Quando o usuário pedir: *"Renderize a vinheta ou o episódio de vídeo do canal
      - **YouTube Studio**: Upload do MP4, título e descrição com atribuição CC-BY, agendamento de data/hora na aba Visibilidade.
      - **Meta Business Suite / Instagram**: Upload do MP4 com capa 9:16 personalizada e enquadramento da grade do feed.
      - **TikTok Studio Desktop (tiktok.com/tiktokstudio)**: Upload do MP4 com ativação de "Agendar vídeo" (até 10 dias) e desativação de legendas automáticas da rede para não sobrepor as legendas do vídeo.
-8. **Uso das 12 Agent Skills Oficiais do Remotion**:
+8. **Boas Práticas de Renderização & Performance (Remotion Engine)**:
+   - **Configurações Globais Otimizadas (`remotion.config.ts`)**:
+     - `Config.setCachingEnabled(true)`: Ativa cache persistente do bundle Webpack, eliminando a recompilação redundante de 7-9s por render.
+     - `Config.setVideoImageFormat("jpeg")` e `Config.setJpegQuality(80)`: Captura de frames intermediários significativamente mais leve e rápida que PNG.
+     - `Config.setX264Preset("fast")`: Acelera a codificação H.264 no FFmpeg sem perda perceptível de qualidade visual.
+     - `Config.setChromiumMultiProcessOnLinux(true)`: Distribuição balanceada de processos Chromium no Linux/WSL2.
+     - `Config.setConcurrency(4)`: Ponto ideal de concorrência calibrado para sistemas com 2.5–4GB de RAM livre, prevenindo thrashing de swap.
+   - **Eficiência de Componentes Visuais**:
+     - Texturas de ruído analógico em [`FilmGrain.tsx`](../src/video/components/FilmGrain.tsx) utilizam tiles seamless SVG em base64 cacheados em memória bitmap com deslocamento analógico (`transform: translate`), evitando recalcular filtros fractais de alta oitava (`feTurbulence`) na CPU por frame.
+     - Imagens de arquivo devem ser preferencialmente pré-escaladas para resolução 1080p antes da renderização para reduzir a carga de decodificação e interpolação no Ken Burns.
+   - **Fluxo de Trabalho Ágil**:
+     - Durante testes visuais e validação de legendas/transições, renderize apenas pequenos trechos (`--frames=0-60`) ou capture stills estáticos (`npx remotion still ... --frame=150`).
+9. **Uso das 12 Agent Skills Oficiais do Remotion**:
    - O projeto conta com as 12 skills oficiais instaladas em [`.agents/skills/remotion-*`](../.agents/skills/) e documentadas em [`REMOTION_SKILLS_AND_DOCS.md`](./REMOTION_SKILLS_AND_DOCS.md).
    - Para animações, utilize sempre `interpolate()` e `spring()` (nunca transições CSS/Tailwind).
    - Para pré-visualização em tempo real: `npm run remotion:preview`.
    - Para buscar documentação oficial: consulte o endpoint Algolia ou utilize URLs `.md` (ex.: `https://www.remotion.dev/docs/interpolate.md`).
    - Para atualizar as skills: `npx remotion skills update`.
+10. **Biblioteca de Componentes Visuais e Dinâmica de Cena**:
+    - [`ChannelOutro`](../src/video/components/ChannelOutro.tsx): Vinheta oficial de encerramento em 2 fases (Fase 1: chamada nobre para compartilhamento; Fase 2: chamada de inscrição com branding oficial e zonas de YouTube End Screen).
+    - [`HeraldicSurgery`](../src/video/components/HeraldicSurgery.tsx): Animação da "Cirurgia Heráldica de 1889", com substituição cirúrgica em tempo real do Brasão Imperial pela Esfera Celeste com flash óptico e badge evolutivo.
+    - [`KenBurnsImage`](../src/video/components/KenBurnsImage.tsx): Presets refinados de movimento de câmera (`zoom-in`, `zoom-out`, `pan-left`, `pan-right`, `subtle-zoom`, `snap-zoom`, `dramatic-push`, `tilt-down`).
+    - [`DustParticles`](../src/video/components/DustParticles.tsx) & [`FilmGrain`](../src/video/components/FilmGrain.tsx): Partículas de poeira e granulação de filme otimizadas para GPU sem degradação de CPU.
+    - **Sonoplastia Tátil por Cena**: Suporte direto em `DocumentaryScene` a `sfxSrc` e `sfxVolume` para sincronização precisa de efeitos de transição e impactos.
+11. **Padrões de Luminância & Fidelidade Histórica**:
+    - Luminância média obrigatória entre **45 e 180** (escala 0-255). Imagens com fundos pretos opacos (< 45) são sumariamente rejeitadas. Fundo em ardósia escura (`#12161F` / `#161B22`).
+    - Portão Anti-Anacronismo: banimento de armas pré/pós-época ou bandeiras errôneas. Cenas de "Caso Encerrado" permitidas apenas no Ato Final.
 
 ---
 
@@ -335,8 +382,11 @@ Quando gerenciar múltiplos canais ou marcas:
 - **Isolamento Completo**:
   ```
   channels/<slug>/
-    ├── channel.json         # Configuração exclusiva da marca
-    ├── articles/            # Artigos em AAAA/MM/
+    ├── .env                 # Credenciais e segredos isolados do canal (BUFFER_API_KEY, IDs)
+    ├── .env.example         # Template de variáveis do canal
+    ├── channel.json         # Configuração exclusiva da marca e handles
+    ├── campanhas/           # Campanhas e postagens cotidianas (personal_brand)
+    ├── artigos/             # Artigos em AAAA/MM/
     ├── media/
     │   ├── raw/             # Imagens e fontes brutas
     │   ├── carousels/       # Lâminas geradas pelo Pillow
@@ -344,7 +394,23 @@ Quando gerenciar múltiplos canais ou marcas:
     │   └── highlights/      # Capas de destaque
     └── scripts/             # Scripts específicos do canal
   ```
-- **Fallback Standalone**: Se uma ferramenta for chamada sem `channel_slug`, ela salvará em `articles/` e `media/` na raiz do repositório, garantindo compatibilidade reversa.
+
+- **Ambiente Central vs. Ambientes Isolados**:
+  - **`.env` na raiz**: Configura o canal principal padrão (**Dossiê Histórico**), através de `OMNIPRESS_ACTIVE_CHANNEL=dossie-historico`.
+  - **`channels/<slug>/.env`**: Cada canal secundário (ex.: `channels/ismael-soilet/.env`) possui seu próprio arquivo `.env` para suas chaves de API particulares (ex.: conta pessoal do Buffer).
+  - **Ordem de Precedência de Credenciais**:
+    1. `channels/<slug>/.env` (prioridade máxima do canal)
+    2. Variáveis de ambiente prefixadas (ex.: `<SLUG>_BUFFER_API_KEY`)
+    3. `.env` na raiz do repositório (fallback global / dossie-historico)
+
+- **Sincronização Automática com Buffer (`sync-buffer`)**:
+  - Para mapear instantaneamente os IDs de perfis sociais conectados (Instagram, LinkedIn, X, Threads, YouTube) para o `channel.json`:
+    ```bash
+    omnipress sync-buffer <slug>
+    ```
+  - O OmniPress consulta a API do Buffer usando a chave isolada do canal e atualiza o `channel.json` automaticamente.
+
+- **Fallback Standalone**: Se uma ferramenta for chamada sem `channel_slug`, ela salvará em `articles/` e `media/` na raiz do repositório e usará as credenciais do `.env` da raiz, garantindo compatibilidade reversa.
 
 ---
 
@@ -428,6 +494,11 @@ omnipress align-captions channels/<slug>/shorts/<id>/whisper.json -o channels/<s
 
 # Publicação ou Agendamento Seguro com PublishingShield:
 omnipress publish --recipe channels/<slug>/articles/<id>/post_recipe.json
+
+# Renderização de Assets 3D Fotorrealistas Headless (Blender 4.2+ LTS / Regra 12):
+omnipress render-3d --template device_mockup --texture channels/<slug>/media/carousels/<post>/slide_01.png -o channels/<slug>/media/visuals/3d/hero_mockup.png
+omnipress render-3d --template rotating_badge --material gold -o channels/<slug>/media/visuals/3d/badge_gold.png
+omnipress render-3d --recipe channels/<slug>/media/visuals/3d/recipe_3d.json
 ```
 
 ### 7.3. Quando Scripts Customizados São Permitidos?

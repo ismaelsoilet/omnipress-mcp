@@ -61,10 +61,8 @@ export const DustParticles: React.FC<{ count?: number }> = ({ count = 32 }) => {
               width: p.size,
               height: p.size,
               borderRadius: "50%",
-              backgroundColor: p.color,
+              background: `radial-gradient(circle, ${p.color} 35%, transparent 75%)`,
               opacity: p.baseOpacity * pulse,
-              filter: p.blur > 0 ? `blur(${p.blur}px)` : "none",
-              boxShadow: `0 0 ${p.size * 2}px ${p.color}`,
               pointerEvents: "none",
             }}
           />

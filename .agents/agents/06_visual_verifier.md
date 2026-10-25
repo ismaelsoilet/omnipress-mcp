@@ -108,8 +108,25 @@ O AG06 é o auditor visual do episódio. Consome o `image_manifest.json` e o `ro
    | `WATERMARK_DETECTADO` | Marca d'água visível |
    | `LICENCA_INVALIDA` | Licença não permissiva ou ausente |
    | `JUSTIFICATIVA_AUSENTE` | Campo `justificativa_tematica` vazio |
+   | `LUMINANCIA_INSUFICIENTE` | Luminância média < 45.0 (imagem escura / vazio negro) |
+   | `ANACRONISMO_DETECTADO` | Presença de armas ou bandeiras anacrônicas incompatíveis com a época histórica |
+   | `PERSONAGEM_INCORRETO` | A figura retratada diverge da personalidade histórica narrada |
+   | `LAYOUT_SUBPADRAO` | Telas finais rústicas / menu de jogo sem padrão broadcast do YouTube |
 
-8. **Calcular `score_visual`** (0–100):
+8. **Portão Automatizado de Luminância & Prevenção de Imagens Escuras**:
+   Para cada imagem em disco, calcular a luminância média (`ImageStat.Stat(im.convert('L')).mean[0]`):
+   - Se `mean_brightness < 45.0`: **REPROVAÇÃO AUTOMÁTICA** (`LUMINANCIA_INSUFICIENTE`).
+   - Se `mean_brightness > 195.0`: Reprovação por sobre-exposição.
+   - Faixa aceita: **45.0 a 180.0**.
+
+9. **Portão Automatizado Anti-Anacronismo e Iconografia Histórica**:
+   - Auditar armas e tecnologias: períodos pré-pólvora (ex.: 1385) não podem conter mosquetes, baionetas ou fuzis.
+   - Auditar vexilologia: cenas de 1385 não podem exibir o pavilhão verde-rubro republicano de 1910; cenas de 1822 não podem exibir o pavilhão republicano estrelado de 1889.
+   - Auditar personagens: validar correspondência entre o nome citado na narração e a figura retratada na tela (ex.: Dom João I vs Dom João VI; presença real de José Bonifácio).
+   - Auditar telas finais e mosaicos: cenas de fechamento (últimas cenas) e mosaicos de figuras históricas devem seguir o padrão broadcast do canal, com a imagem do canal no fundo e tipografia oficial (`Montserrat-ExtraBold` / `Anton`), banindo caixas cinzas rudimentares ou menus de jogos retrô.
+   - Auditar autenticidade contra referências reais: verificar se as imagens baseiam-se em documentos, quadros ou acervos históricos reais, reprovando alucinações visuais óbvias de IA.
+
+10. **Calcular `score_visual`** (0–100):
 
    ```
    score_visual = (aprovadas / total_cenas_com_imagem) * 100

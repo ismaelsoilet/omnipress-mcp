@@ -56,6 +56,11 @@ def get_runtime_capabilities() -> Dict[str, Any]:
     if node_version:
         remotion_ready = bool(shutil.which("remotion") or shutil.which("npx"))
 
+    # Check blender
+    blender_version = check_command_version("blender", "--version")
+    if blender_version and "Blender" in blender_version:
+        blender_version = blender_version.split("\n")[0].strip()
+
     return {
         "python": {
             "available": True,
@@ -77,9 +82,14 @@ def get_runtime_capabilities() -> Dict[str, Any]:
             "available": edge_tts_installed,
             "version": "installed" if edge_tts_installed else "Not found",
         },
+        "blender": {
+            "available": bool(blender_version),
+            "version": blender_version or "Not found",
+        },
         "remotion_ready": remotion_ready,
         "video_capable": bool(node_version and ffmpeg_version),
         "audio_capable": bool(edge_tts_installed and ffmpeg_version),
+        "blender_3d_capable": bool(blender_version),
     }
 
 
@@ -108,12 +118,17 @@ def format_doctor_report(caps: Optional[Dict[str, Any]] = None) -> str:
     tts_ok = caps["edge_tts"]["available"]
     lines.append(f"  Edge-TTS Audio : [{'OK' if tts_ok else 'MISSING'}] {caps['edge_tts']['version']}")
 
+    blender_ok = caps.get("blender", {}).get("available", False)
+    blender_v = caps.get("blender", {}).get("version", "Not found")
+    lines.append(f"  Blender 3D     : [{'OK' if blender_ok else 'OPTIONAL'}] {blender_v}")
+
     lines.append("------------------------------------------------------------")
     lines.append("Capabilities Summary:")
     lines.append(f"  - Long-Form Articles & Markdown : [READY] (Native Python)")
     lines.append(f"  - 3:4 Social Carousels (Pillow) : [READY] (Native Python)")
     lines.append(f"  - Neural Voiceover Generation   : [{'READY' if caps['audio_capable'] else 'DEGRADED (Requires edge-tts + ffmpeg)'}]")
     lines.append(f"  - Programmatic Video (Remotion) : [{'READY' if caps['video_capable'] else 'DEGRADED (Requires Node.js 20+ and ffmpeg)'}]")
+    lines.append(f"  - 3D Assets & Mockups (Blender) : [{'READY' if caps.get('blender_3d_capable') else 'OPTIONAL (Requires Blender 4.2+ LTS)'}]")
     lines.append("============================================================")
 
     return "\n".join(lines)

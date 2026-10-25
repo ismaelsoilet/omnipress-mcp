@@ -7,6 +7,7 @@ Supports 4 distinct visual presets:
 4. split_editorial: Corporate/GovTech authority (Portal da Reforma Tributária) with top photo, circular avatar cutout, square bullets (■), and watermark.
 """
 
+import re
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple, Union
 from PIL import Image, ImageDraw, ImageFont
@@ -131,25 +132,34 @@ def load_font_by_family(
 
 
 def wrap_text_by_pixel(text: str, font: Any, max_width: int, draw: ImageDraw.ImageDraw) -> List[str]:
-    """Dynamically wraps words so no line ever exceeds max_width pixels."""
-    words = text.split()
+    """Dynamically wraps words so no line ever exceeds max_width pixels, preserving explicit paragraph breaks."""
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    paragraphs = normalized.split("\n")
     lines = []
-    current_line = []
-    for word in words:
-        test_line = " ".join(current_line + [word])
-        bbox = draw.textbbox((0, 0), test_line, font=font)
-        w = bbox[2] - bbox[0]
-        if w <= max_width:
-            current_line.append(word)
-        else:
-            if current_line:
-                lines.append(" ".join(current_line))
-                current_line = [word]
+    for p in paragraphs:
+        p_clean = p.strip()
+        if not p_clean:
+            lines.append("")
+            continue
+        words = p_clean.split(" ")
+        current_line = []
+        for word in words:
+            if not word:
+                continue
+            test_line = " ".join(current_line + [word]) if current_line else word
+            bbox = draw.textbbox((0, 0), test_line, font=font)
+            w = bbox[2] - bbox[0]
+            if w <= max_width:
+                current_line.append(word)
             else:
-                lines.append(word)
-                current_line = []
-    if current_line:
-        lines.append(" ".join(current_line))
+                if current_line:
+                    lines.append(" ".join(current_line))
+                    current_line = [word]
+                else:
+                    lines.append(word)
+                    current_line = []
+        if current_line:
+            lines.append(" ".join(current_line))
     return lines
 
 
@@ -401,11 +411,19 @@ class CarouselBuilder:
         author_name = auth_data.get("name") or channel_data.get("name", "Autor")
         handle = auth_data.get("handle") or channel_data.get("branding", {}).get("handle", "@autor")
         avatar_path = auth_data.get("avatar_path")
+        if avatar_path and not Path(avatar_path).is_file():
+            ch_p = channel_data.get("path")
+            if ch_p and (Path(ch_p) / avatar_path).is_file():
+                avatar_path = str(Path(ch_p) / avatar_path)
+            elif (Path("channels") / channel_data.get("slug", "") / avatar_path).is_file():
+                avatar_path = str(Path("channels") / channel_data.get("slug", "") / avatar_path)
+
         is_verified = auth_data.get("verified", True)
 
         start_y = int(h * 0.12)
         avatar_size = int(w * 0.10)
-        self._draw_circular_avatar(img, avatar_path, margin_x, start_y, avatar_size, fallback_initials=author_name)
+        border_c = hex_to_rgb(pal.get("border", "#E0DFDC"))
+        self._draw_circular_avatar(img, avatar_path, margin_x, start_y, avatar_size, fallback_initials=author_name, border_color=border_c)
 
         # Name and Verified badge
         text_start_x = margin_x + avatar_size + int(w * 0.03)
@@ -427,8 +445,12 @@ class CarouselBuilder:
         curr_y = start_y + avatar_size + int(h * 0.04)
 
         # Headline
-        font_head = load_font_by_family("sans", size=int(w * 0.048), is_bold=True)
-        head_lines = wrap_text_by_pixel(headline, font_head, max_w, draw)
+        clean_headline = re.sub(r'[\U00010000-\U0010ffff]', '', headline)
+        clean_headline = re.sub(r'[\u2600-\u27bf]', '', clean_headline)
+        clean_headline = re.sub(r'[\ufe00-\ufe0f]', '', clean_headline).strip()
+
+        font_head = load_font_by_family("sans", size=int(w * 0.046), is_bold=True)
+        head_lines = wrap_text_by_pixel(clean_headline, font_head, max_w, draw)
         for line in head_lines:
             draw.text((margin_x, curr_y), line, fill=name_color, font=font_head)
             curr_y += int(font_head.size * 1.30)
@@ -437,19 +459,113 @@ class CarouselBuilder:
 
         # Body/Lead
         if body:
-            font_body = load_font_by_family("sans", size=int(w * 0.032), is_bold=False)
+            clean_body = re.sub(r'[\U00010000-\U0010ffff]', '', body)
+            clean_body = re.sub(r'[\u2600-\u27bf]', '', clean_body)
+            clean_body = re.sub(r'[\ufe00-\ufe0f]', '', clean_body)
+            clean_body = re.sub(r'[\u200d]', '', clean_body).strip()
+
+            font_body = load_font_by_family("sans", size=int(w * 0.031), is_bold=False)
+            font_body_bold = load_font_by_family("sans", size=int(w * 0.031), is_bold=True)
             body_color = (226, 232, 240, 255) if is_dark else (30, 41, 59, 255)
-            body_lines = wrap_text_by_pixel(body, font_body, max_w, draw)
-            for line in body_lines:
-                draw.text((margin_x, curr_y), line, fill=body_color, font=font_body)
-                curr_y += int(font_body.size * 1.40)
+            mito_color = (248, 113, 113, 255) if is_dark else (220, 38, 38, 255)
+            verdade_color = (52, 211, 153, 255) if is_dark else (5, 150, 105, 255)
+            accent_rgb = hex_to_rgb(pal.get("accent", "#0A66C2"))
+
+            paragraphs = clean_body.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+            for p in paragraphs:
+                clean_p = p.strip()
+                if not clean_p:
+                    curr_y += int(font_body.size * 1.10)
+                    continue
+
+                if clean_p.startswith("MITO:"):
+                    dot_color = mito_color
+                    prefix = "MITO: "
+                    prefix_color = mito_color
+                    content = clean_p[5:].lstrip()
+                elif clean_p.startswith("VERDADE:"):
+                    dot_color = verdade_color
+                    prefix = "VERDADE: "
+                    prefix_color = verdade_color
+                    content = clean_p[8:].lstrip()
+                elif len(clean_p) >= 3 and clean_p[0].isdigit() and clean_p[1:3] in (". ", ") "):
+                    dot_color = None
+                    prefix = clean_p[:3]
+                    prefix_color = (*accent_rgb, 255)
+                    content = clean_p[3:].lstrip()
+                else:
+                    dot_color = None
+                    prefix = ""
+                    prefix_color = body_color
+                    content = clean_p
+
+                text_x = margin_x
+                if dot_color:
+                    dot_d = int(font_body.size * 0.40)
+                    dot_y = curr_y + int(font_body.size * 0.42)
+                    draw.ellipse([margin_x, dot_y, margin_x + dot_d, dot_y + dot_d], fill=dot_color)
+                    text_x = margin_x + dot_d + 12
+
+                prefix_w = 0
+                if prefix:
+                    draw.text((text_x, curr_y), prefix, fill=prefix_color, font=font_body_bold)
+                    bbox = draw.textbbox((0, 0), prefix, font=font_body_bold)
+                    prefix_w = bbox[2] - bbox[0]
+
+                # Full text wrapping for content
+                avail_first = max_w - (text_x + prefix_w - margin_x)
+                words = content.split()
+                first_line_words = []
+                idx = 0
+                while idx < len(words):
+                    w_word = words[idx]
+                    test = " ".join(first_line_words + [w_word]) if first_line_words else w_word
+                    bbox = draw.textbbox((0, 0), test, font=font_body)
+                    if (bbox[2] - bbox[0]) <= avail_first:
+                        first_line_words.append(w_word)
+                        idx += 1
+                    else:
+                        if not first_line_words:
+                            first_line_words.append(w_word)
+                            idx += 1
+                        break
+
+                if first_line_words:
+                    draw.text((text_x + prefix_w, curr_y), " ".join(first_line_words), fill=body_color, font=font_body)
+                    curr_y += int(font_body.size * 1.45)
+
+                # Subsequent lines
+                remaining_text = " ".join(words[idx:])
+                if remaining_text:
+                    sub_x = text_x + prefix_w if prefix and prefix[0].isdigit() else margin_x
+                    sub_w = max_w - (sub_x - margin_x)
+                    sub_lines = wrap_text_by_pixel(remaining_text, font_body, sub_w, draw)
+                    for sl in sub_lines:
+                        draw.text((sub_x, curr_y), sl, fill=body_color, font=font_body)
+                        curr_y += int(font_body.size * 1.45)
+
+                curr_y += int(font_body.size * 0.40)
 
         # Embedded Images (Single or Dual comparison side-by-side)
-        images = slide_data.get("images") or []
-        if not images and slide_data.get("image_asset"):
-            images = [slide_data["image_asset"]]
-        elif not images and slide_data.get("bg_image_path"):
-            images = [slide_data["bg_image_path"]]
+        raw_images = slide_data.get("images") or []
+        if not raw_images and slide_data.get("image_asset"):
+            raw_images = [slide_data["image_asset"]]
+        elif not raw_images and slide_data.get("bg_image_path"):
+            raw_images = [slide_data["bg_image_path"]]
+
+        images = []
+        for img_item in raw_images:
+            p_img = Path(img_item)
+            if p_img.is_file():
+                images.append(p_img)
+            else:
+                ch_p = channel_data.get("path")
+                if ch_p and (Path(ch_p) / img_item).is_file():
+                    images.append(Path(ch_p) / img_item)
+                elif Path(f"channels/{channel_data.get('slug', '')}/{img_item}").is_file():
+                    images.append(Path(f"channels/{channel_data.get('slug', '')}/{img_item}"))
+                else:
+                    images.append(p_img)
 
         if images:
             img_y = max(curr_y + int(h * 0.03), int(h * 0.50))

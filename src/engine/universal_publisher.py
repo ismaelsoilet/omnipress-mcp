@@ -120,10 +120,10 @@ class UniversalPublisherEngine:
 
         # 3. Dispatch to publisher adapter
         adapter = BufferPublisherAdapter()
-        if not adapter.is_configured():
+        if not adapter.is_configured(channel_slug=channel_slug):
             return {
                 "success": False,
-                "error": "Buffer publisher adapter is not configured in environment (.env).",
+                "error": f"Buffer publisher adapter is not configured for channel '{channel_slug}' or in .env.",
                 "channel_slug": channel_slug,
             }
 

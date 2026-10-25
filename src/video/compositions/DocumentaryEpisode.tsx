@@ -8,6 +8,8 @@ import {
 } from "remotion";
 import { ChannelIntro } from "./ChannelIntro";
 import { KenBurnsImage } from "../components/KenBurnsImage";
+import { HeraldicSurgery } from "../components/HeraldicSurgery";
+import { ChannelOutro } from "../components/ChannelOutro";
 import { ClassifiedStamp } from "../components/ClassifiedStamp";
 import { ScrambledText } from "../components/ScrambledText";
 import { TacticalGrid } from "../components/TacticalGrid";
@@ -33,7 +35,6 @@ export const getCameraPreset = (
   if (
     text.includes("GUERRA") ||
     text.includes("BATALHA") ||
-    text.includes("NAPOLEÃO") ||
     text.includes("DECRETO")
   ) {
     return "dramatic-push";
@@ -94,13 +95,50 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#0A0C10" }}>
-      {/* 1. Trilha Sonora Master com Ducking Dinâmico Automático */}
+      {/* 1. Trilha Sonora Master: Hino Nacional (0 a 840s) com Crossfade para Signal to Noise */}
       {config?.backgroundMusicSrc && (
-        <Audio
-          src={staticFile(config.backgroundMusicSrc)}
-          volume={getMusicVolume}
-        />
+        <Sequence from={0} durationInFrames={Math.round(840 * fps)}>
+          <Audio
+            src={staticFile(config.backgroundMusicSrc)}
+            volume={(f) => {
+              const duck = getMusicVolume(f);
+              const fadeFrames = 5 * fps;
+              const endFrame = 840 * fps;
+              if (f > endFrame - fadeFrames) {
+                const progress = (endFrame - f) / fadeFrames;
+                return duck * Math.max(0, Math.min(1, progress));
+              }
+              return duck;
+            }}
+          />
+        </Sequence>
       )}
+
+      {/* 1.2 Trilha Sonora Final: Signal to Noise para completar o vídeo (835s até o encerramento) */}
+      <Sequence from={Math.round(835 * fps)}>
+        <Audio
+          src={staticFile("dossie/ep03b/audios/sb_signaltonoise.mp3")}
+          volume={(f) => {
+            const globalFrame = Math.round(835 * fps) + f;
+            const duck = getMusicVolume(globalFrame);
+            // Fade-in suave de 5 segundos
+            const fadeInFrames = 5 * fps;
+            let vol = duck;
+            if (f < fadeInFrames) {
+              vol = duck * (f / fadeInFrames);
+            }
+            // Fade-out suave nos últimos 5 segundos do documentário
+            const totalEpFrames = 27890;
+            const distFromEnd = totalEpFrames - globalFrame;
+            if (distFromEnd < 5 * fps && distFromEnd > 0) {
+              vol = vol * (distFromEnd / (5 * fps));
+            } else if (distFromEnd <= 0) {
+              vol = 0;
+            }
+            return vol;
+          }}
+        />
+      </Sequence>
 
       {/* 2. Vinheta Oficial de Abertura (0 a 4s) */}
       {enableIntro && (
@@ -149,6 +187,16 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
             {/* Fallback de áudio de cena individual se especificado */}
             {scene.voiceoverAudioSrc && (
               <Audio src={staticFile(scene.voiceoverAudioSrc)} volume={1.0} />
+            )}
+
+            {/* Efeito Sonoro (SFX) Tátil da Cena */}
+            {scene.sfxSrc && (
+              <Sequence from={0} durationInFrames={Math.min(sceneDurationFrames, 120)}>
+                <Audio
+                  src={staticFile(scene.sfxSrc)}
+                  volume={scene.sfxVolume ?? 0.35}
+                />
+              </Sequence>
             )}
 
             {scene.type === "document-reveal" ? (
@@ -227,12 +275,24 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
                   </div>
                 </div>
               </AbsoluteFill>
+            ) : scene.type === "channel-outro" || scene.id === "scene_71" ? (
+              // Vinheta Oficial de Encerramento e Compartilhamento com Tipografia de Alto Impacto
+              <ChannelOutro
+                durationInFrames={sceneDurationFrames}
+                channelName={config?.introProps?.channelName || "DOSSIÊ HISTÓRICO"}
+              />
+            ) : scene.type === "heraldic-surgery" || scene.id === "scene_57" ? (
+              // Animação Especial: Cirurgia Heráldica de 1889 (Substituição Dinâmica do Brasão Imperial pela Esfera Celeste)
+              <HeraldicSurgery
+                durationInFrames={sceneDurationFrames}
+                badge={scene.badge}
+              />
             ) : (
-              // Imagem Documental com Movimento Sutil (Começa em scale 1.0, sem cobrir rostos)
+              // Imagem Documental com Movimento Dinâmico (Começa em scale 1.0, sem cobrir rostos)
               <KenBurnsImage
                 imageSrc={staticFile(scene.mediaSrc)}
                 durationInFrames={sceneDurationFrames}
-                direction={getCameraPreset(index, scene.headline, scene.badge)}
+                direction={scene.cameraDirection || getCameraPreset(index, scene.headline, scene.badge)}
                 badge={scene.badge}
               />
             )}

@@ -129,6 +129,14 @@ A modular, assembly-line content generation factory driven by **12 specialized s
 - **`Remix` (~30 min)**: Visual and acoustic modernizer reusing pre-mastered voice tracks to refresh B-roll, SFX, and Remotion motion dynamics.
 - **Strict Contract Handoffs**: Standardized JSON schemas (`.agents/schemas/`) guarantee seamless data flow across agents (`roteiro.json`, `image_manifest.json`, `timing_report.json`, `audit_report.json`, `production_log.json`).
 
+### 8. Universal 3D Asset & Mockup Engine (Blender Headless / v0.6.0)
+Declarative photorealistic 3D asset generation powered by headless Blender 4.2+ LTS with alpha transparency (PNG/WebM):
+- **Dynamic Device Mockups**: Smartphone in perspective with beveled dark titanium chassis and automatic UV screen mapping for carousel/article screenshots (`device_mockup.py`).
+- **Rotating Metallic Badges & Coins**: 3D beveled medallions with customizable metallic shaders (`gold`, `silver`, `chrome`, `obsidian`, `bronze`) and optional front insignia (`rotating_badge.py`).
+- **3D Kinetic Typography**: Extruded beveled 3D text with studio lighting and specular highlights (`kinetic_title.py`).
+- **Waving Silk Flags**: Photorealistic 3D waving Brazilian and institutional flags with harmonic cloth displacement, satin shaders, and polished golden pole (`brazil_flag.py`).
+- **CLI & MCP Control**: Render via `omnipress render-3d` or canonical MCP tool `omnipress_render_3d`.
+
 ---
 
 ## 🚀 Step-by-Step Hands-On Guide
@@ -182,7 +190,16 @@ omnipress setup
 
 # Run environment and capability diagnostics:
 omnipress doctor
+
+# Automatically sync connected social profiles from Buffer into channel.json:
+omnipress sync-buffer [channel-slug]
 ```
+
+#### Multi-Channel Environment Isolation (Rule 04)
+OmniPress supports true multi-tenant workspace isolation:
+- **Root `.env`**: Serves as the primary configuration for the flagship channel (**Dossiê Histórico** via `OMNIPRESS_ACTIVE_CHANNEL=dossie-historico`).
+- **Channel `.env` (`channels/<slug>/.env`)**: Channels (e.g. `channels/ismael-soilet/.env`) maintain their own isolated API keys and profile IDs, completely decoupled from other brands.
+- **Precedence Order**: `channels/<slug>/.env` → `<SLUG>_BUFFER_API_KEY` → root `.env`.
 
 > 💡 **Offline Mode**: OmniPress works out-of-the-box **without any API keys**. In offline mode, articles are safely stored locally in Markdown and social copies are printed in chat ready for manual copying.
 
@@ -357,6 +374,22 @@ Rendered MP4s are saved to `media/output/intro_dossie_16x9.mp4` and `media/outpu
 2. Record your voice audio per scene using your phone or microphone (`01.mp3`, `02.mp3`...).
 3. Remotion reads audio durations dynamically, adapting visual cuts to your natural speech pace with background music ducking (-20dB under voice).
 
+#### Workflow G: Headless 3D Asset Rendering with Blender (Rule 12)
+Renders photorealistic 3D mockups (smartphones, tablets), rotating metallic coins/badges, and 3D kinetic typography with transparent backgrounds for carousels and Remotion video layers:
+```bash
+# 3D Smartphone Mockup with Article/Carousel Screenshot
+omnipress render-3d --template device_mockup --texture channels/tech-insights/media/carousels/slide_01.png -o channels/tech-insights/media/visuals/3d/hero_mockup.png
+
+# 3D Metallic Badge / Coin
+omnipress render-3d --template rotating_badge --material gold -o channels/tech-insights/media/visuals/3d/badge_gold.png
+
+# 3D Kinetic Typography
+omnipress render-3d --template kinetic_title --text "OMNIPRESS 3D" --material chrome -o channels/tech-insights/media/visuals/3d/title_chrome.png
+
+# Via Declarative 3D Recipe
+omnipress render-3d --recipe recipe_3d.json
+```
+
 ---
 
 ### Step 6: Ready-to-Use Prompt Templates
@@ -401,6 +434,7 @@ Include scene-by-scene AI image prompts and TTS voice direction with a cinematic
 | `omnipress_brainstorm_channel` | Ideates high-retention channel concepts, psychological CTR angles, and viral backlog topics. | `niche`, `tone`, `target_audience`, `language` |
 | `omnipress_generate_speech` | Synthesizes natural, high-definition neural narration audio (Edge-TTS) for Dark Channels, Reels, Shorts. | `text`, `voice`, `output_filename` |
 | `omnipress_render_dark_video` | Renders MP4 video (9:16 or 16:9) combining neural audio narration and scene images via ffmpeg. | `text`, `audio_path`, `image_paths`, `output_filename`, `aspect_ratio`, `voice` |
+| `omnipress_render_3d` | Renders photorealistic 3D visual assets with transparent background via headless Blender 4.2+ LTS. | `template`, `output_filename`, `texture_path`, `text`, `material`, `channel_slug`, `resolution`, `engine`, `samples` |
 | `omnipress_inspect_content` | Standalone utility to scan text for credentials, PII, or lawsuit IDs without publishing. | `text` (string) |
 | `omnipress_list_articles` | Lists recently archived articles and metadata from the repository or channel. | `limit` (int), `channel_slug` (string) |
 | `omnipress_list_recent` | Backward-compatible alias for `omnipress_list_articles`. | `limit` (int) |

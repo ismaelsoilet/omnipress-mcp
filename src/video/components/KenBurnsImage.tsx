@@ -32,45 +32,70 @@ export const KenBurnsImage: React.FC<KenBurnsSceneProps> = ({
 
   const isVertical = height > width;
 
-  // 1. Movimentação Cinematográfica Suave (Começa SEMPRE em 1.0, sem zoom forte)
+  // 1. Movimentação Cinematográfica Dinâmica e Fluida
   let scale = 1.0;
   let translateX = 0;
   let translateY = 0;
 
   if (direction === "zoom-in") {
-    // Zoom suave de 1.0 para 1.045
-    scale = interpolate(frame, [0, durationInFrames], [1.0, 1.045], {
+    // Zoom suave e elegante de 1.0 para 1.12
+    scale = interpolate(frame, [0, durationInFrames], [1.0, 1.12], {
       extrapolateRight: "clamp",
     });
   } else if (direction === "zoom-out") {
-    // Zoom suave de 1.045 para 1.0
-    scale = interpolate(frame, [0, durationInFrames], [1.045, 1.0], {
+    // Zoom out suave de 1.12 para 1.0
+    scale = interpolate(frame, [0, durationInFrames], [1.12, 1.0], {
       extrapolateRight: "clamp",
     });
   } else if (direction === "pan-left") {
-    scale = 1.025;
-    translateX = interpolate(frame, [0, durationInFrames], [14, -14], {
+    scale = 1.08;
+    translateX = interpolate(frame, [0, durationInFrames], [45, -45], {
       extrapolateRight: "clamp",
     });
   } else if (direction === "pan-right") {
-    scale = 1.025;
-    translateX = interpolate(frame, [0, durationInFrames], [-14, 14], {
+    scale = 1.08;
+    translateX = interpolate(frame, [0, durationInFrames], [-45, 45], {
       extrapolateRight: "clamp",
     });
   } else if (direction === "tilt-down") {
-    scale = 1.03;
-    translateY = interpolate(frame, [0, durationInFrames], [-12, 12], {
+    scale = 1.08;
+    translateY = interpolate(frame, [0, durationInFrames], [-28, 28], {
+      extrapolateRight: "clamp",
+    });
+  } else if (direction === "snap-zoom") {
+    // Snap zoom pericial com amortecimento cúbico nos primeiros 16 frames e deriva contínua
+    const snap = interpolate(frame, [0, 16], [1.0, 1.11], {
+      extrapolateRight: "clamp",
+      easing: (t) => 1 - Math.pow(1 - t, 3),
+    });
+    const drift = interpolate(frame, [16, durationInFrames], [0, 0.04], {
+      extrapolateRight: "clamp",
+    });
+    scale = snap + drift;
+  } else if (direction === "subtle-zoom") {
+    // Zoom sutil e discreto para enquadramentos de pinturas e retratos (1.0 para 1.03)
+    scale = interpolate(frame, [0, durationInFrames], [1.0, 1.03], {
+      extrapolateRight: "clamp",
+    });
+  } else if (direction === "dramatic-push") {
+    // Avanço dramático e marcante de 1.0 para 1.16
+    scale = interpolate(frame, [0, durationInFrames], [1.0, 1.16], {
       extrapolateRight: "clamp",
     });
   } else {
-    // Fallback padrão: zoom-in sutil
-    scale = interpolate(frame, [0, durationInFrames], [1.0, 1.04], {
+    scale = interpolate(frame, [0, durationInFrames], [1.0, 1.10], {
       extrapolateRight: "clamp",
     });
   }
 
-  // 2. Transição luminosa suave nos primeiros 3 frames (shutter flash cinematográfico)
-  const flashOpacity = interpolate(frame, [0, 1, 3], [0.25, 0.12, 0], {
+  // 2. Transições e Revelação Suave
+  // Dissolvência suave de entrada nos primeiros 6 frames
+  const entryOpacity = interpolate(frame, [0, 6], [0.25, 1.0], {
+    extrapolateRight: "clamp",
+  });
+
+  // Flash óptico de obturador nos primeiros 4 frames
+  const flashOpacity = interpolate(frame, [0, 1, 4], [0.35, 0.15, 0.0], {
     extrapolateRight: "clamp",
   });
 
@@ -82,20 +107,20 @@ export const KenBurnsImage: React.FC<KenBurnsSceneProps> = ({
       }}
     >
       {/* 1. Camada de Fundo Ambiente com Desfoque (Garante preenchimento 16:9 sem cortar retratos) */}
-      <AbsoluteFill style={{ overflow: "hidden" }}>
+      <AbsoluteFill style={{ overflow: "hidden", contain: "paint" }}>
         <Img
           src={imageSrc}
           style={{
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            filter: "blur(28px) brightness(0.32)",
+            filter: "blur(14px) brightness(0.32)",
             transform: "scale(1.15)",
           }}
         />
       </AbsoluteFill>
 
-      {/* 2. Imagem Principal Nítida em Movimento Sutil (Começa em scale 1.0) */}
+      {/* 2. Imagem Principal Nítida em Movimento Dinâmico e Entrada Suave */}
       <AbsoluteFill
         style={{
           transform: `scale(${scale}) translate(${translateX}px, ${translateY}px)`,
@@ -103,6 +128,7 @@ export const KenBurnsImage: React.FC<KenBurnsSceneProps> = ({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          opacity: entryOpacity,
         }}
       >
         <Img
@@ -144,33 +170,32 @@ export const KenBurnsImage: React.FC<KenBurnsSceneProps> = ({
       {/* 6. Granulação de Película de Época */}
       {showFilmGrain && <FilmGrain opacity={0.032} />}
 
-      {/* 7. Tag Minimalista no Topo Esquerdo (Discreta, sem cobrir rostos) */}
+      {/* 7. Tag / Legenda Superior das Imagens (Destaque cinematográfico proporcional e legível) */}
       {badge && (
         <div
           style={{
             position: "absolute",
-            top: isVertical ? 32 : 28,
-            left: isVertical ? 28 : 36,
+            top: isVertical ? 38 : 34,
+            left: isVertical ? 32 : 40,
             display: "inline-flex",
             alignItems: "center",
-            gap: 8,
-            backgroundColor: "rgba(8, 10, 14, 0.82)",
-            border: "1px solid rgba(212, 175, 55, 0.45)",
-            borderLeft: "3.5px solid #D4AF37",
-            borderRadius: 6,
-            padding: "6px 14px",
-            backdropFilter: "blur(10px)",
-            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.7)",
+            gap: 10,
+            backgroundColor: "rgba(8, 10, 14, 0.88)",
+            border: "1.2px solid rgba(212, 175, 55, 0.50)",
+            borderLeft: "4.5px solid #D4AF37",
+            borderRadius: 8,
+            padding: isVertical ? "10px 22px" : "8px 18px",
+            boxShadow: "0 6px 20px rgba(0, 0, 0, 0.8)",
             zIndex: 30,
           }}
         >
           <span
             style={{
-              color: "#E2E8F0",
+              color: "#F1F5F9",
               fontFamily: "'Courier New', Courier, monospace",
-              fontSize: isVertical ? 13 : 13,
+              fontSize: isVertical ? 24 : 20,
               fontWeight: 800,
-              letterSpacing: 2,
+              letterSpacing: 2.2,
               textTransform: "uppercase",
             }}
           >

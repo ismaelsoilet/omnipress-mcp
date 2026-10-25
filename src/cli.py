@@ -162,6 +162,7 @@ def cmd_create_channel(args: argparse.Namespace) -> int:
         description=args.description or "",
         primary_color=args.color,
         buffer_channel_id=getattr(args, "buffer_id", "") or "",
+        archetype=getattr(args, "archetype", "personal_brand") or "personal_brand",
     )
     print(f"✅ Channel '{res['name']}' created successfully at {res.get('path', '')}")
     return 0
@@ -176,6 +177,83 @@ def cmd_info_channel(args: argparse.Namespace) -> int:
         print(f"❌ Channel '{args.slug}' not found.")
         return 1
     print(json.dumps(ch, indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_sync_buffer(args: argparse.Namespace) -> int:
+    """Discovers connected channels from Buffer and syncs them into channel.json."""
+    import json
+    from src.adapters.buffer_adapter import BufferPublisherAdapter
+    cm = ChannelManager()
+    slug = args.channel or cm.get_active_channel_slug()
+    channel = cm.get_channel(slug)
+    if not channel:
+        print(f"❌ Channel '{slug}' not found.")
+        return 1
+
+    adapter = BufferPublisherAdapter()
+    ch_env = cm.get_channel_env(slug)
+    env_file = Path(channel["path"]) / ".env"
+    if env_file.exists() and not ch_env.get("BUFFER_API_KEY"):
+        print(f"⚠️ Atenção: O arquivo 'channels/{slug}/.env' existe, mas 'BUFFER_API_KEY' ainda está vazia.")
+        print(f"   Por favor, insira o Personal API Key do Buffer da sua conta em channels/{slug}/.env antes de sincronizar.")
+        return 1
+
+    if not adapter.is_configured(channel_slug=slug):
+        print(f"❌ Buffer is not configured for channel '{slug}'.")
+        print(f"   Please define BUFFER_API_KEY in channels/{slug}/.env or root .env.")
+        return 1
+
+    print(f"🔍 Querying Buffer API for channel '{slug}'...")
+    res = adapter.list_channels(channel_slug=slug)
+    if not res.get("success"):
+        print(f"❌ Failed fetching channels from Buffer: {res.get('error')}")
+        return 1
+
+    remote_channels = res.get("channels", [])
+    if not remote_channels:
+        print(f"⚠️ No connected social channels found in Buffer for this account.")
+        return 0
+
+    print(f"✅ Found {len(remote_channels)} connected profile(s) in Buffer:")
+    social = channel.setdefault("social", {})
+    synced = []
+
+    for rc in remote_channels:
+        srv = rc.get("service", "").lower()
+        cid = rc.get("id")
+        cname = rc.get("name")
+        print(f"  • [{srv.upper()}] {cname} (ID: {cid})")
+
+        if srv == "instagram":
+            social.setdefault("instagram", {})["buffer_channel_id"] = cid
+            social["instagram"]["handle"] = cname
+            synced.append(f"Instagram -> {cid}")
+        elif srv == "linkedin":
+            social.setdefault("linkedin", {})["buffer_channel_id"] = cid
+            social["linkedin"]["handle"] = cname
+            synced.append(f"LinkedIn -> {cid}")
+        elif srv in ("twitter", "x"):
+            social.setdefault("x_twitter", {})["buffer_channel_id"] = cid
+            social["x_twitter"]["handle"] = cname
+            synced.append(f"X (Twitter) -> {cid}")
+        elif srv == "threads":
+            social.setdefault("threads", {})["buffer_channel_id"] = cid
+            social["threads"]["handle"] = cname
+            synced.append(f"Threads -> {cid}")
+        elif srv == "youtube":
+            social.setdefault("youtube", {})["buffer_channel_id"] = cid
+            social["youtube"]["name"] = cname
+            synced.append(f"YouTube -> {cid}")
+
+    config_path = Path(channel["path"]) / "channel.json"
+    save_data = {k: v for k, v in channel.items() if k != "path"}
+    with open(config_path, "w", encoding="utf-8") as f:
+        json.dump(save_data, f, indent=2, ensure_ascii=False)
+
+    print(f"\n🎉 Successfully synced {len(synced)} profile(s) into {config_path}")
+    for s in synced:
+        print(f"   ✓ {s}")
     return 0
 
 
@@ -415,12 +493,74 @@ def cmd_publish(args: argparse.Namespace) -> int:
         return 1
 
 
+def cmd_render_3d(args: argparse.Namespace) -> int:
+    """Renders 3D assets via Universal3DEngine using Blender 4.2+ LTS headless."""
+    import json
+    from src.engine.universal_3d import Universal3DEngine, BlenderRenderError
+
+    cm = ChannelManager()
+    engine = Universal3DEngine(channel_manager=cm)
+
+    print("============================================================")
+    print("      OmniPress Universal 3D Blender Engine (Rule 12)       ")
+    print("============================================================")
+
+    if not engine.is_available():
+        print("❌ Error: Blender binary not found in PATH or standard user directories.")
+        print("   Install Blender 4.2+ LTS to use 3D asset rendering.")
+        return 1
+
+    try:
+        if args.recipe:
+            recipe_path = Path(args.recipe).resolve()
+            if not recipe_path.exists():
+                print(f"❌ Error: Recipe file not found: {recipe_path}")
+                return 1
+            print(f"Executing declarative 3D recipe: {recipe_path}")
+            res = engine.render_recipe(recipe=recipe_path, channel_slug=args.channel)
+        else:
+            if not args.output:
+                print("❌ Error: Must specify --output when running without a --recipe.")
+                return 1
+
+            template = args.template or "device_mockup"
+            print(f"Rendering 3D template '{template}' to: {args.output}")
+            rendered_path = engine.render(
+                template=template,
+                output_path=args.output,
+                texture=args.texture,
+                text=args.text,
+                material=args.material,
+                resolution=args.resolution,
+                engine=args.engine,
+                samples=args.samples,
+            )
+            res = {
+                "status": "success",
+                "output_path": str(rendered_path),
+                "template": template,
+                "resolution": args.resolution,
+                "engine": args.engine,
+                "file_size_bytes": rendered_path.stat().st_size if rendered_path.exists() else 0,
+            }
+
+        print("🎉 3D Asset rendered successfully:")
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0
+    except BlenderRenderError as e:
+        print(f"❌ Blender render error: {e}")
+        return 1
+    except Exception as e:
+        print(f"❌ Unexpected error during 3D rendering: {e}")
+        return 1
+
+
 def main(argv: Optional[list] = None) -> int:
     parser = argparse.ArgumentParser(
         prog="omnipress",
         description="OmniPress CLI - Universal Agentic Publishing Protocol & Management Suite",
     )
-    parser.add_argument("--version", action="version", version="OmniPress MCP 0.5.0")
+    parser.add_argument("--version", action="version", version="OmniPress MCP 0.6.0")
 
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
 
@@ -447,10 +587,15 @@ def main(argv: Optional[list] = None) -> int:
     create_p.add_argument("--description", default="", help="Channel editorial description")
     create_p.add_argument("--color", default="#00E5FF", help="Primary brand accent color hex (e.g. #00E5FF)")
     create_p.add_argument("--buffer-id", default="", help="Buffer channel/profile ID for automated publishing")
+    create_p.add_argument("--archetype", default="personal_brand", choices=["personal_brand", "media_channel", "hybrid"], help="Channel archetype (default: personal_brand)")
 
     # info-channel
     info_p = subparsers.add_parser("info-channel", help="Show detailed configuration for a channel")
     info_p.add_argument("slug", help="Channel slug to inspect")
+
+    # sync-buffer
+    sync_p = subparsers.add_parser("sync-buffer", help="Discover and sync connected Buffer profiles into channel.json")
+    sync_p.add_argument("channel", nargs="?", default="", help="Channel slug to sync (defaults to active channel)")
 
     # carousel (Universal Engine)
     carousel_p = subparsers.add_parser("carousel", help="Execute declarative carousel recipes (render, upload, schedule)")
@@ -491,6 +636,19 @@ def main(argv: Optional[list] = None) -> int:
     publish_p.add_argument("--dry-run", action="store_true", help="Dry run validation without dispatch")
     publish_p.add_argument("--force-duplicate", action="store_true", help="Bypass PublishingShield duplicate check")
 
+    # render-3d (Universal 3D Engine)
+    render_3d_p = subparsers.add_parser("render-3d", help="Render 3D visual assets via Blender headless (Rule 12)")
+    render_3d_p.add_argument("--recipe", "-r", help="Path to 3D recipe JSON file")
+    render_3d_p.add_argument("--template", choices=["device_mockup", "rotating_badge", "kinetic_title", "brazil_flag"], default="device_mockup", help="Template name")
+    render_3d_p.add_argument("--texture", help="Path to image texture (device screen or coin emblem)")
+    render_3d_p.add_argument("--text", help="Text string for kinetic_title")
+    render_3d_p.add_argument("--material", help="Material preset (gold, silver, chrome, obsidian)")
+    render_3d_p.add_argument("-o", "--output", help="Output file path for rendered image")
+    render_3d_p.add_argument("-c", "--channel", help="Target channel slug")
+    render_3d_p.add_argument("--resolution", default="1080x1080", help="Render resolution (e.g. 1080x1080, 1920x1080)")
+    render_3d_p.add_argument("--engine", choices=["BLENDER_EEVEE_NEXT", "CYCLES"], default="BLENDER_EEVEE_NEXT", help="Render engine")
+    render_3d_p.add_argument("--samples", type=int, default=32, help="Render sample count")
+
     # build-carousel (legacy alias)
     build_p = subparsers.add_parser("build-carousel", help="Render portrait carousel slides (legacy)")
     build_p.add_argument("--channel", required=True, help="Target channel slug")
@@ -512,6 +670,8 @@ def main(argv: Optional[list] = None) -> int:
         return cmd_create_channel(args)
     elif args.command == "info-channel":
         return cmd_info_channel(args)
+    elif args.command == "sync-buffer":
+        return cmd_sync_buffer(args)
     elif args.command == "carousel":
         return cmd_carousel(args)
     elif args.command == "master-audio":
@@ -520,6 +680,8 @@ def main(argv: Optional[list] = None) -> int:
         return cmd_align_captions(args)
     elif args.command == "publish":
         return cmd_publish(args)
+    elif args.command == "render-3d":
+        return cmd_render_3d(args)
     elif args.command == "build-carousel":
         return cmd_build_carousel(args)
     else:

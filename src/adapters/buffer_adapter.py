@@ -28,21 +28,53 @@ class BufferPublisherAdapter(BasePublisherAdapter):
         self.instagram_profile_id = os.getenv("BUFFER_INSTAGRAM_PROFILE_ID", "").strip()
         self._channel_services: Dict[str, str] = {}
 
-    def is_configured(self) -> bool:
-        """Returns True if Buffer API key/token is configured."""
-        return bool(self.api_key)
+    def get_api_key(self, channel_slug: Optional[str] = None) -> str:
+        """
+        Resolves the effective Buffer API key.
+        Precedence:
+        1. channels/<channel_slug>/.env (BUFFER_API_KEY or BUFFER_ACCESS_TOKEN)
+        2. Channel-prefixed process env var (e.g. ISMAEL_SOILET_BUFFER_API_KEY)
+        3. Global process env var (BUFFER_API_KEY or BUFFER_ACCESS_TOKEN)
+        4. self.api_key instance default
+        """
+        if channel_slug:
+            try:
+                from src.core.channel_manager import ChannelManager
+                ch_env = ChannelManager().get_channel_env(channel_slug)
+                if ch_env.get("BUFFER_API_KEY"):
+                    return ch_env["BUFFER_API_KEY"].strip()
+                if ch_env.get("BUFFER_ACCESS_TOKEN"):
+                    return ch_env["BUFFER_ACCESS_TOKEN"].strip()
+            except Exception:
+                pass
 
-    def list_channels(self) -> Dict[str, Any]:
+            prefix = channel_slug.upper().replace("-", "_")
+            prefixed = os.getenv(f"{prefix}_BUFFER_API_KEY", "").strip() or os.getenv(f"{prefix}_BUFFER_ACCESS_TOKEN", "").strip()
+            if prefixed:
+                return prefixed
+
+        return (
+            os.getenv("BUFFER_API_KEY", "").strip()
+            or os.getenv("BUFFER_ACCESS_TOKEN", "").strip()
+            or getattr(self, "api_key", "")
+        )
+
+    def is_configured(self, channel_slug: Optional[str] = None) -> bool:
+        """Returns True if Buffer API key/token is configured globally or for channel."""
+        return bool(self.get_api_key(channel_slug))
+
+    def list_channels(self, channel_slug: Optional[str] = None, api_key: Optional[str] = None) -> Dict[str, Any]:
         """
         Fetches all connected channels across organizations using modern GraphQL API.
-        Useful for discovering channel IDs automatically.
+        Useful for discovering channel IDs automatically. Supports per-channel or explicit API key.
         """
-        if not self.api_key:
+        effective_key = api_key or self.get_api_key(channel_slug)
+        if not effective_key:
             return {"success": False, "error": "BUFFER_API_KEY is not configured."}
 
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {effective_key}",
         }
 
         # Step 1: Query organizations
@@ -128,24 +160,36 @@ class BufferPublisherAdapter(BasePublisherAdapter):
         if not hasattr(self, "_channel_services"):
             self._channel_services = {}
 
-        # 1. If channel_slug is specified, look up channel-specific buffer_channel_id
+        # 1. If channel_slug is specified, look up channel-specific buffer_channel_id or channel .env
         ch_social = {}
+        ch_env = {}
         if channel_slug:
             from src.core.channel_manager import ChannelManager
-            ch = ChannelManager().get_channel(channel_slug)
+            cm = ChannelManager()
+            ch = cm.get_channel(channel_slug)
             if ch:
                 ch_social = ch.get("social", {})
+            ch_env = cm.get_channel_env(channel_slug)
 
+        effective_key = self.get_api_key(channel_slug)
         cached_remote_channels = None
 
         for plat in requested_platforms:
             resolved_id = None
 
             # Step 1: check channel.json
-            if plat in ch_social:
+            if plat in ch_social and ch_social[plat].get("buffer_channel_id"):
                 resolved_id = ch_social[plat].get("buffer_channel_id")
+            elif plat == "x" and "x_twitter" in ch_social and ch_social["x_twitter"].get("buffer_channel_id"):
+                resolved_id = ch_social["x_twitter"].get("buffer_channel_id")
 
-            # Step 2: fall back to environment profile ID for this specific platform
+            # Step 2: check channel .env overrides
+            if not resolved_id and ch_env:
+                env_plat_key = f"BUFFER_{plat.upper()}_PROFILE_ID"
+                if ch_env.get(env_plat_key):
+                    resolved_id = ch_env[env_plat_key].strip()
+
+            # Step 3: fall back to global environment profile ID for this specific platform
             if not resolved_id:
                 if plat == "linkedin" and self.linkedin_profile_id:
                     resolved_id = self.linkedin_profile_id
@@ -156,10 +200,10 @@ class BufferPublisherAdapter(BasePublisherAdapter):
                 elif plat == "instagram" and self.instagram_profile_id:
                     resolved_id = self.instagram_profile_id
 
-            # Step 3: if still not found, auto-discover from connected channels in Buffer
-            if not resolved_id and self.api_key:
+            # Step 4: if still not found, auto-discover from connected channels in Buffer using effective key
+            if not resolved_id and effective_key:
                 if cached_remote_channels is None:
-                    channels_info = self.list_channels()
+                    channels_info = self.list_channels(channel_slug=channel_slug, api_key=effective_key)
                     cached_remote_channels = (
                         channels_info.get("channels", []) if channels_info.get("success") else []
                     )
@@ -202,7 +246,8 @@ class BufferPublisherAdapter(BasePublisherAdapter):
         Supports channel_slug to dispatch to channel-specific Buffer accounts.
         Enforces PublishingShield pre-flight checks and anti-duplicate ledger (Rule 09).
         """
-        if not self.is_configured():
+        effective_key = self.get_api_key(channel_slug)
+        if not effective_key:
             return {
                 "success": False,
                 "error": "BUFFER_API_KEY or BUFFER_ACCESS_TOKEN is not configured in .env",
@@ -218,7 +263,7 @@ class BufferPublisherAdapter(BasePublisherAdapter):
 
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {effective_key}",
         }
 
         # Resolve publishing mode:
@@ -429,17 +474,18 @@ class BufferPublisherAdapter(BasePublisherAdapter):
                 "error": f"Network exception connecting to Buffer: {str(e)}",
             }
 
-    def delete_post(self, post_id: str) -> Dict[str, Any]:
+    def delete_post(self, post_id: str, channel_slug: Optional[str] = None) -> Dict[str, Any]:
         """
         Deletes a post from Buffer via GraphQL deletePost mutation.
         Enforces Rule 09 (Single Publication & Clean Replacement Overwrite).
         """
-        if not self.api_key:
+        effective_key = self.get_api_key(channel_slug)
+        if not effective_key:
             return {"success": False, "error": "BUFFER_API_KEY is not configured."}
 
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {effective_key}",
         }
 
         mutation = """

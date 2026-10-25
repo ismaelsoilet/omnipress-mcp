@@ -100,7 +100,7 @@ export const ChannelIntro: React.FC<ChannelIntroProps> = ({
       {/* 1. Áudio Cinemático Multi-Camada (Soundscape Sincronizado se fornecido) */}
       {enableAudio && audioSrc && (
         <Audio
-          src={audioSrc}
+          src={audioSrc.startsWith("http") || audioSrc.startsWith("data:") ? audioSrc : staticFile(audioSrc)}
           volume={1.0}
         />
       )}

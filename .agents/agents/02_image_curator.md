@@ -55,6 +55,12 @@ O AG02 percorre o `roteiro.json` cena a cena e encontra a melhor imagem para cad
    - Watermarks visíveis: **ausentes** (verificar bordas e cantos)
    - Licença verificada: **CC0, CC-BY, domínio público** (nunca "uso justo" sem base legal)
    - Alinhamento temático: **justificativa escrita** obrigatória ligando o conteúdo visual ao texto narrado da cena
+   - **Portão de Luminância & Anti-Vazio Escuro (Anti-Dark Void Gate)**: Luminância média obrigatória entre **45 e 180** (escala 0-255). Imagens com fundos pretos opacos, vinhetas excessivas ou silhuetas apagadas (< 45) são sumariamente rejeitadas. O tema de fundo deve usar slate escuro e quente (`#12161F` / `#161B22`), jamais preto absoluto opaco (`#000000`).
+   - **Portão Anti-Anacronismo & Fidelidade Histórica Estrita**: Proibido utilizar armas anacrônicas (ex.: mosquetes/rifles na Batalha de Aljubarrota em 1385) ou bandeiras incorretas (ex.: bandeira republicana de Portugal de 1910 na Idade Média; bandeira republicana do Brasil de 1889 em eventos imperiais de 1822).
+   - **Portão de Correspondência Pessoal**: Se o texto cita Dom João I, José Bonifácio ou Napoleão, a imagem deve retratar indubitavelmente a personalidade histórica exata, referenciada em museus nacionais.
+   - **Portão de Enquadramento Narrativo**: Elementos de "Caso Encerrado" só podem aparecer no Ato Final. Em atos iniciais, exibir "Dossiê Aberto / Em Andamento".
+   - **Portão de Referência Real & Anti-Alucinação**: SEMPRE buscar imagens e acervos históricos reais na internet (Wikimedia Commons, Gallica, Brasiliana Iconográfica, Arquivo Nacional, Museus). Se o documento ou foto original for de baixa resolução ou estiver danificado, remasterize ou recrie com fidelidade sobre referências autênticas. Com referências reais documentadas, elimina-se a alucinação de IA.
+   - **Padrão Estético de Telas Finais e Mosaicos**: Proibido o uso de caixas/quadros cinzas rústicos ou layouts que pareçam menus de videogame antigo. Em telas de encerramento, fechamento de pasta e mosaicos de personagens, utilizar OBRIGATORIAMENTE a arte/banner do canal (`dossie_historico_banner_*.jpg`) como fundo com tratamento sutil de desfoque/vinheta, e tipografia oficial do canal (`Montserrat-ExtraBold` / `Anton`).
 
 4. **Quando nenhuma fonte pública satisfaz**: gerar um prompt estruturado para geração externa. O prompt deve incluir:
 

@@ -129,6 +129,14 @@ Esteira modular de geração de conteúdo orquestrada pelo Diretor Central (AG12
 - **`Remix` (~30 min)**: Modernização visual e acústica reaproveitando a locução pré-masterizada para atualizar B-roll, efeitos sonoros e transições.
 - **Contratos de Handoff Rigorosos**: Schemas padronizados (`.agents/schemas/`) garantem integração fluida entre agentes (`roteiro.json`, `image_manifest.json`, `timing_report.json`, `audit_report.json`, `production_log.json`).
 
+### 8. Motor Universal de Assets 3D & Mockups (Blender Headless / v0.6.0)
+Geração declarativa de ativos 3D fotorrealistas isolados com canal alfa transparente (PNG/WebM) via Blender 4.2+ LTS headless:
+- **Mockups de Dispositivos Dinâmicos**: Smartphone moderno em perspectiva com chassi chanfrado em titânio escuro e mapeamento dinâmico de textura de tela UV para carrosséis e artigos (`device_mockup.py`).
+- **Medalhões e Moedas Metálicas Giratórias**: Medalhões 3D chanfrados com acabamentos metálicos (`gold`, `silver`, `chrome`, `obsidian`, `bronze`) e emblema frontal opcional (`rotating_badge.py`).
+- **Tipografia Cinética 3D**: Títulos 3D extrudados e chanfrados com iluminação de estúdio e reflexos especulares (`kinetic_title.py`).
+- **Bandeiras de Seda Ondulantes**: Simulação fotorrealista de bandeiras 3D em tecido de seda/cetim com deslocamento harmônico de ondas e mastro dourado polido (`brazil_flag.py`).
+- **Controle via CLI e MCP**: Renderize diretamente via `omnipress render-3d` ou através da ferramenta MCP canônica `omnipress_render_3d`.
+
 ---
 
 ## 🚀 Guia Passo a Passo de Uso (Hands-on)
@@ -163,7 +171,7 @@ cd omnipress-mcp
 # 2. Instalar dependências com uv
 uv sync
 
-# 3. Executar a suíte de testes completa (80 testes):
+# 3. Executar a suíte de testes completa (131 testes):
 uv run pytest -v     # Suíte de testes em Python
 npm run typecheck    # Validação de tipos do Remotion
 ```
@@ -180,7 +188,16 @@ omnipress setup
 
 # Diagnóstico de prontidão do sistema:
 omnipress doctor
+
+# Sincronização automática de perfis conectados do Buffer no channel.json:
+omnipress sync-buffer [channel-slug]
 ```
+
+#### Isolamento de Credenciais Multi-Canal (Regra 04)
+O OmniPress suporta isolamento completo de credenciais entre canais:
+- **`.env` na raiz**: Configura o canal principal padrão (**Dossiê Histórico** via `OMNIPRESS_ACTIVE_CHANNEL=dossie-historico`).
+- **`channels/<slug>/.env`**: Canais individuais (como `channels/ismael-soilet/.env`) mantêm suas próprias chaves de API e perfis, totalmente desacoplados de outras marcas.
+- **Ordem de Precedência**: `channels/<slug>/.env` → `<SLUG>_BUFFER_API_KEY` → `.env` da raiz.
 
 > 💡 **Nota**: O OmniPress funciona perfeitamente **mesmo sem nenhuma chave externa**. Se nenhuma API for configurada, os artigos são arquivados localmente em Markdown e os textos das redes sociais são exibidos na tela prontos para você copiar e colar.
 
@@ -339,6 +356,22 @@ Os arquivos finais são salvos em `media/output/intro_dossie_16x9.mp4` e `media/
 2. Grave sua voz por cena no celular ou microfone (`01.mp3`, `02.mp3`...).
 3. O Remotion calcula a duração real da sua fala dinamicamente, sincronizando os cortes visuais no seu ritmo natural com atenuação automática de trilha musical (ducking a -20dB sob a voz).
 
+#### Fluxo G: Renderização 3D Headless com Blender (Regra 12)
+Renderiza mockups 3D fotorrealistas (smartphones), medalhões metálicos giratórios e tipografia 3D cinética com fundo transparente para carrosséis e camadas de vídeo Remotion:
+```bash
+# Mockup 3D de Smartphone com Screenshot de Artigo/Carrossel
+omnipress render-3d --template device_mockup --texture channels/tech-insights/media/carousels/slide_01.png -o channels/tech-insights/media/visuals/3d/hero_mockup.png
+
+# Medalhão / Moeda 3D Metálica
+omnipress render-3d --template rotating_badge --material gold -o channels/tech-insights/media/visuals/3d/badge_gold.png
+
+# Tipografia Cinética 3D
+omnipress render-3d --template kinetic_title --text "OMNIPRESS 3D" --material chrome -o channels/tech-insights/media/visuals/3d/title_chrome.png
+
+# Via Arquivo de Receita 3D Declarativa
+omnipress render-3d --recipe recipe_3d.json
+```
+
 ---
 
 ### Passo 6: Galeria de Prompts Prontos para Uso
@@ -383,6 +416,7 @@ Inclua prompts para Midjourney para cada cena e as especificações de locução
 | `omnipress_brainstorm_channel` | Cria conceitos de canal de alto CTR, pilares editoriais e backlog de tópicos virais com ganchos. | `niche`, `tone`, `target_audience`, `language` |
 | `omnipress_generate_speech` | Sintetiza locução neural de alta definição (Edge-TTS) para Canais Dark, Reels e Shorts. | `text`, `voice`, `output_filename` |
 | `omnipress_render_dark_video` | Renderiza vídeo MP4 (9:16 ou 16:9) unindo áudio neural e imagens de cenas via ffmpeg. | `text`, `audio_path`, `image_paths`, `output_filename`, `aspect_ratio`, `voice` |
+| `omnipress_render_3d` | Renderiza ativos visuais 3D fotorrealistas com fundo transparente via Blender 4.2+ LTS headless. | `template`, `output_filename`, `texture_path`, `text`, `material`, `channel_slug`, `resolution`, `engine`, `samples` |
 | `omnipress_inspect_content` | Utilitário isolado para auditar texto em busca de vazamentos de chaves, processos CNJ e CPFs. | `text` (string) |
 | `omnipress_list_articles` | Lista os artigos arquivados recentemente no repositório ou por canal. | `limit` (int), `channel_slug` (string) |
 | `omnipress_list_recent` | Alias retrocompatível para `omnipress_list_articles`. | `limit` (int) |

@@ -66,7 +66,7 @@ if hasattr(mcp, "custom_route"):
             return JSONResponse({
                 "status": "healthy",
                 "service": "omnipress-mcp",
-                "version": "0.5.0",
+                "version": "0.6.0",
             })
     except (ImportError, Exception):
         pass
@@ -183,6 +183,13 @@ MCP_TOOL_ANNOTATIONS = {
         "readOnlyHint": False,
         "destructiveHint": False,
         "idempotentHint": False,
+        "openWorldHint": False,
+    },
+    "omnipress_render_3d": {
+        "title": "Render 3D Visual Asset",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": True,
         "openWorldHint": False,
     },
 }
@@ -1030,6 +1037,80 @@ async def omnipress_render_dark_video(
         return json.dumps(result, indent=2, ensure_ascii=False)
     except Exception as e:
         return json.dumps({"success": False, "error": str(e)}, indent=2, ensure_ascii=False)
+
+
+@mcp.tool(annotations=get_tool_annotations("omnipress_render_3d"))
+def omnipress_render_3d(
+    template: str = "device_mockup",
+    output_filename: str = "asset_3d.png",
+    texture_path: Optional[str] = None,
+    text: Optional[str] = None,
+    material: Optional[str] = None,
+    channel_slug: Optional[str] = None,
+    resolution: str = "1080x1080",
+    engine: str = "BLENDER_EEVEE_NEXT",
+    samples: int = 32,
+) -> str:
+    """Renders a photorealistic 3D visual asset using headless Blender 4.2+ LTS.
+
+    Generates isolated 3D graphics with transparent backgrounds, including smartphone
+    mockups with dynamic screen texture mapping, rotating metallic coins/badges,
+    and 3D kinetic typography for carousels, articles, and Remotion video layers.
+
+    Use when:
+    - Creating 3D product/device mockups exhibiting article screenshots or carousel slides.
+    - Generating rotating metallic badges, coins, or channel insignia for video b-roll.
+    - Creating 3D beveled titles and hero assets with specular studio lighting.
+
+    Do NOT use when:
+    - Simple 2D carousel slide generation is requested (use omnipress_build_carousel).
+    - Publishing social posts or articles (use omnipress_queue_post or omnipress_publish_article).
+
+    Returns:
+    - JSON string with 'status', 'output_path', 'template', 'resolution', and 'file_size_bytes'.
+    """
+    import json
+    from src.engine.universal_3d import Universal3DEngine, BlenderRenderError
+
+    cm = channel_manager
+    engine_3d = Universal3DEngine(channel_manager=cm)
+
+    if not engine_3d.is_available():
+        return json.dumps({
+            "status": "error",
+            "error": "Blender binary not found in PATH or standard user directories. Install Blender 4.2+ LTS.",
+        }, indent=2, ensure_ascii=False)
+
+    try:
+        # Resolve target channel directory if slug provided
+        target_slug = channel_slug or os.getenv("OMNIPRESS_ACTIVE_CHANNEL", "default")
+        ch_dir = cm.get_channel_dir(target_slug)
+        out_dir = ch_dir / "media" / "visuals" / "3d"
+        out_path = out_dir / output_filename
+
+        rendered = engine_3d.render(
+            template=template,
+            output_path=out_path,
+            texture=texture_path,
+            text=text,
+            material=material,
+            resolution=resolution,
+            engine=engine,
+            samples=samples,
+        )
+
+        return json.dumps({
+            "status": "success",
+            "output_path": str(rendered),
+            "template": template,
+            "resolution": resolution,
+            "engine": engine,
+            "file_size_bytes": rendered.stat().st_size if rendered.exists() else 0,
+        }, indent=2, ensure_ascii=False)
+    except BlenderRenderError as e:
+        return json.dumps({"status": "error", "error": f"Blender render error: {str(e)}"}, indent=2, ensure_ascii=False)
+    except Exception as e:
+        return json.dumps({"status": "error", "error": str(e)}, indent=2, ensure_ascii=False)
 
 
 def main():

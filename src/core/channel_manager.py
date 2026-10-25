@@ -120,6 +120,18 @@ class ChannelManager:
         c_dir.mkdir(parents=True, exist_ok=True)
         return c_dir
 
+    def get_channel_env(self, slug: Optional[str] = None) -> Dict[str, str]:
+        """Loads and returns environment variables defined in channels/<slug>/.env if present."""
+        target_slug = slugify_channel(slug) if slug else self.get_active_channel_slug()
+        env_file = self.channels_dir / target_slug / ".env"
+        if not env_file.exists():
+            return {}
+        try:
+            from dotenv import dotenv_values
+            return {str(k): str(v) for k, v in dotenv_values(env_file).items() if v is not None}
+        except Exception:
+            return {}
+
     def get_articles_dir(self, slug: Optional[str] = None) -> Path:
         """Returns the articles directory for a channel."""
         art_dir = self.get_channel_dir(slug) / "articles"
@@ -290,6 +302,34 @@ class ChannelManager:
                 sg_content = sg_content.replace("@seuperfil", handle if handle.startswith("@") else f"@{handle}")
                 sg_content = sg_content.replace("Nome Oficial ou Marca", name)
                 style_guide_path.write_text(sg_content, encoding="utf-8")
+
+        # Automatically scaffold channel-specific .env for isolated credentials (Rule 04)
+        env_example_path = channel_dir / ".env.example"
+        env_template = (
+            f"# ==============================================================================\n"
+            f"# OmniPress MCP — Channel Environment Secrets: {clean_slug}\n"
+            f"# ==============================================================================\n"
+            f"# Personal Buffer API Key (https://publish.buffer.com/settings/api)\n"
+            f"BUFFER_API_KEY=\n\n"
+            f"# Optional overrides for channel profile IDs (auto-discovered if empty)\n"
+            f"BUFFER_LINKEDIN_PROFILE_ID=\n"
+            f"BUFFER_X_PROFILE_ID=\n"
+            f"BUFFER_INSTAGRAM_PROFILE_ID={buffer_channel_id}\n"
+            f"BUFFER_THREADS_PROFILE_ID=\n"
+        )
+        if not env_example_path.exists():
+            env_example_path.write_text(env_template, encoding="utf-8")
+
+        env_path = channel_dir / ".env"
+        if not env_path.exists():
+            env_path.write_text(env_template, encoding="utf-8")
+
+        # Copy campaign template into campanhas/ if available
+        src_camp = self.channels_dir / "_template" / "campanhas" / "_template_campanha"
+        dst_camp = channel_dir / "campanhas" / "_template_campanha"
+        if src_camp.exists() and not dst_camp.exists():
+            import shutil
+            shutil.copytree(src_camp, dst_camp)
 
         config["path"] = str(channel_dir)
         return config

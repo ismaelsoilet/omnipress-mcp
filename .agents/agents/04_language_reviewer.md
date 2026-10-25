@@ -55,17 +55,25 @@ O AG04 é o guardião da qualidade textual do episódio. Revisa o `roteiro.md` e
    - **Redundâncias**: palavras repetidas no mesmo parágrafo sem efeito estilístico intencional
    - **Tom**: manter o registro do canal (investigativo, tenso, revelador) — nunca suavizar sem motivo
 
-4. **Revisar `whisper.json`** (se disponível):
-   - Verificar chunks de 2–4 palavras por segmento (não mais, não menos)
-   - Corrigir erros comuns de transcrição automática (homófonos, nomes próprios, datas)
-   - Verificar pontuação final de cada chunk (sem ponto-final em meio de frase)
-   - Validar `start` e `end` timestamps para consistência (sem sobreposição de chunks)
+4. **Regra de Ouro das Legendas (Timing da Fala, Texto do Roteiro & Destaque da Palavra Ativa)**:
+   - **Origem Estrita do Texto**: O texto exibido na legenda deve vir **SEMPRE do roteiro oficial aprovado (`roteiro.json` / `roteiro_revisado.md`)**, garantindo 100% de correção gramatical, ortografia culta, concordância, pontuação e preservação de nomes históricos e termos protegidos. **É expressamente proibido exibir o texto cru ou fonético do Whisper** na legenda final.
+   - **Origem Estrita do Timing**: O Whisper é utilizado **estritamente para a extração dos timestamps de início e fim da fala real**. Cada palavra do roteiro oficial é alinhada temporalmente à palavra correspondente falada no áudio.
+   - **Estrutura de Chunks (2 a 4 palavras)**: Dividir as legendas em blocos compactos de 2 a 4 palavras que não ultrapassem fronteiras de cena nem quebrem frases no meio de pontuações fortes.
+   - **Destaque Dinâmico da Palavra Ativa (Karaoke Style - WordTiming)**: Cada chunk deve obrigatoriamente preencher o array `words` com a estrutura `{ "word": string, "start": float, "end": float }`. O componente `SynchronizedCaptions` utiliza esses timestamps individuais para iluminar a palavra exata falada no momento (`#FFD700`, escala 1.06 e sublinhado dourado), mantendo as demais palavras do chunk legíveis.
 
    ```json
-   // Exemplo de chunk mal transcrito → corrigido
-   { "text": "a operaçao paperclip", "start": 2.1, "end": 3.4 }
-   // Corrigido para:
-   { "text": "a Operação Paperclip", "start": 2.1, "end": 3.4 }
+   // Exemplo canônico de chunk com WordTiming alimentado pelo texto do roteiro:
+   {
+     "start": 2.58,
+     "end": 4.64,
+     "text": "Pare por cinco segundos",
+     "words": [
+       { "word": "Pare", "start": 2.58, "end": 3.32 },
+       { "word": "por", "start": 3.32, "end": 3.60 },
+       { "word": "cinco", "start": 3.60, "end": 4.02 },
+       { "word": "segundos", "start": 4.02, "end": 4.64 }
+     ]
+   }
    ```
 
 5. **Revisar títulos, hashtags e CTAs** por plataforma:
