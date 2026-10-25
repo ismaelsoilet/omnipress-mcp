@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] — 2026-10-25
+
+### Added
+- **Desacoplamento Paramétrico Total do `CarouselBuilder` (Regras 04, 08 e 12)**:
+  - Adicionado resolvedor hierárquico de parâmetros `_resolve_param`:
+    - Resolução em cascata: `slide_data` (recipe) > `channel.visual_identity.presets[preset]` > `channel.visual_identity.layout_parameters` > `channel.branding` (legado) > fallbacks universais da engine.
+  - Parâmetros declarativos suportados por canal em `visual_identity.layout_parameters`:
+    - Margens e geometria: `margin_ratio`, `border_radius`, `split_ratio`, `start_y_ratio`.
+    - Escalas tipográficas: `headline_scale`, `body_scale`, `step_scale`, `badge_scale`, `footer_scale`.
+    - Entrelinhas e espaçamento: `line_height_head`, `line_height_body`.
+    - Contraste e segurança: `card_alpha`, `card_pad_x_ratio`, `card_pad_y_ratio`, `stroke_width`.
+    - Elementos e avatares: `avatar_size_ratio`, `show_verified_badge`.
+  - **Vocabulário Semântico Desacoplado**:
+    - `_parse_semantic_line` agora suporta dicionários de categorias customizados (`semantic_categories`: `danger`, `success`, `warning`, `accent`) e tags explícitas (`semantic_tags`), permitindo que canais de tecnologia, direito ou história definam suas próprias palavras-chave de destaque sem tocar no código Python do motor.
+  - Atualização dos canais de referência (`channels/_template/channel.json`, `channels/ismael-soilet/channel.json`, `channels/dossie-historico/channel.json`) demonstrando parametrização customizada e vocabulário semântico próprio.
+  - Novos testes unitários dedicados em `tests/test_carousel_builder.py` cobrindo a hierarquia de parâmetros, categorias semânticas e renderização orientada a dados.
+
+### Changed
+- Removidas referências a criadores ou canais específicos nos docstrings e comentários do `carousel_builder.py`, universalizando os presets como `classic_card` (Archival Contrast), `tweet_card` (Social Proof & Post Mockup), `minimal_dark` (Dark Editorial) e `split_editorial` (Corporate & Editorial Authority).
+- `_render_classic_card` agora aceita `channel_data` e `slide_data` e extrai parâmetros dinâmicos de layout e contraste de forma idêntica aos demais presets.
+
 ## [0.7.0] — 2026-10-25
 
 ### Added

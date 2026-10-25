@@ -252,6 +252,130 @@ def test_parse_semantic_line():
     assert content == "Alíquota padrão estimada em 27%"
 
 
+def test_resolve_param_hierarchy():
+    builder = CarouselBuilder()
+
+    channel_data = {
+        "branding": {"legacy_param": "from_branding"},
+        "visual_identity": {
+            "layout_parameters": {
+                "margin_ratio": 0.08,
+                "border_radius": 24,
+            },
+            "presets": {
+                "tweet_card": {
+                    "border_radius": 30,
+                }
+            }
+        }
+    }
+
+    # 1. Slide-level override beats everything
+    slide = {"margin_ratio": 0.12}
+    res = builder._resolve_param("margin_ratio", slide_data=slide, channel_data=channel_data, preset_name="tweet_card", default=0.05)
+    assert res == 0.12
+
+    # 2. Preset-specific override in channel beats channel-wide layout_parameters
+    res = builder._resolve_param("border_radius", slide_data={}, channel_data=channel_data, preset_name="tweet_card", default=10)
+    assert res == 30
+
+    # 3. Channel-wide layout_parameters beats default
+    res = builder._resolve_param("margin_ratio", slide_data={}, channel_data=channel_data, preset_name="minimal_dark", default=0.05)
+    assert res == 0.08
+
+    # 4. Legacy branding parameter resolution
+    res = builder._resolve_param("legacy_param", slide_data={}, channel_data=channel_data, preset_name="tweet_card", default="fallback")
+    assert res == "from_branding"
+
+    # 5. Fallback to default when not specified anywhere
+    res = builder._resolve_param("non_existent", slide_data={}, channel_data=channel_data, preset_name="tweet_card", default="safe_default")
+    assert res == "safe_default"
+
+
+def test_parse_semantic_line_custom_categories():
+    pal = {"primary": "#3B82F6", "accent": "#3B82F6", "danger": "#EF4444", "success": "#10B981", "warning": "#F59E0B"}
+    custom_categories = {
+        "danger": ["ANTIPATTERN", "DEPRECATED", "FALHA"],
+        "success": ["PADRÃO", "BOA PRÁTICA"],
+        "warning": ["TRADE-OFF"]
+    }
+
+    # Channel-specific danger keyword
+    dot, prefix, p_color, content = CarouselBuilder._parse_semantic_line(
+        "ANTIPATTERN: Injeção de dependência via singleton global",
+        pal=pal,
+        is_dark=True,
+        semantic_categories=custom_categories,
+    )
+    assert prefix == "ANTIPATTERN: "
+    assert p_color == (239, 68, 68, 255)
+    assert content == "Injeção de dependência via singleton global"
+
+    # Channel-specific success keyword
+    dot, prefix, p_color, content = CarouselBuilder._parse_semantic_line(
+        "PADRÃO: Usar inversão de controle com containers leves",
+        pal=pal,
+        is_dark=True,
+        semantic_categories=custom_categories,
+    )
+    assert prefix == "PADRÃO: "
+    assert p_color == (16, 185, 129, 255)
+
+    # Channel-specific warning keyword
+    dot, prefix, p_color, content = CarouselBuilder._parse_semantic_line(
+        "TRADE-OFF: Maior desacoplamento versus complexidade inicial",
+        pal=pal,
+        is_dark=True,
+        semantic_categories=custom_categories,
+    )
+    assert prefix == "TRADE-OFF: "
+    assert p_color == (245, 158, 11, 255)
+
+
+def test_render_slide_with_channel_layout_parameters(tmp_path: Path):
+    cm = ChannelManager(root_dir=tmp_path)
+    cm.create_channel(
+        slug="dev-brand",
+        name="Developer Brand",
+        primary_color="#0A66C2",
+        handle="@devbrand"
+    )
+
+    # Update channel with custom layout_parameters
+    ch_file = tmp_path / "channels" / "dev-brand" / "channel.json"
+    import json
+    data = json.loads(ch_file.read_text(encoding="utf-8"))
+    data["visual_identity"] = {
+        "default_preset": "tweet_card",
+        "layout_parameters": {
+            "margin_ratio": 0.10,
+            "headline_scale": 0.060,
+            "body_scale": 0.040,
+            "border_radius": 24,
+            "show_verified_badge": True
+        },
+        "semantic_tags": {
+            "ARQUITETURA": "#0A66C2"
+        }
+    }
+    ch_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+    builder = CarouselBuilder(channel_manager=cm)
+    out_slide = tmp_path / "slide_param.jpg"
+    res = builder.render_slide(
+        bg_image_path=None,
+        output_path=out_slide,
+        channel_slug="dev-brand",
+        headline="Arquitetura de Alta Escalabilidade",
+        body="ARQUITETURA: Serviços isolados e desacoplados.",
+        aspect_ratio="3:4"
+    )
+
+    assert res.exists()
+    img = Image.open(res)
+    assert img.size == (1080, 1440)
+
+
 if __name__ == "__main__":
     import pytest
     import sys

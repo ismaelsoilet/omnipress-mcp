@@ -56,6 +56,27 @@
       "bullet_style": "square",
       "watermark_text": "OMNIPRESS",
       "enable_shadow": true
+    },
+    "layout_parameters": {
+      "margin_ratio": 0.075,
+      "headline_scale": 0.054,
+      "body_scale": 0.038,
+      "footer_scale": 0.022,
+      "border_radius": 18,
+      "card_alpha": 215,
+      "avatar_size_ratio": 0.09,
+      "show_verified_badge": true
+    },
+    "semantic_tags": {
+      "DICA": "#8B5CF6",
+      "IMPORTANTE": "#F59E0B",
+      "ATENÇÃO": "#DC2626",
+      "SUCESSO": "#059669"
+    },
+    "semantic_categories": {
+      "danger": ["MITO", "ERRO", "FALSO", "PROBLEMA", "NÃO", "PERIGO", "ATENÇÃO", "RISCO", "DESVANTAGEM", "FAIL", "BUG", "MYTH", "WRONG", "ERROR", "DANGER"],
+      "success": ["VERDADE", "FATO", "CORRETO", "SOLUÇÃO", "SIM", "VANTAGEM", "CERTO", "SUCESSO", "TRUTH", "FACT", "CORRECT", "SOLUTION"],
+      "warning": ["AVISO", "NOTA", "ALERTA", "IMPORTANTE", "WARNING", "NOTE", "ALERT", "OBS"]
     }
   },
   "social": {

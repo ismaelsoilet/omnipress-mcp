@@ -299,9 +299,11 @@ Quando o usuário pedir: *"Gere um carrossel para o Instagram sobre este tema."*
    - Slide 1 (Capa): Gancho provocativo + badge de categoria.
    - Slides 2 a N-1 (Desenvolvimento): Cada lâmina com headline concisa (máximo 4 linhas) e corpo explicativo direto.
    - Slide Final (CTA): Chamada para ação ("Siga @canal", "Salve este post").
-3. **Renderizar com `omnipress_build_carousel`**:
-   - Certifique-se de que cada `bg_image_path` aponta para um arquivo existente em `channels/<slug>/media/raw/` ou `media/staging/`.
-   - O `CarouselBuilder` aplicará automaticamente o card protetor escuro (`rgba(8, 10, 14, 215)`) e o contorno escuro nas fontes (`stroke_width=2`), garantindo legibilidade perfeita sob qualquer fundo.
+3. **Renderizar com `omnipress_build_carousel` ou `omnipress carousel --recipe`**:
+   - O `CarouselBuilder` é 100% desacoplado e orientado aos parâmetros do canal (`channel.json -> visual_identity`):
+     - `layout_parameters`: Margens (`margin_ratio`), proporções tipográficas (`headline_scale`, `body_scale`, `step_scale`, `footer_scale`), raio de borda (`border_radius`) e transparência do card (`card_alpha`).
+     - `semantic_tags` e `semantic_categories`: Mapeamento de termos e categorias (`danger`, `success`, `warning`, `accent`) para realce automático em tópicos sem modificar o código do motor.
+   - Aplica automaticamente os padrões da Regra 08 (card protetor escuro `rgba(8, 10, 14, 215)` e contorno de segurança `stroke_width=2`).
 4. **Hospedagem & Fila**:
    - Utilize o storage provider para obter as URLs públicas das lâminas geradas (`https://...`).
    - Chame `omnipress_queue_post(text=legenda, platforms=["instagram"], media_urls=[url_slide1, url_slide2, ...])`.

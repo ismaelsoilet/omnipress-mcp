@@ -90,10 +90,11 @@ channels/
 ```
 
 ### 2. Social Carousel Rendering Engine (`CarouselBuilder`)
-Integrated Python (Pillow) graphics engine specifically engineered for 3:4 portrait carousels (optimized for Instagram & LinkedIn feeds):
-- **Pixel-perfect dynamic wrapping**: Guarantees zero text truncation or clipping.
-- **Contrast gradient overlays**: Seamless readability over any background image.
-- **Brand injection**: Primary accent color, top badge text, social `@handle`, page pagination counters (`01/06`), and swipe cues (`Deslize →`).
+Fully decoupled, data-driven Python (Pillow) graphics engine parameterized via `channel.json`:
+- **Hierarchical Parameter Resolution**: Configurable margins (`margin_ratio`), typography scales (`headline_scale`, `body_scale`, `step_scale`, `footer_scale`), line heights, card backdrop alphas, and border radiuses resolved per slide, per preset, or from channel-wide defaults.
+- **Agnostic Semantic Callouts**: Decoupled category vocabularies (`semantic_categories`: `danger`, `success`, `warning`, `accent`) and custom tags (`semantic_tags`), enabling any vertical (Software, Law, History) to define custom highlighted phrases without engine code modifications.
+- **4 Visual Presets**: `classic_card` (Rule 08 contrast cards over archival photos), `tweet_card` (social proof post cards with avatar & verified badge), `minimal_dark` (dark editorial with serif typography & UI search mockups), and `split_editorial` (corporate authority with top photo & circular avatar cutout).
+- **Pixel-perfect dynamic wrapping**: Guarantees zero text truncation or clipping under any aspect ratio (3:4, 4:5, 1:1, 9:16).
 
 ### 3. Universal Privacy & Secrets Shield (LGPD, CNJ & Secrets)
 Before anything is staged or published, OmniPress automatically runs security and privacy sanitization:

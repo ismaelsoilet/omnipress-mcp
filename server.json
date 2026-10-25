@@ -3,7 +3,7 @@
   "name": "io.github.ismaelsoilet/omnipress-mcp",
   "title": "OmniPress MCP",
   "description": "Universal agentic publishing protocol, social syndication, and 3D media engine.",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "repository": {
     "url": "https://github.com/ismaelsoilet/omnipress-mcp",
     "source": "github"
@@ -12,7 +12,7 @@
     {
       "registryType": "pypi",
       "identifier": "omnipress-mcp",
-      "version": "0.7.0",
+      "version": "0.8.0",
       "transport": {
         "type": "stdio"
       }

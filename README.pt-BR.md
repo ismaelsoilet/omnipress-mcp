@@ -90,10 +90,11 @@ channels/
 ```
 
 ### 2. Motor de Carrosséis para Redes Sociais (`CarouselBuilder`)
-Renderizador gráfico integrado em Python (Pillow) para carrosséis 3:4 (retrato otimizado para feeds modernos de Instagram e LinkedIn):
-- **Quebra por pixel**: cálculo exato de largura tipográfica sem palavras truncadas.
-- **Gradientes de leitura**: escurecimento inferior suave sobre qualquer imagem de fundo para contraste legível.
-- **Injeção de marca**: cores de destaque primária da marca, badge superior, `@handle` social, contador de páginas (`01/06`) e indicação de swipe (`Deslize →`).
+Motor gráfico em Python (Pillow) 100% desacoplado e orientado a dados, parametrizado via `channel.json`:
+- **Resolução Hierárquica de Parâmetros**: Margens (`margin_ratio`), escalas tipográficas (`headline_scale`, `body_scale`, `step_scale`, `footer_scale`), entrelinhas, transparência de card (`card_alpha`) e raios de borda resolvidos por slide, por preset ou a partir dos padrões do canal.
+- **Chamadas Semânticas Agnósticas**: Categorias de vocabulário desacopladas (`semantic_categories`: `danger`, `success`, `warning`, `accent`) e tags customizadas (`semantic_tags`), permitindo que qualquer nicho defina termos destacados sem alterar o código do motor.
+- **4 Presets Visuais**: `classic_card` (cards de contraste da Regra 08 sobre fotos de arquivo), `tweet_card` (prova social estilo post com avatar e selo verificado), `minimal_dark` (editorial dark com serifas e mockups de busca) e `split_editorial` (autoridade corporativa com foto superior e avatar circular).
+- **Quebra por pixel**: cálculo dinâmico exato de largura tipográfica sem palavras truncadas em qualquer proporção (3:4, 4:5, 1:1, 9:16).
 
 ### 3. Escudo Universal de Privacidade e Segredos (LGPD & CNJ)
 Antes de qualquer post ser enfileirado ou arquivado, o OmniPress executa uma varredura automática:

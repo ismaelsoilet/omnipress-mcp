@@ -560,7 +560,7 @@ def main(argv: Optional[list] = None) -> int:
         prog="omnipress",
         description="OmniPress CLI - Universal Agentic Publishing Protocol & Management Suite",
     )
-    parser.add_argument("--version", action="version", version="OmniPress MCP 0.7.0")
+    parser.add_argument("--version", action="version", version="OmniPress MCP 0.8.0")
 
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
 

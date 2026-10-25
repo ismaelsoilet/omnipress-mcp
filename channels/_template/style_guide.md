@@ -40,18 +40,22 @@ O OmniPress suporta nativamente 3 famílias tipográficas com segurança multipl
 
 ---
 
-## 📐 4. Presets Visuais de Carrosséis
+## 📐 4. Presets Visuais & Parametrização por Canal
 
-O motor [`CarouselBuilder`](file:///home/ismaelsoilet/omnipress-mcp/src/engine/carousel_builder.py) oferece 4 layouts modulares que podem ser escolhidos no `channel.json` ou sobrescritos por campanha/slide:
+O motor [`CarouselBuilder`](file:///home/ismaelsoilet/omnipress-mcp/src/engine/carousel_builder.py) é 100% desacoplado e orientado a dados. Cada canal define seus parâmetros no [`channel.json`](file:///home/ismaelsoilet/omnipress-mcp/channels/_template/channel.json) via:
+- `layout_parameters`: Margens (`margin_ratio`), proporções tipográficas (`headline_scale`, `body_scale`, `step_scale`, `footer_scale`), raio de borda (`border_radius`), transparência do card (`card_alpha`), e tamanho do avatar (`avatar_size_ratio`).
+- `semantic_tags`: Mapeamento de tags para cores hex (ex: `"DICA": "#8B5CF6"`).
+- `semantic_categories`: Mapeamento de categorias (`danger`, `success`, `warning`, `accent`) para palavras-chave personalizadas do nicho do canal.
+
+O motor oferece 4 presets universais:
 
 ### Preset A: `tweet_card` (Social Proof & Opinião Ágil)
-- **Inspiração**: Estilo Thiago Ramos / Cards de Twitter.
 - **Quando Usar**: Posts de posicionamento, estudos de caso, análises políticas/estratégicas, reflexões com fotos reais ou comparativos.
 - **Elementos Visuais**:
   - Cabeçalho de rede social no topo: Avatar circular do autor, nome em negrito, **selo azul de verificado**, handle `@seuperfil`.
   - Headline em fonte Sans-serif bold destacada.
   - Subtítulo / Lead com ênfases seletivas em negrito.
-  - Imagem ou Comparativo abaixo: 1 foto ampla ou 2 fotos lado a lado com cantos arredondados (`radius=18`) e borda fina.
+  - Imagem ou Comparativo abaixo: 1 foto ampla ou 2 fotos lado a lado com cantos arredondados e borda fina.
 
 ### Preset B: `minimal_dark` (Dark Editorial & Tutoriais Passo a Passo)
 - **Inspiração**: Estilo Rhaj Teixeira.
