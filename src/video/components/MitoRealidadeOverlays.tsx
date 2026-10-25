@@ -4,10 +4,21 @@ import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 export interface OverlayEvent {
   startSec: number;
   durationSec: number;
-  type: "stamp-mito" | "stamp-realidade" | "question-card" | "flash-cut";
+  type:
+    | "stamp-mito"
+    | "stamp-realidade"
+    | "stamp-alert"
+    | "stamp-negative"
+    | "stamp-success"
+    | "stamp-positive"
+    | "question-card"
+    | "flash-cut";
   text?: string;
   subtext?: string;
   top?: number;
+  color?: string;
+  borderColor?: string;
+  subtextColor?: string;
 }
 
 export interface MitoRealidadeOverlaysProps {
@@ -15,15 +26,13 @@ export interface MitoRealidadeOverlaysProps {
 }
 
 /**
- * MitoRealidadeOverlays — Camada de Choque Visual e Retenção Psicológica
- * Controla carimbos táteis (MITO vs REALIDADE), caixas de perguntas reflexivas
- * e micro-flashes de transição para reter a atenção nos primeiros segundos.
+ * MitoRealidadeOverlays (ImpactOverlays) — Camada Universal de Choque Visual e Retenção Psicológica
+ * Controla carimbos táteis de alto impacto (Negativo/Alerta vs Positivo/Sucesso),
+ * caixas de perguntas táticas e micro-flashes de transição para retenção nos primeiros segundos.
  */
 export const MitoRealidadeOverlays: React.FC<MitoRealidadeOverlaysProps> = ({ events }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-
-  const currentTimeSec = frame / fps;
 
   return (
     <div
@@ -69,8 +78,12 @@ export const MitoRealidadeOverlays: React.FC<MitoRealidadeOverlaysProps> = ({ ev
           );
         }
 
-        // 2. CARIMBO "MITO HISTÓRICO" (Vermelho Neon com batida violenta)
-        if (evt.type === "stamp-mito") {
+        // 2. CARIMBO DE IMPACTO NEGATIVO / ALERTA (Vermelho Neon com batida violenta)
+        if (
+          evt.type === "stamp-mito" ||
+          evt.type === "stamp-alert" ||
+          evt.type === "stamp-negative"
+        ) {
           const slam = spring({
             frame: localFrame,
             fps,
@@ -79,6 +92,9 @@ export const MitoRealidadeOverlays: React.FC<MitoRealidadeOverlaysProps> = ({ ev
 
           const scale = interpolate(slam, [0, 1], [3.2, 1.0]);
           const opacity = interpolate(slam, [0, 0.3, 1], [0, 0.95, 1.0]);
+          const themeColor = evt.color || "#FF2A55";
+          const borderColor = evt.borderColor || themeColor;
+          const defaultLabel = evt.type === "stamp-alert" ? "ALERTA!" : "MITO!";
 
           return (
             <div
@@ -93,10 +109,10 @@ export const MitoRealidadeOverlays: React.FC<MitoRealidadeOverlaysProps> = ({ ev
                 flexDirection: "column",
                 alignItems: "center",
                 backgroundColor: "rgba(18, 4, 8, 0.92)",
-                border: "6px solid #FF2A55",
+                border: `6px solid ${borderColor}`,
                 borderRadius: 16,
                 padding: "20px 48px",
-                boxShadow: "0 0 50px rgba(255, 42, 85, 0.65), inset 0 0 30px rgba(255, 42, 85, 0.4)",
+                boxShadow: `0 0 50px ${themeColor}A6, inset 0 0 30px ${themeColor}66`,
                 backdropFilter: "blur(14px)",
               }}
             >
@@ -112,8 +128,8 @@ export const MitoRealidadeOverlays: React.FC<MitoRealidadeOverlaysProps> = ({ ev
                     width: 26,
                     height: 26,
                     borderRadius: "50%",
-                    backgroundColor: "#FF2A55",
-                    boxShadow: "0 0 20px #FF2A55",
+                    backgroundColor: themeColor,
+                    boxShadow: `0 0 20px ${themeColor}`,
                     display: "inline-block",
                     flexShrink: 0,
                   }}
@@ -123,14 +139,14 @@ export const MitoRealidadeOverlays: React.FC<MitoRealidadeOverlaysProps> = ({ ev
                     fontFamily: "'Impact', 'Arial Black', sans-serif",
                     fontSize: 78,
                     fontWeight: 900,
-                    color: "#FF2A55",
+                    color: themeColor,
                     letterSpacing: 6,
                     textTransform: "uppercase",
-                    textShadow: "0 4px 20px rgba(0, 0, 0, 0.95), 0 0 30px rgba(255, 42, 85, 0.8)",
+                    textShadow: `0 4px 20px rgba(0, 0, 0, 0.95), 0 0 30px ${themeColor}CC`,
                     lineHeight: 1,
                   }}
                 >
-                  {evt.text || "MITO!"}
+                  {evt.text || defaultLabel}
                 </span>
               </div>
               {evt.subtext && (
@@ -139,7 +155,7 @@ export const MitoRealidadeOverlays: React.FC<MitoRealidadeOverlaysProps> = ({ ev
                     fontFamily: "'Courier New', Courier, monospace",
                     fontSize: 22,
                     fontWeight: 800,
-                    color: "#FFFFFF",
+                    color: evt.subtextColor || "#FFFFFF",
                     letterSpacing: 3,
                     textTransform: "uppercase",
                     marginTop: 8,
@@ -152,8 +168,12 @@ export const MitoRealidadeOverlays: React.FC<MitoRealidadeOverlaysProps> = ({ ev
           );
         }
 
-        // 3. CARIMBO "REALIDADE HISTÓRICA" (Verde Dourado Imperial)
-        if (evt.type === "stamp-realidade") {
+        // 3. CARIMBO DE IMPACTO POSITIVO / SUCESSO (Verde Dourado / Neon)
+        if (
+          evt.type === "stamp-realidade" ||
+          evt.type === "stamp-success" ||
+          evt.type === "stamp-positive"
+        ) {
           const slam = spring({
             frame: localFrame,
             fps,
@@ -162,6 +182,14 @@ export const MitoRealidadeOverlays: React.FC<MitoRealidadeOverlaysProps> = ({ ev
 
           const scale = interpolate(slam, [0, 1], [3.2, 1.0]);
           const opacity = interpolate(slam, [0, 0.3, 1], [0, 0.95, 1.0]);
+          const themeColor = evt.color || "#00FF88";
+          const borderColor = evt.borderColor || themeColor;
+          const defaultLabel =
+            evt.type === "stamp-success"
+              ? "SUCESSO!"
+              : evt.type === "stamp-positive"
+              ? "FATO!"
+              : "REALIDADE";
 
           return (
             <div
@@ -176,10 +204,10 @@ export const MitoRealidadeOverlays: React.FC<MitoRealidadeOverlaysProps> = ({ ev
                 flexDirection: "column",
                 alignItems: "center",
                 backgroundColor: "rgba(4, 18, 10, 0.92)",
-                border: "6px solid #00FF88",
+                border: `6px solid ${borderColor}`,
                 borderRadius: 16,
                 padding: "20px 48px",
-                boxShadow: "0 0 50px rgba(0, 255, 136, 0.65), inset 0 0 30px rgba(0, 255, 136, 0.4)",
+                boxShadow: `0 0 50px ${themeColor}A6, inset 0 0 30px ${themeColor}66`,
                 backdropFilter: "blur(14px)",
               }}
             >
@@ -195,8 +223,8 @@ export const MitoRealidadeOverlays: React.FC<MitoRealidadeOverlaysProps> = ({ ev
                     width: 26,
                     height: 26,
                     borderRadius: "50%",
-                    backgroundColor: "#00FF88",
-                    boxShadow: "0 0 20px #00FF88",
+                    backgroundColor: themeColor,
+                    boxShadow: `0 0 20px ${themeColor}`,
                     display: "inline-block",
                     flexShrink: 0,
                   }}
@@ -206,14 +234,14 @@ export const MitoRealidadeOverlays: React.FC<MitoRealidadeOverlaysProps> = ({ ev
                     fontFamily: "'Impact', 'Arial Black', sans-serif",
                     fontSize: 74,
                     fontWeight: 900,
-                    color: "#00FF88",
+                    color: themeColor,
                     letterSpacing: 6,
                     textTransform: "uppercase",
-                    textShadow: "0 4px 20px rgba(0, 0, 0, 0.95), 0 0 30px rgba(0, 255, 136, 0.8)",
+                    textShadow: `0 4px 20px rgba(0, 0, 0, 0.95), 0 0 30px ${themeColor}CC`,
                     lineHeight: 1,
                   }}
                 >
-                  {evt.text || "REALIDADE"}
+                  {evt.text || defaultLabel}
                 </span>
               </div>
               {evt.subtext && (
@@ -222,7 +250,7 @@ export const MitoRealidadeOverlays: React.FC<MitoRealidadeOverlaysProps> = ({ ev
                     fontFamily: "'Courier New', Courier, monospace",
                     fontSize: 22,
                     fontWeight: 800,
-                    color: "#D4AF37",
+                    color: evt.subtextColor || "#D4AF37",
                     letterSpacing: 3,
                     textTransform: "uppercase",
                     marginTop: 8,

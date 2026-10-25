@@ -72,7 +72,7 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
   introDurationFrames = 120, // 4.0s @ 30fps
   enableIntro = true,
 }) => {
-  const { fps, width, height } = useVideoConfig();
+  const { fps, width, height, durationInFrames } = useVideoConfig();
   const isVertical = height > width;
 
   const episodeTitle = config?.title || "EPISÓDIO DOCUMENTAL";
@@ -93,19 +93,22 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
     return isSpeaking ? 0.14 : 0.28;
   };
 
+  const resolveAudioSrc = (src: string) => {
+    return src.startsWith("http") || src.startsWith("data:") ? src : staticFile(src);
+  };
+
   return (
     <AbsoluteFill style={{ backgroundColor: "#0A0C10" }}>
-      {/* 1. Trilha Sonora Master: Hino Nacional (0 a 840s) com Crossfade para Signal to Noise */}
+      {/* 1. Trilha Sonora Master com ducking dinâmico sob a fala */}
       {config?.backgroundMusicSrc && (
-        <Sequence from={0} durationInFrames={Math.round(840 * fps)}>
+        <Sequence from={0} durationInFrames={durationInFrames}>
           <Audio
-            src={staticFile(config.backgroundMusicSrc)}
+            src={resolveAudioSrc(config.backgroundMusicSrc)}
             volume={(f) => {
               const duck = getMusicVolume(f);
               const fadeFrames = 5 * fps;
-              const endFrame = 840 * fps;
-              if (f > endFrame - fadeFrames) {
-                const progress = (endFrame - f) / fadeFrames;
+              if (f > durationInFrames - fadeFrames) {
+                const progress = (durationInFrames - f) / fadeFrames;
                 return duck * Math.max(0, Math.min(1, progress));
               }
               return duck;
@@ -114,31 +117,33 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
         </Sequence>
       )}
 
-      {/* 1.2 Trilha Sonora Final: Signal to Noise para completar o vídeo (835s até o encerramento) */}
-      <Sequence from={Math.round(835 * fps)}>
-        <Audio
-          src={staticFile("dossie/ep03b/audios/sb_signaltonoise.mp3")}
-          volume={(f) => {
-            const globalFrame = Math.round(835 * fps) + f;
-            const duck = getMusicVolume(globalFrame);
-            // Fade-in suave de 5 segundos
-            const fadeInFrames = 5 * fps;
-            let vol = duck;
-            if (f < fadeInFrames) {
-              vol = duck * (f / fadeInFrames);
-            }
-            // Fade-out suave nos últimos 5 segundos do documentário
-            const totalEpFrames = 27890;
-            const distFromEnd = totalEpFrames - globalFrame;
-            if (distFromEnd < 5 * fps && distFromEnd > 0) {
-              vol = vol * (distFromEnd / (5 * fps));
-            } else if (distFromEnd <= 0) {
-              vol = 0;
-            }
-            return vol;
-          }}
-        />
-      </Sequence>
+      {/* 1.2 Trilha Sonora Secundária / Encerramento (opcional via config) */}
+      {config?.outroMusicSrc && (
+        <Sequence from={Math.round((config.outroMusicStartSec ?? 0) * fps)}>
+          <Audio
+            src={resolveAudioSrc(config.outroMusicSrc)}
+            volume={(f) => {
+              const startSec = config.outroMusicStartSec ?? 0;
+              const globalFrame = Math.round(startSec * fps) + f;
+              const duck = getMusicVolume(globalFrame);
+              // Fade-in suave de 5 segundos
+              const fadeInFrames = 5 * fps;
+              let vol = duck;
+              if (f < fadeInFrames) {
+                vol = duck * (f / fadeInFrames);
+              }
+              // Fade-out suave nos últimos 5 segundos do documentário
+              const distFromEnd = durationInFrames - globalFrame;
+              if (distFromEnd < 5 * fps && distFromEnd > 0) {
+                vol = vol * (distFromEnd / (5 * fps));
+              } else if (distFromEnd <= 0) {
+                vol = 0;
+              }
+              return vol;
+            }}
+          />
+        </Sequence>
+      )}
 
       {/* 2. Vinheta Oficial de Abertura (0 a 4s) */}
       {enableIntro && (
@@ -231,7 +236,7 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
                       fontWeight: 800,
                     }}
                   >
-                    {scene.badge || "DOSSIÊ OFICIAL // TRANSIÇÃO"}
+                    {scene.badge || "TRANSIÇÃO // DOCUMENTO OFICIAL"}
                   </div>
 
                   <h1
@@ -275,22 +280,24 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
                   </div>
                 </div>
               </AbsoluteFill>
-            ) : scene.type === "channel-outro" || scene.id === "scene_71" ? (
+            ) : scene.type === "channel-outro" ? (
               // Vinheta Oficial de Encerramento e Compartilhamento com Tipografia de Alto Impacto
               <ChannelOutro
                 durationInFrames={sceneDurationFrames}
-                channelName={config?.introProps?.channelName || "DOSSIÊ HISTÓRICO"}
+                channelName={config?.introProps?.channelName || "CANAL OFICIAL"}
               />
-            ) : scene.type === "heraldic-surgery" || scene.id === "scene_57" ? (
-              // Animação Especial: Cirurgia Heráldica de 1889 (Substituição Dinâmica do Brasão Imperial pela Esfera Celeste)
+            ) : scene.type === "heraldic-surgery" || scene.type === "image-morph" ? (
+              // Animação Especial: Cirurgia Heráldica / Metamorfose Visual
               <HeraldicSurgery
                 durationInFrames={sceneDurationFrames}
                 badge={scene.badge}
+                beforeSrc={scene.beforeSrc || scene.mediaSrc}
+                afterSrc={scene.afterSrc}
               />
             ) : (
               // Imagem Documental com Movimento Dinâmico (Começa em scale 1.0, sem cobrir rostos)
               <KenBurnsImage
-                imageSrc={staticFile(scene.mediaSrc)}
+                imageSrc={scene.mediaSrc ? (scene.mediaSrc.startsWith("http") || scene.mediaSrc.startsWith("data:") ? scene.mediaSrc : staticFile(scene.mediaSrc)) : ""}
                 durationInFrames={sceneDurationFrames}
                 direction={scene.cameraDirection || getCameraPreset(index, scene.headline, scene.badge)}
                 badge={scene.badge}

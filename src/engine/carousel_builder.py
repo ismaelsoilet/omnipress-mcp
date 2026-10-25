@@ -4,7 +4,7 @@ Supports 4 distinct visual presets:
 1. classic_card: Rule 08 protective translucent backdrop card over archival background image.
 2. tweet_card: Social-proof style (Thiago Ramos) with avatar, verified badge, handle, bold headline and rounded image frame.
 3. minimal_dark: Minimalist dark-mode editorial (Rhaj Teixeira) with serif typography, step numbers, and UI mockups.
-4. split_editorial: Corporate/GovTech authority (Portal da Reforma Tributária) with top photo, circular avatar cutout, square bullets (■), and watermark.
+4. split_editorial: Corporate/Editorial authority with top photo, circular avatar cutout, square bullets (■), and watermark.
 """
 
 import re
@@ -304,6 +304,70 @@ class CarouselBuilder:
             draw_b = ImageDraw.Draw(base_img)
             draw_b.rounded_rectangle([box[0], box[1], box[2], box[3]], radius=radius, outline=border_color, width=1)
 
+    @staticmethod
+    def _parse_semantic_line(
+        clean_p: str,
+        pal: Dict[str, Any],
+        is_dark: bool,
+        custom_tags: Optional[Dict[str, str]] = None,
+    ) -> Tuple[Optional[Tuple[int, int, int, int]], str, Tuple[int, int, int, int], str]:
+        """
+        Agnostically parses a text line to identify semantic callouts, tags,
+        numbered lists, or bullets without any hardcoded domain terms.
+        
+        Returns:
+            (dot_color, prefix, prefix_color, content)
+        """
+        accent_rgb = hex_to_rgb(pal.get("accent") or pal.get("primary", "#0A66C2"))
+        danger_rgb = hex_to_rgb(pal.get("danger") or pal.get("error", "#DC2626" if not is_dark else "#F87171"))
+        success_rgb = hex_to_rgb(pal.get("success", "#059669" if not is_dark else "#34D399"))
+        warning_rgb = hex_to_rgb(pal.get("warning", "#D97706" if not is_dark else "#FBBF24"))
+        body_rgb = (226, 232, 240) if is_dark else (30, 41, 59)
+
+        # 1. Check for generic capitalized semantic tag (e.g., 'TAG: content')
+        tag_match = re.match(r'^([A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇ0-9_\-\s]{2,20}):\s*(.*)$', clean_p)
+        if tag_match:
+            tag_key = tag_match.group(1).strip()
+            content = tag_match.group(2).strip()
+            prefix = f"{tag_key}: "
+
+            tag_upper = tag_key.upper()
+            tag_lookup = custom_tags.get(tag_upper) or custom_tags.get(f"{tag_upper}:") if custom_tags else None
+            if tag_lookup:
+                c = hex_to_rgb(tag_lookup)
+            elif any(k in tag_upper for k in ("MITO", "ERRO", "FALSO", "PROBLEMA", "NÃO", "PERIGO", "ATENÇÃO", "RISCO", "DESVANTAGEM", "FAIL", "BUG", "MYTH", "WRONG", "ERROR", "DANGER")):
+                c = danger_rgb
+            elif any(k in tag_upper for k in ("VERDADE", "FATO", "CORRETO", "SOLUÇÃO", "SIM", "VANTAGEM", "CERTO", "SUCESSO", "TRUTH", "FACT", "CORRECT", "SOLUTION")):
+                c = success_rgb
+            elif any(k in tag_upper for k in ("AVISO", "NOTA", "ALERTA", "IMPORTANTE", "WARNING", "NOTE", "ALERT", "OBS")):
+                c = warning_rgb
+            else:
+                c = accent_rgb
+
+            dot_color = (*c, 255)
+            prefix_color = (*c, 255)
+            return dot_color, prefix, prefix_color, content
+
+        # 2. Check for numbered list (e.g. '1. ', '2) ')
+        num_match = re.match(r'^(\d+[\.\)])\s*(.*)$', clean_p)
+        if num_match:
+            prefix = num_match.group(1) + " "
+            prefix_color = (*accent_rgb, 255)
+            content = num_match.group(2).strip()
+            return None, prefix, prefix_color, content
+
+        # 3. Check for bullet list (e.g. '- ', '• ', '* ', '■ ')
+        bullet_match = re.match(r'^([\-\•\*\■])\s*(.*)$', clean_p)
+        if bullet_match:
+            prefix = ""
+            prefix_color = (*accent_rgb, 255)
+            dot_color = (*accent_rgb, 255)
+            content = bullet_match.group(2).strip()
+            return dot_color, prefix, prefix_color, content
+
+        # 4. Standard line
+        return None, "", (*body_rgb, 255), clean_p
+
     # -------------------------------------------------------------------------
     # Preset Renderers
     # -------------------------------------------------------------------------
@@ -449,7 +513,7 @@ class CarouselBuilder:
         clean_headline = re.sub(r'[\u2600-\u27bf]', '', clean_headline)
         clean_headline = re.sub(r'[\ufe00-\ufe0f]', '', clean_headline).strip()
 
-        font_head = load_font_by_family("sans", size=int(w * 0.046), is_bold=True)
+        font_head = load_font_by_family("sans", size=int(w * 0.050), is_bold=True)
         head_lines = wrap_text_by_pixel(clean_headline, font_head, max_w, draw)
         for line in head_lines:
             draw.text((margin_x, curr_y), line, fill=name_color, font=font_head)
@@ -464,12 +528,10 @@ class CarouselBuilder:
             clean_body = re.sub(r'[\ufe00-\ufe0f]', '', clean_body)
             clean_body = re.sub(r'[\u200d]', '', clean_body).strip()
 
-            font_body = load_font_by_family("sans", size=int(w * 0.031), is_bold=False)
-            font_body_bold = load_font_by_family("sans", size=int(w * 0.031), is_bold=True)
+            font_body = load_font_by_family("sans", size=int(w * 0.035), is_bold=False)
+            font_body_bold = load_font_by_family("sans", size=int(w * 0.035), is_bold=True)
             body_color = (226, 232, 240, 255) if is_dark else (30, 41, 59, 255)
-            mito_color = (248, 113, 113, 255) if is_dark else (220, 38, 38, 255)
-            verdade_color = (52, 211, 153, 255) if is_dark else (5, 150, 105, 255)
-            accent_rgb = hex_to_rgb(pal.get("accent", "#0A66C2"))
+            custom_tags = slide_data.get("prefixes") or slide_data.get("tag_colors") or vis_id.get("tag_colors") or {}
 
             paragraphs = clean_body.replace("\r\n", "\n").replace("\r", "\n").split("\n")
             for p in paragraphs:
@@ -478,26 +540,12 @@ class CarouselBuilder:
                     curr_y += int(font_body.size * 1.10)
                     continue
 
-                if clean_p.startswith("MITO:"):
-                    dot_color = mito_color
-                    prefix = "MITO: "
-                    prefix_color = mito_color
-                    content = clean_p[5:].lstrip()
-                elif clean_p.startswith("VERDADE:"):
-                    dot_color = verdade_color
-                    prefix = "VERDADE: "
-                    prefix_color = verdade_color
-                    content = clean_p[8:].lstrip()
-                elif len(clean_p) >= 3 and clean_p[0].isdigit() and clean_p[1:3] in (". ", ") "):
-                    dot_color = None
-                    prefix = clean_p[:3]
-                    prefix_color = (*accent_rgb, 255)
-                    content = clean_p[3:].lstrip()
-                else:
-                    dot_color = None
-                    prefix = ""
-                    prefix_color = body_color
-                    content = clean_p
+                dot_color, prefix, prefix_color, content = self._parse_semantic_line(
+                    clean_p=clean_p,
+                    pal=pal,
+                    is_dark=is_dark,
+                    custom_tags=custom_tags,
+                )
 
                 text_x = margin_x
                 if dot_color:
@@ -634,8 +682,8 @@ class CarouselBuilder:
         margin_x = int(w * 0.08)
         curr_y = split_y + int(h * 0.05)
 
-        # Brand Badge & Opinion Label
-        badge_text = slide_data.get("badge_text") or f"{channel_data.get('name', 'PORTAL').upper()} | OPINIÃO"
+        # Brand Badge & Label
+        badge_text = slide_data.get("badge_text") or channel_data.get("branding", {}).get("badge_text") or channel_data.get("name", "CHANNEL").upper()
         font_badge = load_font_by_family("sans", size=int(w * 0.024), is_bold=True)
         draw.text((margin_x, curr_y), badge_text, fill=(*accent_color, 255), font=font_badge)
         curr_y += int(font_badge.size * 1.8)
@@ -661,7 +709,12 @@ class CarouselBuilder:
                 curr_y += int(font_body.size * 1.40)
 
         # Watermark in bottom right
-        watermark = slide_data.get("watermark_text") or vis_id.get("elements", {}).get("watermark_text", "RT")
+        watermark = (
+            slide_data.get("watermark_text")
+            or vis_id.get("elements", {}).get("watermark_text")
+            or channel_data.get("branding", {}).get("badge_text")
+            or channel_data.get("name", "OMNIPRESS")[:3].upper()
+        )
         foot_y = h - int(h * 0.055)
         font_wm = load_font_by_family("sans", size=int(w * 0.036), is_bold=True)
         draw.text((w - margin_x - int(w * 0.08), foot_y - 6), watermark, fill=(255, 255, 255, 230), font=font_wm)

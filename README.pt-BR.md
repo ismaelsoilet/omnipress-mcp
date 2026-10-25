@@ -134,7 +134,7 @@ Geração declarativa de ativos 3D fotorrealistas isolados com canal alfa transp
 - **Mockups de Dispositivos Dinâmicos**: Smartphone moderno em perspectiva com chassi chanfrado em titânio escuro e mapeamento dinâmico de textura de tela UV para carrosséis e artigos (`device_mockup.py`).
 - **Medalhões e Moedas Metálicas Giratórias**: Medalhões 3D chanfrados com acabamentos metálicos (`gold`, `silver`, `chrome`, `obsidian`, `bronze`) e emblema frontal opcional (`rotating_badge.py`).
 - **Tipografia Cinética 3D**: Títulos 3D extrudados e chanfrados com iluminação de estúdio e reflexos especulares (`kinetic_title.py`).
-- **Bandeiras de Seda Ondulantes**: Simulação fotorrealista de bandeiras 3D em tecido de seda/cetim com deslocamento harmônico de ondas e mastro dourado polido (`brazil_flag.py`).
+- **Bandeiras e Estandartes de Seda Ondulantes**: Simulação fotorrealista de bandeiras 3D em tecido de seda/cetim com deslocamento harmônico de ondas, mapeamento dinâmico de textura e mastro dourado polido (`waving_flag.py` / `brazil_flag.py`).
 - **Controle via CLI e MCP**: Renderize diretamente via `omnipress render-3d` ou através da ferramenta MCP canônica `omnipress_render_3d`.
 
 ---

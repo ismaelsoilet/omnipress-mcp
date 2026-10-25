@@ -185,6 +185,73 @@ def test_render_split_editorial_preset(tmp_path: Path):
     assert img.size == (1080, 1350)  # 4:5 aspect ratio
 
 
+def test_parse_semantic_line():
+    pal = {
+        "danger": "#EF4444",
+        "success": "#10B981",
+        "warning": "#F59E0B",
+        "accent": "#3B82F6",
+    }
+    custom_tags = {
+        "DICA:": "#8B5CF6",
+        "ATENÇÃO:": "#EC4899",
+    }
+
+    # 1. Test standard tags
+    dot, prefix, p_color, content = CarouselBuilder._parse_semantic_line(
+        "MITO: O IBS entra em vigor imediatamente",
+        pal=pal,
+        is_dark=True,
+        custom_tags=custom_tags,
+    )
+    assert prefix == "MITO: "
+    assert p_color == (239, 68, 68, 255)
+    assert content == "O IBS entra em vigor imediatamente"
+
+    dot, prefix, p_color, content = CarouselBuilder._parse_semantic_line(
+        "VERDADE: A transição completa é até 2033",
+        pal=pal,
+        is_dark=True,
+        custom_tags=custom_tags,
+    )
+    assert prefix == "VERDADE: "
+    assert p_color == (16, 185, 129, 255)
+    assert content == "A transição completa é até 2033"
+
+    # 2. Test channel-custom tag
+    dot, prefix, p_color, content = CarouselBuilder._parse_semantic_line(
+        "DICA: Prepare seu ERP com antecedência",
+        pal=pal,
+        is_dark=False,
+        custom_tags=custom_tags,
+    )
+    assert prefix == "DICA: "
+    assert p_color == (139, 92, 246, 255)
+    assert content == "Prepare seu ERP com antecedência"
+
+    # 3. Test numbered list
+    dot, prefix, p_color, content = CarouselBuilder._parse_semantic_line(
+        "1. Realize o saneamento cadastral de produtos",
+        pal=pal,
+        is_dark=True,
+        custom_tags=custom_tags,
+    )
+    assert prefix == "1. "
+    assert p_color == (59, 130, 246, 255)
+    assert content == "Realize o saneamento cadastral de produtos"
+
+    # 4. Test bullet list
+    dot, prefix, p_color, content = CarouselBuilder._parse_semantic_line(
+        "• Alíquota padrão estimada em 27%",
+        pal=pal,
+        is_dark=True,
+        custom_tags=custom_tags,
+    )
+    assert dot == (59, 130, 246, 255)
+    assert prefix == ""
+    assert content == "Alíquota padrão estimada em 27%"
+
+
 if __name__ == "__main__":
     import pytest
     import sys

@@ -74,6 +74,7 @@ class UniversalPublisherEngine:
         mode: Optional[str] = None,
         force_duplicate: bool = False,
         dry_run: bool = False,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """Dispatches social post to configured adapter with pre-flight checks."""
         from src.adapters.buffer_adapter import BufferPublisherAdapter
@@ -81,14 +82,30 @@ class UniversalPublisherEngine:
         target_platforms = platforms or ["instagram"]
         effective_mode = mode or ("customScheduled" if schedule_time else "shareNow")
 
+        # Handle thread length validation if thread is provided for X/Twitter
+        thread = kwargs.get("thread") or kwargs.get("thread_items")
+        if thread and any(p.lower() in ("x", "twitter") for p in target_platforms):
+            for idx_t, t_item in enumerate(thread, 1):
+                t_str = t_item if isinstance(t_item, str) else t_item.get("text", "")
+                if len(t_str) > 280:
+                    return {
+                        "success": False,
+                        "error": f"Tweet {idx_t} length ({len(t_str)} chars) exceeds X limit (280 chars).",
+                        "channel_slug": channel_slug,
+                    }
+            if not text and thread:
+                text = thread[0] if isinstance(thread[0], str) else thread[0].get("text", "")
+
         # 1. Sanitize and validate length
         cleaned_text, validation_errors = self.validate_content(text, target_platforms)
         if validation_errors:
-            return {
-                "success": False,
-                "error": "; ".join(validation_errors),
-                "channel_slug": channel_slug,
-            }
+            # If thread is present on X, the main text is just tweet 1
+            if not (thread and any(p.lower() in ("x", "twitter") for p in target_platforms)):
+                return {
+                    "success": False,
+                    "error": "; ".join(validation_errors),
+                    "channel_slug": channel_slug,
+                }
 
         # 2. Check duplicate via PublishingShield (Rule 09)
         is_dup, reason = PublishingShield.check_duplicate(
@@ -116,6 +133,7 @@ class UniversalPublisherEngine:
                 "schedule_time": schedule_time,
                 "media_count": len(media_urls or []),
                 "sanitized_text_preview": cleaned_text[:120],
+                "thread_count": len(thread) if thread else 0,
             }
 
         # 3. Dispatch to publisher adapter
@@ -127,6 +145,9 @@ class UniversalPublisherEngine:
                 "channel_slug": channel_slug,
             }
 
+        passed_kwargs = dict(kwargs)
+        passed_kwargs.pop("thread", None)
+
         res = adapter.queue_social_post(
             text=cleaned_text,
             platforms=target_platforms,
@@ -134,6 +155,8 @@ class UniversalPublisherEngine:
             schedule_time=schedule_time,
             channel_slug=channel_slug,
             mode=effective_mode,
+            thread=thread,
+            **passed_kwargs,
         )
 
         # 4. Record to ledger on success
@@ -165,8 +188,12 @@ class UniversalPublisherEngine:
             publish_block = recipe.get("publish", {})
             text = publish_block.get("caption", "")
 
+        thread = recipe.get("thread") or recipe.get("thread_items")
+        if not text and thread and isinstance(thread, list) and len(thread) > 0:
+            text = thread[0] if isinstance(thread[0], str) else thread[0].get("text", "")
+
         if not text:
-            return {"success": False, "error": "Recipe contains no 'text' or 'caption'."}
+            return {"success": False, "error": "Recipe contains no 'text', 'caption', or 'thread'."}
 
         platforms = recipe.get("platforms")
         if not platforms and "publish" in recipe:
@@ -188,4 +215,5 @@ class UniversalPublisherEngine:
             mode=mode,
             force_duplicate=force_duplicate,
             dry_run=dry_run,
+            thread=thread,
         )

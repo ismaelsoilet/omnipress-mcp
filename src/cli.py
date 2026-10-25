@@ -560,7 +560,7 @@ def main(argv: Optional[list] = None) -> int:
         prog="omnipress",
         description="OmniPress CLI - Universal Agentic Publishing Protocol & Management Suite",
     )
-    parser.add_argument("--version", action="version", version="OmniPress MCP 0.6.0")
+    parser.add_argument("--version", action="version", version="OmniPress MCP 0.7.0")
 
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
 
@@ -639,7 +639,7 @@ def main(argv: Optional[list] = None) -> int:
     # render-3d (Universal 3D Engine)
     render_3d_p = subparsers.add_parser("render-3d", help="Render 3D visual assets via Blender headless (Rule 12)")
     render_3d_p.add_argument("--recipe", "-r", help="Path to 3D recipe JSON file")
-    render_3d_p.add_argument("--template", choices=["device_mockup", "rotating_badge", "kinetic_title", "brazil_flag"], default="device_mockup", help="Template name")
+    render_3d_p.add_argument("--template", choices=["device_mockup", "rotating_badge", "kinetic_title", "waving_flag", "brazil_flag"], default="device_mockup", help="Template name")
     render_3d_p.add_argument("--texture", help="Path to image texture (device screen or coin emblem)")
     render_3d_p.add_argument("--text", help="Text string for kinetic_title")
     render_3d_p.add_argument("--material", help="Material preset (gold, silver, chrome, obsidian)")

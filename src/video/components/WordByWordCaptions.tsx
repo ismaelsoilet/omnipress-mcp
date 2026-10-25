@@ -8,32 +8,33 @@ export interface WordByWordCaptionsProps {
   actTimelines?: ActTimeline[];
   bottomPosition?: number;
   fontSize?: number;
+  customHighlightWords?: {
+    red?: string[];
+    green?: string[];
+    gold?: string[];
+  };
 }
 
-// Lista de termos chave para coloração de alto impacto psicológico (estilo TikTok/Hormozi)
-const RED_WORDS = new Set([
-  "mito", "mitos", "mentira", "mentiras", "nunca", "jamais", "enganado", "errado",
-  "golpe", "problema", "morte", "sangue", "esconder", "apagada", "farsa", "vetada",
-  "rejeitada", "rejeitado"
+// Termos universais de ênfase psicológica (estilo Hormozi/Shorts)
+const DEFAULT_RED_WORDS = new Set([
+  "erro", "perigo", "alerta", "falha", "risco", "cuidado", "problema",
+  "nunca", "jamais", "falso", "mentira", "morte", "bloqueio", "perda"
 ]);
 
-const GREEN_WORDS = new Set([
-  "verde", "realidade", "verdade", "verdadeira", "verdadeiro", "documento",
-  "documentos", "bragança", "aliança", "matas", "florestas", "natureza", "oficiais",
-  "resgata"
+const DEFAULT_GREEN_WORDS = new Set([
+  "sucesso", "resultado", "verdade", "realidade", "oficial", "lucro",
+  "crescimento", "solução", "ganho", "aprovado", "garantia", "prática"
 ]);
 
-const GOLD_WORDS = new Set([
-  "amarelo", "amarela", "ouro", "imperatriz", "leopoldina", "habsburgo", "coroa", "coroas",
-  "dinastia", "império", "imperial", "pedro", "primeiro", "brasil", "brasileiro",
-  "decreto", "segredo", "austríaca", "portuguesa", "losango", "napoleão", "itália",
-  "debret", "dossiê", "histórico", "república"
+const DEFAULT_GOLD_WORDS = new Set([
+  "segredo", "exclusivo", "estratégia", "método", "chave", "essencial",
+  "impacto", "autoridade", "lei", "código", "dinheiro", "futuro"
 ]);
 
 /**
  * WordByWordCaptions — Motor de Legendas de Ultra-Retenção (Palavra por Palavra)
  * Sincronização milimétrica baseada em Whisper com pop animation (escala dinâmica),
- * cores temáticas instantâneas, contorno preto de alta densidade e zero repetições.
+ * cores temáticas dinâmicas, contorno preto de alta densidade e zero repetições.
  */
 export const WordByWordCaptions: React.FC<WordByWordCaptionsProps> = ({
   introDurationFrames = 0,
@@ -41,9 +42,28 @@ export const WordByWordCaptions: React.FC<WordByWordCaptionsProps> = ({
   actTimelines = [],
   bottomPosition = 420,
   fontSize = 72,
+  customHighlightWords,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+
+  const redWords = useMemo(() => {
+    const s = new Set(DEFAULT_RED_WORDS);
+    (customHighlightWords?.red || []).forEach((w) => s.add(w.toLowerCase()));
+    return s;
+  }, [customHighlightWords?.red]);
+
+  const greenWords = useMemo(() => {
+    const s = new Set(DEFAULT_GREEN_WORDS);
+    (customHighlightWords?.green || []).forEach((w) => s.add(w.toLowerCase()));
+    return s;
+  }, [customHighlightWords?.green]);
+
+  const goldWords = useMemo(() => {
+    const s = new Set(DEFAULT_GOLD_WORDS);
+    (customHighlightWords?.gold || []).forEach((w) => s.add(w.toLowerCase()));
+    return s;
+  }, [customHighlightWords?.gold]);
 
   if (!captionsData || !actTimelines || actTimelines.length === 0) {
     return null;
@@ -132,15 +152,15 @@ export const WordByWordCaptions: React.FC<WordByWordCaptionsProps> = ({
   let glowColor = "rgba(0, 0, 0, 0.9)";
   let isKeyword = false;
 
-  if (RED_WORDS.has(cleanWord)) {
+  if (redWords.has(cleanWord)) {
     textColor = "#FF2A55";
     glowColor = "rgba(255, 42, 85, 0.75)";
     isKeyword = true;
-  } else if (GREEN_WORDS.has(cleanWord)) {
+  } else if (greenWords.has(cleanWord)) {
     textColor = "#00FF88";
     glowColor = "rgba(0, 255, 136, 0.75)";
     isKeyword = true;
-  } else if (GOLD_WORDS.has(cleanWord)) {
+  } else if (goldWords.has(cleanWord)) {
     textColor = "#FFE500";
     glowColor = "rgba(255, 229, 0, 0.85)";
     isKeyword = true;

@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] — 2026-10-25
+
+### Added
+- **Desacoplamento e Universalização Arquitetural de `src/` (Regra 04)**:
+  - `src/engine/carousel_builder.py`: método estático agnóstico `_parse_semantic_line` com suporte a qualquer tag semântica em maiúsculas (`TAG:`), listas numeradas (`1.`) e marcadores (`•`), mapeando cores dinamicamente da paleta do canal (`danger`, `success`, `warning`, `accent`) ou de dicionários customizados (`prefixes`, `tag_colors`).
+  - Suporte a marcas d'água (`watermark_text`) e badges editoriais (`badge_text`) dinâmicos, extraídos diretamente do `channel.json` ou do slide, sem fallbacks hardcoded.
+  - Dimensionamento responsivo ampliado de tipografia no carrossel (`headline` a 5.0% e `body` a 3.5% da largura da imagem) garantindo legibilidade perfeita no feed do Instagram e LinkedIn.
+- **Suporte Nativo a Threads Encadeadas no X (Twitter)**:
+  - Adicionado suporte a `metadata.twitter.thread` no `BufferAdapter` (`src/adapters/buffer_adapter.py`) e `UniversalPublisher` (`src/engine/universal_publisher.py`), permitindo a publicação automática de threads completas com validação estrita de 280 caracteres por tweet.
+- **Universal 3D Waving Flag Template (`src/engine/blender_templates/waving_flag.py`)**:
+  - Template 3D agnóstico no Blender para simulação fotorrealista de bandeiras e estandartes ondulantes em tecido de seda/cetim com mastro dourado polido, canal alfa transparente e textura dinâmica configurável via `--texture`.
+  - Mapeado no `Universal3DEngine` (`src/engine/universal_3d.py`) e CLI `omnipress render-3d --template waving_flag`. O antigo `brazil_flag.py` atua como forwarder retrocompatível.
+- **Camada Universal de Impacto Psicológico & Metamorfose (`src/video/components/`)**:
+  - `MitoRealidadeOverlays.tsx`: suporte a carimbos táteis universais (`stamp-alert`, `stamp-negative`, `stamp-success`, `stamp-positive`) com cores customizáveis (`color`, `borderColor`, `subtextColor`) aplicáveis a qualquer nicho de canal (tributário, tecnologia, história, saúde).
+  - `HeraldicSurgery.tsx`: universalizado com props `beforeSrc`, `afterSrc`, `beforeBadge` e `afterBadge` para metamorfose visual e transição de documentos entre dois estados visuais (Antes e Depois).
+  - `WordByWordCaptions.tsx`: adicionada propriedade `customHighlightWords` (`red`, `green`, `gold`) permitindo aos canais injetar suas próprias palavras-chave emocionais mantendo vocabulário padrão universal.
+
+### Changed
+- **Purga de Acoplamentos e Hardcodings em Componentes de Vídeo**:
+  - `DocumentaryEpisode.tsx`: removido áudio fixo (`sb_signaltonoise.mp3`), frame counts hardcoded (`27890`) e IDs de cena vinculados a episódios específicos (`scene_57`, `scene_71`). Áudios secundários agora são configurados opcionalmente via `EpisodeConfig.outroMusicSrc` e sincronizados via `useVideoConfig().durationInFrames`.
+  - `ChannelOutro.tsx`: totalmente parametrizado (`title`, `subtitle`, `stampText`, `playlistTitle`, `debateQuestion`), removendo títulos de episódios históricos e caminhos de avatares fixos em favor de padrões genéricos universais.
+  - `ThumbnailEpisode.tsx`: tratamento seguro para URLs remotas e caminhos vazios de imagem.
+
+### Fixed
+- Correção de conflito de argumentos em `universal_publisher.py` ao repassar `thread` para adaptadores sociais.
+- Correção de parênteses excedentes na resolução de cores de perigo/alerta no `carousel_builder.py`.
+
 ## [0.6.0] — 2026-10-24
 
 ### Added

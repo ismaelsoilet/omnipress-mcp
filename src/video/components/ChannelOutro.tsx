@@ -16,11 +16,16 @@ export interface ChannelOutroProps {
   avatarSrc?: string;
   bannerSrc?: string;
   primaryColor?: string;
+  title?: string;
+  subtitle?: string;
+  stampText?: string;
+  playlistTitle?: string;
+  debateQuestion?: string;
 }
 
 /**
- * ChannelOutro — Vinheta Oficial de Encerramento e Compartilhamento.
- * 100% agnóstica e reutilizável em todos os projetos do canal Dossiê Histórico.
+ * ChannelOutro — Vinheta Universal de Encerramento e Compartilhamento.
+ * 100% agnóstica e reutilizável em qualquer canal configurado no OmniPress.
  *
  * Estrutura Dinâmica em 2 Fases:
  * - Fase 1 (0 a 12s / frames 0 a 360): Chamada nobre de COMPARTILHAMENTO com fontes grandes.
@@ -28,10 +33,15 @@ export interface ChannelOutroProps {
  */
 export const ChannelOutro: React.FC<ChannelOutroProps> = ({
   durationInFrames,
-  channelName = "DOSSIÊ HISTÓRICO",
-  avatarSrc = "dossie/ep03b/midias/cena_69_mosaico_quatro_arquitetos.jpg", // fallback seguro
+  channelName = "CANAL OFICIAL",
+  avatarSrc,
   bannerSrc,
-  primaryColor = "#D4AF37",
+  primaryColor = "#3B82F6",
+  title = "COMPARTILHE O CONHECIMENTO",
+  subtitle = "Compartilhe este conteúdo com colegas e amigos que se interessam por este tema.",
+  stampText = "✔ CONTEÚDO OFICIAL // COMPARTILHE",
+  playlistTitle = "Episódios & Análises",
+  debateQuestion = "Qual é a sua visão sobre este tema? Deixe sua opinião nos comentários.",
 }) => {
   const frame = useCurrentFrame();
   const { width, height } = useVideoConfig();
@@ -151,7 +161,7 @@ export const ChannelOutro: React.FC<ChannelOutroProps> = ({
               textTransform: "uppercase",
             }}
           >
-            A VERDADEIRA HISTÓRIA NÃO PODE FICAR EM SEGREDO
+            {title}
           </h1>
 
           {/* Subtítulo Dinâmico */}
@@ -167,23 +177,23 @@ export const ChannelOutro: React.FC<ChannelOutroProps> = ({
               textShadow: "0 2px 10px rgba(0, 0, 0, 0.8)",
             }}
           >
-            Compartilhe este dossiê com professores, estudantes, historiadores e amigos que ainda acreditam no mito das matas e do ouro.
+            {subtitle}
           </p>
 
-          {/* Carimbo de Partilha Pericial */}
+          {/* Carimbo de Partilha */}
           <div
             style={{
               display: "inline-block",
-              border: "3px solid #00B45F",
+              border: `3px solid ${primaryColor}`,
               borderRadius: 10,
               backgroundColor: "rgba(10, 32, 20, 0.88)",
               padding: "14px 40px",
-              boxShadow: "0 0 30px rgba(0, 180, 95, 0.25)",
+              boxShadow: `0 0 30px ${primaryColor}40`,
             }}
           >
             <span
               style={{
-                color: "#00E676",
+                color: "#FFFFFF",
                 fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
                 fontSize: 28,
                 fontWeight: 800,
@@ -191,7 +201,7 @@ export const ChannelOutro: React.FC<ChannelOutroProps> = ({
                 textTransform: "uppercase",
               }}
             >
-              ✔ DOCUMENTO PÚBLICO // COMPARTILHE A HISTÓRIA REAL
+              {stampText}
             </span>
           </div>
         </AbsoluteFill>
@@ -382,7 +392,7 @@ export const ChannelOutro: React.FC<ChannelOutroProps> = ({
                   textAlign: "center",
                 }}
               >
-                Dossiês e Casos Arquivados
+                {playlistTitle}
               </span>
             </div>
           </div>
@@ -391,7 +401,7 @@ export const ChannelOutro: React.FC<ChannelOutroProps> = ({
           <div
             style={{
               backgroundColor: "rgba(10, 14, 22, 0.90)",
-              border: `1.5px solid rgba(212, 175, 55, 0.40)`,
+              border: `1.5px solid ${primaryColor}66`,
               borderRadius: 8,
               padding: "14px 40px",
               width: "100%",
@@ -409,7 +419,7 @@ export const ChannelOutro: React.FC<ChannelOutroProps> = ({
                 letterSpacing: 1,
               }}
             >
-              <strong style={{ color: primaryColor }}>PARTICIPE DO DEBATE:</strong> Você já conhecia a verdadeira história das cores? Deixe sua opinião nos comentários.
+              <strong style={{ color: primaryColor }}>PARTICIPE DO DEBATE:</strong> {debateQuestion}
             </p>
           </div>
         </AbsoluteFill>

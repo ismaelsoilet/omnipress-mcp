@@ -29,7 +29,7 @@ export interface KenBurnsSceneProps {
 
 export interface DocumentaryScene {
   id: string;
-  type: "ken-burns" | "document-reveal" | "tactical-map" | "stat-counter" | "video-clip" | "channel-outro" | "heraldic-surgery";
+  type: "ken-burns" | "document-reveal" | "tactical-map" | "stat-counter" | "video-clip" | "channel-outro" | "heraldic-surgery" | "image-morph";
   mediaSrc: string;
   durationInSeconds: number;
   startInSeconds?: number;
@@ -42,6 +42,8 @@ export interface DocumentaryScene {
   subheadline?: string;
   badge?: string;
   notes?: string;
+  beforeSrc?: string;
+  afterSrc?: string;
 }
 
 export interface VoiceoverTrack {
@@ -85,6 +87,8 @@ export interface EpisodeConfig {
   language: SupportedLanguage;
   backgroundMusicSrc?: string;
   backgroundMusicVolume?: number;
+  outroMusicSrc?: string;
+  outroMusicStartSec?: number;
   voiceovers?: VoiceoverTrack[];
   scenes: DocumentaryScene[];
   captions?: Record<string, ActData>;

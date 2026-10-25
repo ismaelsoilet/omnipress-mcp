@@ -38,37 +38,41 @@ export const ThumbnailEpisode: React.FC<ThumbnailEpisodeProps> = ({
         @import url('https://fonts.googleapis.com/css2?family=Anton&family=Cinzel:wght@800;900&family=Montserrat:wght@800;900&display=swap');
       `}</style>
 
-      {/* 1. Imagem de Fundo Principal: Corte Transversal de Derinkuyu (Lado Direito e Central) */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          width: "72%",
-          height: "100%",
-          backgroundImage: `url(${staticFile(imageSrc)})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center 28%",
-          filter: "contrast(1.18) saturate(1.15) brightness(0.92)",
-        }}
-      />
+      {/* 1. Imagem de Fundo Principal */}
+      {imageSrc && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            width: "72%",
+            height: "100%",
+            backgroundImage: `url(${imageSrc.startsWith("http") || imageSrc.startsWith("data:") ? imageSrc : staticFile(imageSrc)})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center 28%",
+            filter: "contrast(1.18) saturate(1.15) brightness(0.92)",
+          }}
+        />
+      )}
 
-      {/* 2. Composição do Lado Esquerdo: A Descoberta no Porão (Parede Quebrada) */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "45%",
-          height: "100%",
-          backgroundImage: `url(${staticFile(cellarSrc)})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center 40%",
-          filter: "contrast(1.2) brightness(0.55)",
-          maskImage: "linear-gradient(to right, black 55%, transparent 100%)",
-          WebkitMaskImage: "linear-gradient(to right, black 55%, transparent 100%)",
-        }}
-      />
+      {/* 2. Composição do Lado Esquerdo */}
+      {cellarSrc && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "45%",
+            height: "100%",
+            backgroundImage: `url(${cellarSrc.startsWith("http") || cellarSrc.startsWith("data:") ? cellarSrc : staticFile(cellarSrc)})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center 40%",
+            filter: "contrast(1.2) brightness(0.55)",
+            maskImage: "linear-gradient(to right, black 55%, transparent 100%)",
+            WebkitMaskImage: "linear-gradient(to right, black 55%, transparent 100%)",
+          }}
+        />
+      )}
 
       {/* 3. Gradiente Tático Escuro na Esquerda para Contraste Absoluto das Letras */}
       <div

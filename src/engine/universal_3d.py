@@ -33,7 +33,8 @@ class Universal3DEngine:
         "device_mockup": TEMPLATES_DIR / "device_mockup.py",
         "rotating_badge": TEMPLATES_DIR / "rotating_badge.py",
         "kinetic_title": TEMPLATES_DIR / "kinetic_title.py",
-        "brazil_flag": TEMPLATES_DIR / "brazil_flag.py",
+        "waving_flag": TEMPLATES_DIR / "waving_flag.py",
+        "brazil_flag": TEMPLATES_DIR / "waving_flag.py",  # Backward-compatible alias
     }
 
     def __init__(self, channel_manager: Optional[ChannelManager] = None):

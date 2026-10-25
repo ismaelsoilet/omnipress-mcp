@@ -134,7 +134,7 @@ Declarative photorealistic 3D asset generation powered by headless Blender 4.2+ 
 - **Dynamic Device Mockups**: Smartphone in perspective with beveled dark titanium chassis and automatic UV screen mapping for carousel/article screenshots (`device_mockup.py`).
 - **Rotating Metallic Badges & Coins**: 3D beveled medallions with customizable metallic shaders (`gold`, `silver`, `chrome`, `obsidian`, `bronze`) and optional front insignia (`rotating_badge.py`).
 - **3D Kinetic Typography**: Extruded beveled 3D text with studio lighting and specular highlights (`kinetic_title.py`).
-- **Waving Silk Flags**: Photorealistic 3D waving Brazilian and institutional flags with harmonic cloth displacement, satin shaders, and polished golden pole (`brazil_flag.py`).
+- **Waving Silk Flags & Banners**: Photorealistic 3D waving flags and banners with harmonic cloth displacement, satin shaders, custom texture mapping, and polished golden pole (`waving_flag.py` / `brazil_flag.py`).
 - **CLI & MCP Control**: Render via `omnipress render-3d` or canonical MCP tool `omnipress_render_3d`.
 
 ---

@@ -365,6 +365,36 @@ class BufferPublisherAdapter(BasePublisherAdapter):
                     }
                 }
 
+            # If target channel is Twitter/X, check for thread support
+            is_twitter = (
+                service_for_ch in ("x", "twitter")
+                or ch_id == self.x_profile_id
+                or any(p in ("x", "twitter") for p in normalized)
+            )
+            if not is_twitter and channel_slug:
+                try:
+                    from src.core.channel_manager import ChannelManager
+                    ch_conf = ChannelManager().get_channel(channel_slug)
+                    if ch_conf and ch_conf.get("social", {}).get("x_twitter", {}).get("buffer_channel_id") == ch_id:
+                        is_twitter = True
+                except Exception:
+                    pass
+
+            thread = kwargs.get("thread") or kwargs.get("thread_items")
+            if is_twitter and thread and isinstance(thread, list) and len(thread) > 1:
+                input_payload["text"] = thread[0]
+                thread_objs = []
+                for item in thread:
+                    if isinstance(item, str):
+                        thread_objs.append({"text": item})
+                    elif isinstance(item, dict):
+                        thread_objs.append(item)
+                input_payload["metadata"] = {
+                    "twitter": {
+                        "thread": thread_objs
+                    }
+                }
+
             try:
                 res = requests.post(
                     self.GRAPHQL_URL,
