@@ -71,6 +71,17 @@ When an agent generates a content campaign, it must produce three synchronized a
   1. Proactively search public archives, open museum collections, Wikimedia Commons, and the web for authentic, high-resolution historical/real-world assets, downloading, cropping/letterboxing them into 16:9 or 9:16 format with high visual fidelity.
   2. Simultaneously generate structured, production-ready prompts tailored for external AI generators (Midjourney, FLUX, Stable Diffusion, Ideogram, Leonardo AI) with explicit aspect ratios (`--ar 16:9` / `--ar 9:16`), cinematography tags, and target destination paths in the channel directory, so the user can easily render and deliver them back into the workspace.
 
+- **Documentary Visual Dynamism & Anti-Bare-Table Standard**:
+  - Scenes in documentary video episodes (such as *Dossiê Histórico*) must NEVER be composed as bare text tables, flat geometric data boxes, or raw bullet lists over solid or gradient backgrounds.
+  - Every single scene MUST feature a rich, authentic visual foundation: an authentic archival photograph, a vintage tactical/nautical map, an original period declassified document, an individual historical portrait, or a cinematic AI/3D render.
+  - Explanatory text, forensic labels, and subtitles must be rendered over this imagery using the Rule 08 protective backdrop card (`rgba(10, 14, 22, 230)` with `#D4AF37` gold borders and stroke), never erasing or substituting the visual atmosphere.
+
+- **YouTube End Screen Outro Standardization (Universal Outro Standard)**:
+  - Channel outro scenes must strictly adhere to the clean, native YouTube End Screen architecture:
+    1. Interactive circular channel subscription card on the left with channel wax seal, bell, and CTA (`INSCREVA-SE NO CANAL // DOSSIÊ HISTÓRICO`).
+    2. Exactly ONE prominent 16:9 slot on the right reserved for YouTube's automated algorithmic recommendation (`[ VÍDEO RECOMENDADO / SELEÇÃO AUTOMÁTICA DO YOUTUBE ]`).
+    3. Never include hardcoded previews, teasers, or static cards for future episodes (e.g. "Prévia do Dossiê 05"), keeping the slot 100% dynamic for YouTube's native delivery.
+
 - **Audio-First Synchronization & Visual Dynamics Standard (Speech-to-Frame Lock)**:
   - The recorded voiceover narration track is the absolute, authoritative master clock of the entire video. Visual scene cuts, b-roll switches, document reveals, text overlays, and graphic transitions must be strictly frame-locked to the exact millisecond when the corresponding topic or phrase is uttered in the speech.
   - Estimating, interpolating, or uniformly distributing scene durations is strictly prohibited when an audio track exists. Scene start and end points must derive directly from speech alignment (Whisper word/segment timestamps or acoustic speech detection).
@@ -167,6 +178,17 @@ Ao gerar campanhas de conteúdo, o agente deve produzir 3 formatos integrados:
 - **Protocolo de Aquisição de Imagens, Fallback de Cotas e Geração Externa Colaborativa**: Caso as cotas de geração de imagens por IA estejam esgotadas (HTTP 429), restritas ou indisponíveis, é TERMINANTEMENTE PROIBIDO travar a esteira:
   1. O agente deve proativamente pesquisar e obter imagens reais/históricas na internet (arquivos públicos, Wikimedia Commons, National Archives, Library of Congress, etc.), baixando-as e formatando-as no padrão 16:9 ou 9:16 com tratamento visual adequado (letterbox difuso, enquadramento cinematográfico).
   2. Simultaneamente, o agente deve gerar prompts estruturados e de alto nível para programas externos (Midjourney, FLUX, Stable Diffusion, Ideogram, Leonardo AI) contendo proporções exatas (`--ar 16:9` / `--ar 9:16`), direção de fotografia, iluminação, estilo e o caminho exato onde o usuário deve salvar os arquivos para integração imediata.
+
+- **Padrão de Dinamismo Visual Documental & Erradicação de Tabelas Vazias (Anti-Bare-Table)**:
+  - Cenas de documentários audiovisuais (como os do canal *Dossiê Histórico*) JAMAIS devem ser compostas como meras tabelas de dados, caixas de texto planas ou listas de tópicos sobre fundos chapados ou gradientes escuros.
+  - Toda e qualquer cena DEVE obrigatoriamente conter uma base visual documental rica e autêntica: uma fotografia histórica de arquivo, um mapa tático ou carta náutica de época, um documento desclassificado original, um retrato individual verídico ou uma renderização cinematográfica em IA/3D.
+  - Legendas explicativas, fichas forenses e textos de apoio devem ser dispostos sobre essa imagem utilizando o contêiner protetor translúcido da Regra 08 (`rgba(10, 14, 22, 230)` com borda dourada `#D4AF37` e contorno de segurança), preservando a atmosfera visual de cinema.
+
+- **Padronização Universal de Telas Finais do YouTube (Outro Oficial)**:
+  - As telas de encerramento dos episódios devem adotar rigorosamente a arquitetura nativa de End Screen do YouTube:
+    1. Card interativo de inscrição no canal à esquerda com sinete oficial, sino de notificações e chamada (`INSCREVA-SE NO CANAL // DOSSIÊ HISTÓRICO`).
+    2. Exatamente UM slot amplo em proporção 16:9 à direita reservado para o vídeo recomendado automatizado do YouTube (`[ VÍDEO RECOMENDADO / SELEÇÃO AUTOMÁTICA DO YOUTUBE ]`).
+    3. É expressamente proibido incluir prévias estáticas ou teasers manuais de episódios futuros (como "Prévia do Dossiê 05"), mantendo o slot 100% dinâmico para a entrega nativa da plataforma.
 
 - **Padrão de Linha do Tempo Guiada pelo Áudio & Dinâmica Visual do Remotion (Casamento Estrito Fala-Frame)**:
   - A gravação de locução de voz é o relógio mestre irrevogável de toda a composição. Cada corte de imagem, mudança de plano, entrada de documento, carimbo pericial e transição visual deve estar milimetricamente travado no frame exato em que a respectiva palavra ou assunto é pronunciado pelo narrador.

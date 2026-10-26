@@ -30,34 +30,22 @@ class BufferPublisherAdapter(BasePublisherAdapter):
 
     def get_api_key(self, channel_slug: Optional[str] = None) -> str:
         """
-        Resolves the effective Buffer API key.
-        Precedence:
+        Resolves the effective Buffer API key with strict Rule 04 precedence:
         1. channels/<channel_slug>/.env (BUFFER_API_KEY or BUFFER_ACCESS_TOKEN)
         2. Channel-prefixed process env var (e.g. ISMAEL_SOILET_BUFFER_API_KEY)
         3. Global process env var (BUFFER_API_KEY or BUFFER_ACCESS_TOKEN)
         4. self.api_key instance default
         """
-        if channel_slug:
-            try:
-                from src.core.channel_manager import ChannelManager
-                ch_env = ChannelManager().get_channel_env(channel_slug)
-                if ch_env.get("BUFFER_API_KEY"):
-                    return ch_env["BUFFER_API_KEY"].strip()
-                if ch_env.get("BUFFER_ACCESS_TOKEN"):
-                    return ch_env["BUFFER_ACCESS_TOKEN"].strip()
-            except Exception:
-                pass
+        try:
+            from src.core.channel_manager import ChannelManager
+            cm = ChannelManager()
+            key = cm.get_credential("BUFFER_API_KEY", channel_slug) or cm.get_credential("BUFFER_ACCESS_TOKEN", channel_slug)
+            if key:
+                return key
+        except Exception:
+            pass
 
-            prefix = channel_slug.upper().replace("-", "_")
-            prefixed = os.getenv(f"{prefix}_BUFFER_API_KEY", "").strip() or os.getenv(f"{prefix}_BUFFER_ACCESS_TOKEN", "").strip()
-            if prefixed:
-                return prefixed
-
-        return (
-            os.getenv("BUFFER_API_KEY", "").strip()
-            or os.getenv("BUFFER_ACCESS_TOKEN", "").strip()
-            or getattr(self, "api_key", "")
-        )
+        return getattr(self, "api_key", "")
 
     def is_configured(self, channel_slug: Optional[str] = None) -> bool:
         """Returns True if Buffer API key/token is configured globally or for channel."""
@@ -136,40 +124,49 @@ class BufferPublisherAdapter(BasePublisherAdapter):
         except requests.RequestException as e:
             return {"success": False, "error": str(e)}
 
-    @staticmethod
-    def _canonical_platform(plat: str) -> str:
-        plat_lower = plat.lower().strip()
-        if plat_lower in ("instagram", "ig"):
-            return "instagram"
-        if plat_lower in ("x", "twitter"):
-            return "x"
-        if plat_lower in ("linkedin",):
-            return "linkedin"
-        if plat_lower in ("threads",):
-            return "threads"
-        return plat_lower
+    PLATFORM_ALIASES = {
+        "instagram": "instagram",
+        "ig": "instagram",
+        "x": "x",
+        "twitter": "x",
+        "x_twitter": "x",
+        "linkedin": "linkedin",
+        "threads": "threads",
+    }
 
-    def _resolve_channel_ids(self, platforms: List[str], channel_slug: Optional[str] = None) -> List[str]:
-        target_ids = []
+    @classmethod
+    def _canonical_platform(cls, plat: str) -> str:
+        plat_lower = plat.lower().strip()
+        return cls.PLATFORM_ALIASES.get(plat_lower, plat_lower)
+
+    def _resolve_targets(self, platforms: List[str], channel_slug: Optional[str] = None) -> List[Dict[str, str]]:
+        """
+        Resolves list of target profile dictionaries: [{"id": channel_id, "service": platform}, ...]
+        Precedence:
+        1. channels/<slug>/channel.json (social[plat].buffer_channel_id or social.x_twitter.buffer_channel_id)
+        2. channels/<slug>/.env (BUFFER_<PLAT>_PROFILE_ID)
+        3. Global process env / instance profile ID
+        4. Auto-discovery from Buffer GraphQL API
+        """
+        target_dict: Dict[str, str] = {}
         normalized = [p.lower().strip() for p in platforms]
         if "all" in normalized:
             requested_platforms = ["linkedin", "x", "threads", "instagram"]
         else:
             requested_platforms = [self._canonical_platform(p) for p in normalized]
 
-        if not hasattr(self, "_channel_services"):
-            self._channel_services = {}
-
-        # 1. If channel_slug is specified, look up channel-specific buffer_channel_id or channel .env
         ch_social = {}
         ch_env = {}
         if channel_slug:
-            from src.core.channel_manager import ChannelManager
-            cm = ChannelManager()
-            ch = cm.get_channel(channel_slug)
-            if ch:
-                ch_social = ch.get("social", {})
-            ch_env = cm.get_channel_env(channel_slug)
+            try:
+                from src.core.channel_manager import ChannelManager
+                cm = ChannelManager()
+                ch = cm.get_channel(channel_slug)
+                if ch:
+                    ch_social = ch.get("social", {})
+                ch_env = cm.get_channel_env(channel_slug)
+            except Exception:
+                pass
 
         effective_key = self.get_api_key(channel_slug)
         cached_remote_channels = None
@@ -222,11 +219,21 @@ class BufferPublisherAdapter(BasePublisherAdapter):
                         resolved_id = remote_ch["id"]
                         break
 
-            if resolved_id and resolved_id not in target_ids:
-                target_ids.append(resolved_id)
-                self._channel_services[resolved_id] = plat
+            if resolved_id and resolved_id not in target_dict:
+                target_dict[resolved_id] = plat
 
-        return target_ids
+        # Maintain backward-compatible _channel_services on instance
+        if not hasattr(self, "_channel_services"):
+            self._channel_services = {}
+        for r_id, srv in target_dict.items():
+            self._channel_services[r_id] = srv
+
+        return [{"id": r_id, "service": srv} for r_id, srv in target_dict.items()]
+
+    def _resolve_channel_ids(self, platforms: List[str], channel_slug: Optional[str] = None) -> List[str]:
+        """Backward-compatible helper returning flat list of channel IDs."""
+        targets = self._resolve_targets(platforms, channel_slug=channel_slug)
+        return [t["id"] for t in targets]
 
     def queue_social_post(
         self,
@@ -253,13 +260,13 @@ class BufferPublisherAdapter(BasePublisherAdapter):
                 "error": "BUFFER_API_KEY or BUFFER_ACCESS_TOKEN is not configured in .env",
             }
 
-        normalized = [p.lower().strip() for p in platforms]
-        target_ids = self._resolve_channel_ids(platforms, channel_slug=channel_slug)
-        if not target_ids:
+        targets = self._resolve_targets(platforms, channel_slug=channel_slug)
+        if not targets:
             return {
                 "success": False,
                 "error": f"No valid channel IDs found for requested platforms: {platforms}. Configure BUFFER_INSTAGRAM_PROFILE_ID or verify connected channels.",
             }
+        target_ids = [t["id"] for t in targets]
 
         headers = {
             "Content-Type": "application/json",
@@ -329,7 +336,10 @@ class BufferPublisherAdapter(BasePublisherAdapter):
                 assets.append({"image": {"url": url}})
 
         created_posts = []
-        for ch_id in target_ids:
+        for target in targets:
+            ch_id = target["id"]
+            service = target["service"]
+
             input_payload: Dict[str, Any] = {
                 "text": text,
                 "channelId": ch_id,
@@ -341,23 +351,8 @@ class BufferPublisherAdapter(BasePublisherAdapter):
             if assets:
                 input_payload["assets"] = assets
 
-            # If target channel is Instagram, inject mandatory Instagram post metadata
-            service_for_ch = getattr(self, "_channel_services", {}).get(ch_id)
-            is_instagram = (
-                service_for_ch == "instagram"
-                or ch_id == self.instagram_profile_id
-                or (len(target_ids) == 1 and any(p in ("instagram", "ig") for p in normalized))
-            )
-            if not is_instagram and channel_slug:
-                try:
-                    from src.core.channel_manager import ChannelManager
-                    ch_conf = ChannelManager().get_channel(channel_slug)
-                    if ch_conf and ch_conf.get("social", {}).get("instagram", {}).get("buffer_channel_id") == ch_id:
-                        is_instagram = True
-                except Exception:
-                    pass
-
-            if is_instagram:
+            # Inject Instagram post metadata strictly when target is Instagram
+            if service == "instagram":
                 input_payload["metadata"] = {
                     "instagram": {
                         "type": "post",
@@ -365,35 +360,24 @@ class BufferPublisherAdapter(BasePublisherAdapter):
                     }
                 }
 
-            # If target channel is Twitter/X, check for thread support
-            is_twitter = (
-                service_for_ch in ("x", "twitter")
-                or ch_id == self.x_profile_id
-                or any(p in ("x", "twitter") for p in normalized)
-            )
-            if not is_twitter and channel_slug:
-                try:
-                    from src.core.channel_manager import ChannelManager
-                    ch_conf = ChannelManager().get_channel(channel_slug)
-                    if ch_conf and ch_conf.get("social", {}).get("x_twitter", {}).get("buffer_channel_id") == ch_id:
-                        is_twitter = True
-                except Exception:
-                    pass
-
-            thread = kwargs.get("thread") or kwargs.get("thread_items")
-            if is_twitter and thread and isinstance(thread, list) and len(thread) > 1:
-                input_payload["text"] = thread[0]
-                thread_objs = []
-                for item in thread:
-                    if isinstance(item, str):
-                        thread_objs.append({"text": item})
-                    elif isinstance(item, dict):
-                        thread_objs.append(item)
-                input_payload["metadata"] = {
-                    "twitter": {
-                        "thread": thread_objs
+            # Inject Twitter thread metadata strictly when target is Twitter/X
+            if service in ("x", "twitter"):
+                thread = kwargs.get("thread") or kwargs.get("thread_items")
+                if thread and isinstance(thread, list) and len(thread) > 1:
+                    input_payload["text"] = thread[0]
+                    thread_objs = []
+                    for item in thread[1:]:
+                        if isinstance(item, str):
+                            thread_objs.append({"text": item, "assets": []})
+                        elif isinstance(item, dict):
+                            if "assets" not in item:
+                                item["assets"] = []
+                            thread_objs.append(item)
+                    input_payload["metadata"] = {
+                        "twitter": {
+                            "thread": thread_objs
+                        }
                     }
-                }
 
             try:
                 res = requests.post(

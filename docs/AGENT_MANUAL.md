@@ -399,11 +399,12 @@ Quando gerenciar múltiplos canais ou marcas:
 
 - **Ambiente Central vs. Ambientes Isolados**:
   - **`.env` na raiz**: Configura o canal principal padrão (**Dossiê Histórico**), através de `OMNIPRESS_ACTIVE_CHANNEL=dossie-historico`.
-  - **`channels/<slug>/.env`**: Cada canal secundário (ex.: `channels/ismael-soilet/.env`) possui seu próprio arquivo `.env` para suas chaves de API particulares (ex.: conta pessoal do Buffer).
-  - **Ordem de Precedência de Credenciais**:
-    1. `channels/<slug>/.env` (prioridade máxima do canal)
-    2. Variáveis de ambiente prefixadas (ex.: `<SLUG>_BUFFER_API_KEY`)
-    3. `.env` na raiz do repositório (fallback global / dossie-historico)
+  - **`channels/<slug>/.env`**: Cada canal secundário (ex.: `channels/ismael-soilet/.env`) possui seu próprio arquivo `.env` para suas chaves de API particulares (ex.: conta pessoal do Buffer, chaves Dev.to, Ghost, Reddit, Instagram).
+  - **Ordem Universal de Precedência de Credenciais (`ChannelManager.get_credential`)**:
+    1. `channels/<slug>/.env` (prioridade máxima do canal isolado)
+    2. Variáveis de ambiente prefixadas no processo (ex.: `<SLUG>_<KEY>`, ex: `ISMAEL_SOILET_BUFFER_API_KEY`)
+    3. `.env` na raiz do repositório / variáveis globais de ambiente (fallback global)
+  - **Performance & Cache Inviolável**: `ChannelManager` utiliza cache em memória indexado por assinatura em nanossegundos `(st_mtime_ns, st_size)`, garantindo zero I/O desnecessário de disco em loops de publicação com invalidação automática imediata ao editar qualquer arquivo `.env` ou `channel.json`.
 
 - **Sincronização Automática com Buffer (`sync-buffer`)**:
   - Para mapear instantaneamente os IDs de perfis sociais conectados (Instagram, LinkedIn, X, Threads, YouTube) para o `channel.json`:

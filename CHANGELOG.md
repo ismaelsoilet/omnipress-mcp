@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] — 2026-10-26
+
+### Added
+- **Resolução Universal de Credenciais por Canal (Regras 01 e 04)**:
+  - Adicionado `ChannelManager.get_credential(key, channel_slug, default="")` com cascata estrita em 3 níveis:
+    1. `channels/<slug>/.env` (credenciais privadas e isoladas do canal).
+    2. `<SLUG>_<KEY>` no ambiente global / `.env`.
+    3. `<KEY>` no ambiente global padrão.
+  - Integração nativa em todos os adaptadores de publicação: `BufferAdapter`, `InstagramAdapter`, `DevtoAdapter`, `GhostAdapter` e `RedditAdapter`.
+- **Cache em Memória de Assinatura de Arquivo (`mtime_ns`, `size`) no `ChannelManager`**:
+  - `get_channel()` e `get_channel_env()` agora utilizam cache em memória validado pela assinatura em nanossegundos `(st_mtime_ns, st_size)`, eliminando I/O redundante de disco em loops de publicação com invalidação automática imediata se o arquivo for modificado externamente.
+  - Adicionado método `clear_cache()` para limpeza determinística de cache em testes e reloads.
+
+### Fixed
+- **Isolamento de Alvos e Correção de Contaminação de Threads no `BufferAdapter` (Regras 06 e 09)**:
+  - Corrigido defeito crítico em que postagens multi-rede contendo `linkedin` e `x` (`platforms=["linkedin", "x"]`) contaminavam o payload do LinkedIn com metadados de thread do Twitter e substituíam o texto do artigo/post pelo tweet 1 devido a uma heurística booleana gulosa.
+  - Implementado `BufferAdapter._resolve_targets(platforms, channel_slug) -> List[Dict[str, str]]`, que resolve cada destino individualmente com seu respectivo serviço canônico e elimina dicionários mutáveis de estado (`self._channel_services`).
+  - Preservado `_resolve_channel_ids` como wrapper para compatibilidade retroativa estrita.
+
+### Changed
+- **Modernização de User-Agents nos Adaptadores**:
+  - Substituídos User-Agents legados e hardcoded (`0.2.0`) em `DevtoAdapter`, `GhostAdapter` e `RedditAdapter` por `OmniPress-MCP/{__version__}` dinâmico.
+- **Limpeza de Docstrings no `CarouselBuilder`**:
+  - Purgadas menções a criadores específicos em comentários internos, padronizando a documentação técnica dos componentes de mockup.
+
 ## [0.8.0] — 2026-10-25
 
 ### Added

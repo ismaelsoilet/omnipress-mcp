@@ -22,9 +22,25 @@ class InstagramGraphAdapter(BasePublisherAdapter):
             or os.getenv("INSTAGRAM_BUSINESS_ACCOUNT_ID", "").strip()
         )
 
-    def is_configured(self) -> bool:
-        """Returns True if Meta Instagram Graph API credentials are set in environment."""
-        return bool(self.access_token and self.account_id)
+    def get_credentials(self, channel_slug: Optional[str] = None) -> tuple[str, str]:
+        """Resolves (access_token, account_id) with strict Rule 04 channel precedence."""
+        try:
+            from src.core.channel_manager import ChannelManager
+            cm = ChannelManager()
+            token = cm.get_credential("INSTAGRAM_ACCESS_TOKEN", channel_slug) or self.access_token
+            acct = (
+                cm.get_credential("INSTAGRAM_ACCOUNT_ID", channel_slug)
+                or cm.get_credential("INSTAGRAM_BUSINESS_ACCOUNT_ID", channel_slug)
+                or self.account_id
+            )
+            return token, acct
+        except Exception:
+            return self.access_token, self.account_id
+
+    def is_configured(self, channel_slug: Optional[str] = None) -> bool:
+        """Returns True if Meta Instagram Graph API credentials are set in environment or channel."""
+        token, acct = self.get_credentials(channel_slug)
+        return bool(token and acct)
 
     def queue_social_post(
         self,
@@ -42,7 +58,8 @@ class InstagramGraphAdapter(BasePublisherAdapter):
         Publishes a single image or multi-slide carousel to Instagram via Meta Graph API.
         Protected by PublishingShield pre-flight validation and anti-duplicate ledger (Rule 09).
         """
-        if not self.is_configured():
+        access_token, account_id = self.get_credentials(channel_slug)
+        if not (access_token and account_id):
             return {
                 "success": False,
                 "error": "INSTAGRAM_ACCESS_TOKEN or INSTAGRAM_ACCOUNT_ID is not configured in .env",
@@ -67,8 +84,9 @@ class InstagramGraphAdapter(BasePublisherAdapter):
             }
 
         # Gate 4: Anti-Duplicate Idempotency Check (Rule 09)
+        effective_channel_id = account_id or channel_slug or "instagram_default"
         is_dup, dup_err = PublishingShield.check_duplicate(
-            channel_id=self.account_id,
+            channel_id=effective_channel_id,
             text=text,
             media_urls=media_urls,
             force=force_duplicate,
@@ -80,12 +98,12 @@ class InstagramGraphAdapter(BasePublisherAdapter):
                 "error": dup_err,
             }
 
-        headers = {"Authorization": f"Bearer {self.access_token}"}
+        headers = {"Authorization": f"Bearer {access_token}"}
 
         try:
             # Case A: Single Image Post
             if len(media_urls) == 1:
-                container_url = f"{self.BASE_URL}/{self.account_id}/media"
+                container_url = f"{self.BASE_URL}/{account_id}/media"
                 payload = {
                     "image_url": media_urls[0],
                     "caption": text,
@@ -109,7 +127,7 @@ class InstagramGraphAdapter(BasePublisherAdapter):
                         "is_carousel_item": "true",
                     }
                     res_item = requests.post(
-                        f"{self.BASE_URL}/{self.account_id}/media",
+                        f"{self.BASE_URL}/{account_id}/media",
                         data=item_payload,
                         headers=headers,
                         timeout=20,
@@ -128,7 +146,7 @@ class InstagramGraphAdapter(BasePublisherAdapter):
                     "children": ",".join(children_ids),
                 }
                 res_parent = requests.post(
-                    f"{self.BASE_URL}/{self.account_id}/media",
+                    f"{self.BASE_URL}/{account_id}/media",
                     data=carousel_payload,
                     headers=headers,
                     timeout=20,
@@ -141,7 +159,7 @@ class InstagramGraphAdapter(BasePublisherAdapter):
                 container_id = res_parent.json().get("id")
 
             # Step 2: Publish the media container
-            publish_url = f"{self.BASE_URL}/{self.account_id}/media_publish"
+            publish_url = f"{self.BASE_URL}/{account_id}/media_publish"
             pub_res = requests.post(
                 publish_url,
                 data={"creation_id": container_id},
@@ -152,7 +170,7 @@ class InstagramGraphAdapter(BasePublisherAdapter):
                 post_id = pub_res.json().get("id")
                 from src.core.publishing_shield import PublishingShield
                 PublishingShield.record_published(
-                    channel_id=self.account_id,
+                    channel_id=effective_channel_id,
                     text=text,
                     media_urls=media_urls,
                     post_id=post_id,

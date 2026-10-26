@@ -223,3 +223,25 @@ def test_ghost_publishing_shield_anti_duplicate(temp_ledger):
         )
         assert res3["success"] is True
         assert mock_post.call_count == 2
+
+
+def test_ghost_channel_scoped_credentials(monkeypatch):
+    """Verify GhostPublisherAdapter resolves channel-specific credentials via ChannelManager."""
+    monkeypatch.delenv("GHOST_ADMIN_API_KEY", raising=False)
+    monkeypatch.delenv("GHOST_API_URL", raising=False)
+    adapter = GhostPublisherAdapter(admin_api_key="", api_url="")
+    assert adapter.is_configured() is False
+
+    def mock_get_cred(key, slug):
+        if key == "GHOST_ADMIN_API_KEY":
+            return VALID_ADMIN_KEY
+        if key == "GHOST_API_URL":
+            return "https://channel-blog.ghost.io"
+        return ""
+
+    with patch("src.core.channel_manager.ChannelManager.get_credential", side_effect=mock_get_cred):
+        assert adapter.is_configured(channel_slug="my-channel") is True
+        key, url = adapter.get_credentials(channel_slug="my-channel")
+        assert key == VALID_ADMIN_KEY
+        assert url == "https://channel-blog.ghost.io"
+

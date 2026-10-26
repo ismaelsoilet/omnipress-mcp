@@ -192,6 +192,61 @@ def test_buffer_adapter_multi_platform_resolution_and_no_contamination(monkeypat
         assert "metadata" not in ch_payloads["prof_x_99"] or "instagram" not in ch_payloads["prof_x_99"].get("metadata", {})
 
 
+def test_buffer_adapter_thread_no_linkedin_contamination(monkeypatch):
+    """Adversarial check: Multi-platform dispatch with thread MUST NOT contaminate LinkedIn."""
+    monkeypatch.setenv("BUFFER_API_KEY", "test_key_123")
+    monkeypatch.setenv("BUFFER_LINKEDIN_PROFILE_ID", "prof_linkedin_88")
+    monkeypatch.setenv("BUFFER_X_PROFILE_ID", "prof_x_99")
+    adapter = BufferPublisherAdapter()
+
+    thread_tweets = [
+        "Tweet 1: Abertura sobre Arquitetura de Software",
+        "Tweet 2: Detalhes de isolamento e desacoplamento",
+        "Tweet 3: Conclusão e lições aprendidas",
+    ]
+
+    with patch("requests.post") as mock_post:
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "data": {
+                "createPost": {
+                    "post": {"id": "post_thread_test", "status": "sent"}
+                }
+            }
+        }
+        mock_post.return_value = mock_resp
+
+        res = adapter.queue_social_post(
+            text="Texto completo para LinkedIn com múltiplos parágrafos.",
+            platforms=["linkedin", "x"],
+            thread=thread_tweets,
+        )
+        assert res["success"] is True
+        calls = mock_post.call_args_list
+        assert len(calls) == 2
+
+        payloads = {c[1]["json"]["variables"]["input"]["channelId"]: c[1]["json"]["variables"]["input"] for c in calls}
+        assert "prof_linkedin_88" in payloads
+        assert "prof_x_99" in payloads
+
+        # 1. LinkedIn payload verification: MUST NOT have twitter metadata, MUST NOT be truncated to tweet 1
+        li_payload = payloads["prof_linkedin_88"]
+        assert li_payload["text"] == "Texto completo para LinkedIn com múltiplos parágrafos."
+        assert "metadata" not in li_payload or "twitter" not in li_payload.get("metadata", {})
+
+        # 2. X payload verification: MUST have first tweet as text, and thread metadata with remaining tweets
+        x_payload = payloads["prof_x_99"]
+        assert x_payload["text"] == thread_tweets[0]
+        assert "metadata" in x_payload
+        assert "twitter" in x_payload["metadata"]
+        assert "thread" in x_payload["metadata"]["twitter"]
+        thread_items = x_payload["metadata"]["twitter"]["thread"]
+        assert len(thread_items) == 2
+        assert thread_items[0]["text"] == thread_tweets[1]
+        assert thread_items[1]["text"] == thread_tweets[2]
+
+
 # -------------------------------------------------------------
 # Webhook Adapter Tests
 # -------------------------------------------------------------
@@ -317,6 +372,49 @@ def test_instagram_adapter_publish_carousel(monkeypatch):
         assert res["success"] is True
         assert res["post_id"] == "media_published_100"
         assert res["media_count"] == 2
+
+
+def test_instagram_channel_scoped_credentials(monkeypatch):
+    """Verify InstagramGraphAdapter resolves credentials via ChannelManager."""
+    monkeypatch.delenv("INSTAGRAM_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("INSTAGRAM_ACCOUNT_ID", raising=False)
+    monkeypatch.delenv("INSTAGRAM_BUSINESS_ACCOUNT_ID", raising=False)
+    adapter = InstagramGraphAdapter()
+    assert adapter.is_configured() is False
+
+    def mock_get_cred(key, slug):
+        if key == "INSTAGRAM_ACCESS_TOKEN":
+            return "channel_ig_token_123"
+        if key in ("INSTAGRAM_ACCOUNT_ID", "INSTAGRAM_BUSINESS_ACCOUNT_ID"):
+            return "channel_ig_acct_456"
+        return ""
+
+    with patch("src.core.channel_manager.ChannelManager.get_credential", side_effect=mock_get_cred):
+        assert adapter.is_configured(channel_slug="my-channel") is True
+        token, acct = adapter.get_credentials(channel_slug="my-channel")
+        assert token == "channel_ig_token_123"
+        assert acct == "channel_ig_acct_456"
+
+
+def test_reddit_channel_scoped_credentials(monkeypatch):
+    """Verify RedditPublisherAdapter resolves credentials via ChannelManager."""
+    monkeypatch.delenv("REDDIT_CLIENT_ID", raising=False)
+    monkeypatch.delenv("REDDIT_CLIENT_SECRET", raising=False)
+    monkeypatch.delenv("REDDIT_USERNAME", raising=False)
+    monkeypatch.delenv("REDDIT_PASSWORD", raising=False)
+    adapter = RedditPublisherAdapter()
+    assert adapter.is_configured() is False
+
+    def mock_get_cred(key, slug):
+        return f"ch_{key.lower()}"
+
+    with patch("src.core.channel_manager.ChannelManager.get_credential", side_effect=mock_get_cred):
+        assert adapter.is_configured(channel_slug="my-channel") is True
+        cid, csec, uname, pwd = adapter.get_credentials(channel_slug="my-channel")
+        assert cid == "ch_reddit_client_id"
+        assert csec == "ch_reddit_client_secret"
+        assert uname == "ch_reddit_username"
+        assert pwd == "ch_reddit_password"
 
 
 if __name__ == "__main__":

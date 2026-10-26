@@ -27,6 +27,13 @@ class ChannelManager:
         self.root_dir = Path(root_dir or PROJECT_ROOT).resolve()
         self.channels_dir = self.root_dir / "channels"
         self.channels_dir.mkdir(parents=True, exist_ok=True)
+        self._channel_cache: Dict[str, Any] = {}
+        self._env_cache: Dict[str, Any] = {}
+
+    def clear_cache(self) -> None:
+        """Clears in-memory caches for channel definitions and environments."""
+        self._channel_cache.clear()
+        self._env_cache.clear()
 
     def list_channels(self, include_templates: bool = False) -> List[Dict[str, Any]]:
         """Discovers all configured channels with valid channel.json files."""
@@ -56,8 +63,8 @@ class ChannelManager:
                     })
         return channels
 
-    def get_channel(self, slug: str) -> Optional[Dict[str, Any]]:
-        """Returns the configuration for a specific channel slug."""
+    def get_channel(self, slug: str, use_cache: bool = True) -> Optional[Dict[str, Any]]:
+        """Returns the configuration for a specific channel slug with mtime-aware in-memory caching."""
         clean_slug = slugify_channel(slug)
         target_dir = self.channels_dir / clean_slug
         config_file = target_dir / "channel.json"
@@ -66,10 +73,18 @@ class ChannelManager:
             return None
 
         try:
+            stat = config_file.stat()
+            file_sig = (stat.st_mtime_ns, stat.st_size)
+            if use_cache and clean_slug in self._channel_cache:
+                cached_sig, cached_data = self._channel_cache[clean_slug]
+                if cached_sig == file_sig:
+                    return dict(cached_data)
+
             with open(config_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 data["path"] = str(target_dir)
-                return data
+                self._channel_cache[clean_slug] = (file_sig, data)
+                return dict(data)
         except Exception:
             return None
 
@@ -120,17 +135,49 @@ class ChannelManager:
         c_dir.mkdir(parents=True, exist_ok=True)
         return c_dir
 
-    def get_channel_env(self, slug: Optional[str] = None) -> Dict[str, str]:
+    def get_channel_env(self, slug: Optional[str] = None, use_cache: bool = True) -> Dict[str, str]:
         """Loads and returns environment variables defined in channels/<slug>/.env if present."""
         target_slug = slugify_channel(slug) if slug else self.get_active_channel_slug()
         env_file = self.channels_dir / target_slug / ".env"
         if not env_file.exists():
             return {}
+
         try:
+            stat = env_file.stat()
+            file_sig = (stat.st_mtime_ns, stat.st_size)
+            if use_cache and target_slug in self._env_cache:
+                cached_sig, cached_data = self._env_cache[target_slug]
+                if cached_sig == file_sig:
+                    return dict(cached_data)
+
             from dotenv import dotenv_values
-            return {str(k): str(v) for k, v in dotenv_values(env_file).items() if v is not None}
+            res = {str(k): str(v) for k, v in dotenv_values(env_file).items() if v is not None}
+            self._env_cache[target_slug] = (file_sig, res)
+            return dict(res)
         except Exception:
             return {}
+
+    def get_credential(self, key: str, channel_slug: Optional[str] = None, default: str = "") -> str:
+        """
+        Resolves credentials with strict Rule 04 precedence:
+        1. channels/<slug>/.env (e.g. BUFFER_API_KEY)
+        2. Channel-prefixed process environment variable (e.g. ISMAEL_SOILET_BUFFER_API_KEY)
+        3. Global process environment variable (e.g. BUFFER_API_KEY)
+        4. Default value
+        """
+        if channel_slug:
+            ch_env = self.get_channel_env(channel_slug)
+            if ch_env.get(key):
+                val = ch_env[key].strip()
+                if val:
+                    return val
+
+            prefix = slugify_channel(channel_slug).upper().replace("-", "_")
+            prefixed_val = os.getenv(f"{prefix}_{key}", "").strip()
+            if prefixed_val:
+                return prefixed_val
+
+        return os.getenv(key, "").strip() or default
 
     def get_articles_dir(self, slug: Optional[str] = None) -> Path:
         """Returns the articles directory for a channel."""
@@ -332,4 +379,10 @@ class ChannelManager:
             shutil.copytree(src_camp, dst_camp)
 
         config["path"] = str(channel_dir)
+        try:
+            stat = config_path.stat()
+            self._channel_cache[clean_slug] = ((stat.st_mtime_ns, stat.st_size), dict(config))
+        except Exception:
+            self._channel_cache.pop(clean_slug, None)
+        self._env_cache.pop(clean_slug, None)
         return config

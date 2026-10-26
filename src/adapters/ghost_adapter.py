@@ -30,19 +30,32 @@ class GhostPublisherAdapter(BasePublisherAdapter):
         self.admin_api_key = (admin_api_key or os.getenv("GHOST_ADMIN_API_KEY", "")).strip()
         self.api_url = (api_url or os.getenv("GHOST_API_URL", "")).strip().rstrip("/")
 
-    def is_configured(self) -> bool:
+    def get_credentials(self, channel_slug: Optional[str] = None) -> tuple[str, str]:
+        """Resolves (admin_api_key, api_url) with Rule 04 channel precedence."""
+        try:
+            from src.core.channel_manager import ChannelManager
+            cm = ChannelManager()
+            key = cm.get_credential("GHOST_ADMIN_API_KEY", channel_slug) or self.admin_api_key
+            url = (cm.get_credential("GHOST_API_URL", channel_slug) or self.api_url).rstrip("/")
+            return key, url
+        except Exception:
+            return self.admin_api_key, self.api_url
+
+    def is_configured(self, channel_slug: Optional[str] = None) -> bool:
         """Returns True if GHOST_ADMIN_API_KEY (with valid id:secret format) and GHOST_API_URL are set."""
-        if not self.admin_api_key or not self.api_url:
+        key, url = self.get_credentials(channel_slug)
+        if not key or not url:
             return False
-        parts = self.admin_api_key.split(":")
+        parts = key.split(":")
         return len(parts) == 2 and len(parts[0]) > 0 and len(parts[1]) > 0
 
-    def _generate_jwt_token(self) -> str:
+    def _generate_jwt_token(self, admin_api_key: Optional[str] = None) -> str:
         """
         Generates a 5-minute Ghost Admin API JWT token signed with HMAC-SHA256.
         The secret part of the Admin API key is hex-encoded.
         """
-        parts = self.admin_api_key.split(":")
+        effective_key = admin_api_key or self.admin_api_key
+        parts = effective_key.split(":")
         if len(parts) != 2:
             raise ValueError("GHOST_ADMIN_API_KEY must be in '{id}:{secret}' format.")
 
@@ -146,13 +159,15 @@ class GhostPublisherAdapter(BasePublisherAdapter):
         canonical_url: Optional[str] = None,
         published: bool = False,
         force_duplicate: bool = False,
+        channel_slug: Optional[str] = None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """
         Submits an article to Ghost CMS Admin API.
         If published=False, creates a draft post for review.
         """
-        if not self.is_configured():
+        admin_api_key, api_url = self.get_credentials(channel_slug)
+        if not self.is_configured(channel_slug):
             return {
                 "success": False,
                 "error": "GHOST_ADMIN_API_KEY (with valid id:secret) and GHOST_API_URL must be configured.",
@@ -160,9 +175,10 @@ class GhostPublisherAdapter(BasePublisherAdapter):
             }
 
         # Pre-flight Gate: PublishingShield anti-duplicate ledger check
+        shield_channel = channel_slug or "ghost"
         shield_text = f"{title.strip()}\n{content_markdown.strip()}"
         is_dup, err = PublishingShield.check_duplicate(
-            channel_id="ghost",
+            channel_id=shield_channel,
             text=shield_text,
             media_urls=None,
         )
@@ -174,7 +190,7 @@ class GhostPublisherAdapter(BasePublisherAdapter):
             }
 
         try:
-            token = self._generate_jwt_token()
+            token = self._generate_jwt_token(admin_api_key)
         except ValueError as e:
             return {"success": False, "error": f"Failed to generate Ghost JWT: {str(e)}"}
 
@@ -191,12 +207,13 @@ class GhostPublisherAdapter(BasePublisherAdapter):
         if canonical_url:
             post_data["canonical_url"] = canonical_url.strip()
 
-        endpoint = f"{self.api_url}/ghost/api/admin/posts/?source=html"
+        from src import __version__
+        endpoint = f"{api_url}/ghost/api/admin/posts/?source=html"
         headers = {
             "Authorization": f"Ghost {token}",
             "Content-Type": "application/json",
             "Accept-Version": "v5.0",
-            "User-Agent": "OmniPress-MCP/0.2.0",
+            "User-Agent": f"OmniPress-MCP/{__version__}",
         }
 
         try:

@@ -19,16 +19,34 @@ class RedditPublisherAdapter(BasePublisherAdapter):
         self.password = os.getenv("REDDIT_PASSWORD", "").strip()
         self.default_subreddit = os.getenv("REDDIT_DEFAULT_SUBREDDIT", "SideProject").strip()
 
-    def is_configured(self) -> bool:
-        return bool(self.client_id and self.client_secret and self.username and self.password)
+    def get_credentials(self, channel_slug: Optional[str] = None) -> tuple[str, str, str, str]:
+        """Resolves Reddit credentials with Rule 04 channel precedence."""
+        try:
+            from src.core.channel_manager import ChannelManager
+            cm = ChannelManager()
+            cid = cm.get_credential("REDDIT_CLIENT_ID", channel_slug) or self.client_id
+            csec = cm.get_credential("REDDIT_CLIENT_SECRET", channel_slug) or self.client_secret
+            uname = cm.get_credential("REDDIT_USERNAME", channel_slug) or self.username
+            pwd = cm.get_credential("REDDIT_PASSWORD", channel_slug) or self.password
+            return cid, csec, uname, pwd
+        except Exception:
+            return self.client_id, self.client_secret, self.username, self.password
 
-    def _get_access_token(self) -> Optional[str]:
-        auth = requests.auth.HTTPBasicAuth(self.client_id, self.client_secret)
-        headers = {"User-Agent": f"OmniPress/0.2.0 by /u/{self.username}"}
+    def is_configured(self, channel_slug: Optional[str] = None) -> bool:
+        cid, csec, uname, pwd = self.get_credentials(channel_slug)
+        return bool(cid and csec and uname and pwd)
+
+    def _get_access_token(self, channel_slug: Optional[str] = None) -> Optional[str]:
+        cid, csec, uname, pwd = self.get_credentials(channel_slug)
+        if not (cid and csec and uname and pwd):
+            return None
+        from src import __version__
+        auth = requests.auth.HTTPBasicAuth(cid, csec)
+        headers = {"User-Agent": f"OmniPress/{__version__} by /u/{uname}"}
         data = {
             "grant_type": "password",
-            "username": self.username,
-            "password": self.password,
+            "username": uname,
+            "password": pwd,
         }
 
         try:
@@ -46,12 +64,13 @@ class RedditPublisherAdapter(BasePublisherAdapter):
         media_urls: Optional[List[str]] = None,
         schedule_time: Optional[str] = None,
         title: Optional[str] = None,
+        channel_slug: Optional[str] = None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """
         Submits text post to Reddit.
         """
-        if not self.is_configured():
+        if not self.is_configured(channel_slug):
             return {
                 "success": False,
                 "provider": "reddit",
@@ -75,7 +94,7 @@ class RedditPublisherAdapter(BasePublisherAdapter):
                 post_title = post_title[:247] + "..."
             post_body = "\n".join(lines[1:]).strip() or text
 
-        token = self._get_access_token()
+        token = self._get_access_token(channel_slug)
         if not token:
             return {
                 "success": False,
@@ -83,9 +102,11 @@ class RedditPublisherAdapter(BasePublisherAdapter):
                 "error": "Failed to authenticate with Reddit API. Check username/password and client credentials.",
             }
 
+        cid, csec, uname, pwd = self.get_credentials(channel_slug)
+        from src import __version__
         headers = {
             "Authorization": f"Bearer {token}",
-            "User-Agent": f"OmniPress/0.2.0 by /u/{self.username}",
+            "User-Agent": f"OmniPress/{__version__} by /u/{uname}",
         }
         payload = {
             "api_type": "json",

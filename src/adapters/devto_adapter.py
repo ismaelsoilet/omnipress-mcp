@@ -22,9 +22,20 @@ class DevToPublisherAdapter(BasePublisherAdapter):
         self.api_key = (api_key or os.getenv("DEVTO_API_KEY", "")).strip()
         self.api_url = (api_url or os.getenv("DEVTO_API_URL", self.DEFAULT_API_URL)).strip()
 
-    def is_configured(self) -> bool:
-        """Returns True if DEVTO_API_KEY is configured."""
-        return bool(self.api_key)
+    def get_api_key(self, channel_slug: Optional[str] = None) -> str:
+        """Resolves Dev.to API key with Rule 04 channel precedence."""
+        try:
+            from src.core.channel_manager import ChannelManager
+            key = ChannelManager().get_credential("DEVTO_API_KEY", channel_slug)
+            if key:
+                return key
+        except Exception:
+            pass
+        return getattr(self, "api_key", "")
+
+    def is_configured(self, channel_slug: Optional[str] = None) -> bool:
+        """Returns True if DEVTO_API_KEY is configured globally or for channel."""
+        return bool(self.get_api_key(channel_slug))
 
     @staticmethod
     def _sanitize_tags(tags: Optional[List[str]]) -> List[str]:
@@ -53,13 +64,15 @@ class DevToPublisherAdapter(BasePublisherAdapter):
         series: Optional[str] = None,
         published: bool = False,
         force_duplicate: bool = False,
+        channel_slug: Optional[str] = None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """
         Submits an article to Dev.to.
         If published=False, creates a draft in the user's Dev.to dashboard.
         """
-        if not self.is_configured():
+        effective_key = self.get_api_key(channel_slug)
+        if not effective_key:
             return {
                 "success": False,
                 "error": "DEVTO_API_KEY is not configured.",
@@ -67,9 +80,10 @@ class DevToPublisherAdapter(BasePublisherAdapter):
             }
 
         # Pre-flight Gate: PublishingShield anti-duplicate ledger check
+        shield_channel = channel_slug or "devto"
         shield_text = f"{title.strip()}\n{content_markdown.strip()}"
         is_dup, err = PublishingShield.check_duplicate(
-            channel_id="devto",
+            channel_id=shield_channel,
             text=shield_text,
             media_urls=None,
         )
@@ -93,10 +107,11 @@ class DevToPublisherAdapter(BasePublisherAdapter):
         if series:
             article_payload["series"] = series.strip()
 
+        from src import __version__
         headers = {
-            "api-key": self.api_key,
+            "api-key": effective_key,
             "Content-Type": "application/json",
-            "User-Agent": "OmniPress-MCP/0.2.0 (https://github.com/ismaelsoilet/omnipress-mcp)",
+            "User-Agent": f"OmniPress-MCP/{__version__} (https://github.com/ismaelsoilet/omnipress-mcp)",
         }
 
         try:

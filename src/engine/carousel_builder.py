@@ -232,7 +232,7 @@ class CarouselBuilder:
         border_color: Tuple[int, int, int, int] = (70, 75, 85, 255),
         text_color: Tuple[int, int, int, int] = (240, 242, 245, 255),
     ) -> None:
-        """Renders an interactive search bar input mockup (Rhaj Teixeira style)."""
+        """Renders an interactive search bar input mockup with rounded pill borders."""
         radius = height // 2
         draw.rounded_rectangle([x, y, x + width, y + height], radius=radius, fill=bg_color, outline=border_color, width=2)
 

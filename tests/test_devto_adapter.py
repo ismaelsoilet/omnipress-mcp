@@ -171,3 +171,15 @@ def test_devto_unsupported_social_post():
     res = adapter.queue_social_post(text="Tweet curto", platforms=["devto"])
     assert res["success"] is False
     assert "only supports long-form articles" in res["error"]
+
+
+def test_devto_channel_scoped_credentials(monkeypatch):
+    """Verify DevToPublisherAdapter resolves channel-specific credentials via ChannelManager."""
+    monkeypatch.delenv("DEVTO_API_KEY", raising=False)
+    adapter = DevToPublisherAdapter(api_key="")
+    assert adapter.is_configured() is False
+
+    with patch("src.core.channel_manager.ChannelManager.get_credential", return_value="channel_devto_key_777"):
+        assert adapter.is_configured(channel_slug="my-channel") is True
+        assert adapter.get_api_key(channel_slug="my-channel") == "channel_devto_key_777"
+
