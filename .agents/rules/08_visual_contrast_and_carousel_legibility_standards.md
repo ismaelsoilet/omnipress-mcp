@@ -34,6 +34,18 @@ Todo slide gerado pelo motor de carrossel **deve conter sem exceção**:
   $$\text{grad\_start} = \min(h \times \text{gradient\_start\_ratio}, \text{start\_y} - 0.06h)$$
 * A curva de transição deve atingir opacidade profunda ($\alpha \ge 240$) antes do início da primeira linha da headline.
 
+### 4. Padrão Mandatório de Ícones de Ação Social (Action Icons) e Destaque Semântico
+* **Ícones de Ação Vetoriais (CTA Slides):** Lâminas finais de síntese e Chamada para Ação (CTA) devem **obrigatoriamente renderizar ícones vetoriais nativos** diretamente na lâmina para cada uma das 4 ações sociais:
+  - 🔖 **SALVAR (Bookmark Ribbon):** Destaque em tom dourado/âmbar (`#D97706` / `#D4AF37`).
+  - 🔄/↗️ **COMPARTILHAR (Share 3-Node Graph):** Destaque em tom verde esmeralda (`#059669` / `#10B981`).
+  - 💬 **COMENTAR (Speech Bubble):** Destaque em tom ciano/azul institucional (`#0A66C2` / `#0284C7`).
+  - ❤️ **CURTIR (Heart):** Destaque em tom carmim/rosa vibrante (`#E11D48` / `#F43F5E`).
+* **Zero Dependência de Emojis Unicode em Imagens:** Motores gráficos não devem depender de glifos unicode de emojis em texto (que frequentemente quebram ou são expurgados por fontes sem suporte a emojis coloridos). O motor deve desenhar as formas vetoriais correspondentes de forma determinística e nítida.
+* **Rodapé Social Proof (Preset `tweet_card`):** Em todos os slides no preset `tweet_card`, a barra inferior de rodapé deve exibir os 4 micro-ícones sociais interativos à esquerda (Comentar, Compartilhar, Curtir, Salvar), espelhando o visual nativo das redes sociais.
+* **Cores Semânticas Normativas (MITO vs. VERDADE):**
+  - **MITO / ERRO / FALSO / PROBLEMA:** Aplicação **obrigatória** de cor Vermelha (`#DC2626` em fundo claro, `#EF4444` em fundo escuro) no marcador indicador e no prefixo em negrito.
+  - **VERDADE / FATO / CORRETO / SOLUÇÃO:** Aplicação **obrigatória** de cor Verde (`#059669` em fundo claro, `#10B981` em fundo escuro) no marcador indicador e no prefixo em negrito.
+
 ---
 
 ## 📐 Tratamento Prévio de Imagens com Fundo Claro
@@ -48,3 +60,5 @@ Ao preparar imagens em scripts de pipeline (`prepare_backgrounds.py` ou geraçã
 1. O texto é perfeitamente legível com zoom de 100% em qualquer tela mobile.
 2. Imagens com 100% de fundo branco (`#FFFFFF`) produzem textos com contraste WCAG AAA.
 3. A identidade estética do canal (cores primárias, tipografia e badges) permanece preservada e valorizada.
+4. Lâminas com MITO/VERDADE evidenciam o contraste vermelho/verde instantaneamente aos olhos do leitor.
+5. Lâminas de CTA exibem os 4 ícones vetoriais de ação renderizados com nitidez cristalina.

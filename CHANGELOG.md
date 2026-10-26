@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] — 2026-10-26
+
+### Added
+- **Normativa Canônica — Regra 15 (Tipografia Titânica e Embalagem de Thumbnails de Alto CTR)**:
+  - Adicionado documento normativo [`.agents/rules/15_high_ctr_thumbnail_typography_and_packaging_standards.md`](.agents/rules/15_high_ctr_thumbnail_typography_and_packaging_standards.md) e incorporação em `AGENTS.md` (Seção 12 em EN/PT), `.agents/rules/README.md` e `docs/AGENT_MANUAL.md` (Playbook 3.1).
+  - Estipuladas as 8 Leis da Embalagem de Alto CTR para documentários de YouTube (revertendo estagnação de 0,90%–1,5% para benchmarks de 5,0%–10,0%+):
+    1. Limite estrito de 3 a 4 palavras de alto impacto emocional (zero bulas de remédio, subtítulos, bullets ou metadados na capa).
+    2. Escala Tipográfica Titânica: headlines em `Anton` ou `Impact` entre 160px e 220px, badges entre 50px e 65px e proibição absoluta de micro-fontes (< 50px).
+    3. Safety Heavy Stroke: contorno preto espesso (10px a 16px, `stroke_width >= 11`) e drop-shadow profundo (`0 12px 28px rgba(0,0,0,0.98)`).
+    4. Cromática de alta luminância periférica: combinação bi-tonal de Branco Puro (`#FFFFFF`) e Amarelo Alerta (`#FFE500` / `#FFD700`).
+    5. Isolamento Chiaroscuro: gradiente escuro tático (`rgba(4,6,10,0.96)`) na metade esquerda do canvas garantindo contraste total.
+    6. Escudo Anti-Timestamp do YouTube: canto inferior direito (320px x 140px) 100% livre de textos e badges para não colidir com o marcador de tempo da plataforma.
+    7. Regra dos 3 Elementos Focais: Sujeito Dramático (Direita) + Tipografia Titânica (Esquerda) + Selo de Autoridade/Badge.
+    8. Teste Obrigatório dos 120px no Celular: inspeção obrigatória em resolução reduzida para garantir leitura instantânea em < 1 segundo.
+- **Refatoração do Componente Universal Remotion `ThumbnailEpisode.tsx`**:
+  - Reestruturado o layout com tipografia titânica (títulos em 175px/195px, badge em 52px, callout em 56px).
+  - Removidos cards com micro-fontes de 22px e purgado qualquer elemento no canto inferior direito para proteção contra o badge de duração do YouTube.
+- **Suíte de Testes da Regra 15 (`tests/test_rule15_thumbnails.py`)**:
+  - Adicionados 4 testes automatizados para contagem de palavras, escala tipográfica, zona de morte do YouTube e geração de preview mobile de 120px, elevando a suíte para 151 testes automatizados (100% aprovados).
+
+### Changed
+- **Alinhamento de Skills e Templates**:
+  - `.agents/skills/youtube-thumbnail-design/SKILL.md`: atualizado para a Escala Titânica da Regra 15 e limite de 3-4 palavras.
+  - `.agents/skills/omnipress-youtube-documentary/SKILL.md`: Seção 3 atualizada com o protocolo de embalagem da Regra 15.
+  - `channels/_template/episodios/_template_episodio/`: atualizados checklists e diretrizes de thumbnails.
+
+### Fixed
+- **Desempacotamento de Tupla no `tests/test_carousel_builder.py`**:
+  - Corrigido desempacotamento de 5 valores da tupla retornada por `_parse_semantic_line` em `test_parse_semantic_line` e `test_parse_semantic_line_custom_categories`.
+
 ## [0.8.3] — 2026-10-26
 
 ### Fixed

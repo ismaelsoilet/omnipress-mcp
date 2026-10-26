@@ -199,7 +199,7 @@ def test_parse_semantic_line():
     }
 
     # 1. Test standard tags
-    dot, prefix, p_color, content = CarouselBuilder._parse_semantic_line(
+    dot, prefix, p_color, content, _ = CarouselBuilder._parse_semantic_line(
         "MITO: O IBS entra em vigor imediatamente",
         pal=pal,
         is_dark=True,
@@ -209,7 +209,7 @@ def test_parse_semantic_line():
     assert p_color == (239, 68, 68, 255)
     assert content == "O IBS entra em vigor imediatamente"
 
-    dot, prefix, p_color, content = CarouselBuilder._parse_semantic_line(
+    dot, prefix, p_color, content, _ = CarouselBuilder._parse_semantic_line(
         "VERDADE: A transição completa é até 2033",
         pal=pal,
         is_dark=True,
@@ -220,7 +220,7 @@ def test_parse_semantic_line():
     assert content == "A transição completa é até 2033"
 
     # 2. Test channel-custom tag
-    dot, prefix, p_color, content = CarouselBuilder._parse_semantic_line(
+    dot, prefix, p_color, content, _ = CarouselBuilder._parse_semantic_line(
         "DICA: Prepare seu ERP com antecedência",
         pal=pal,
         is_dark=False,
@@ -231,7 +231,7 @@ def test_parse_semantic_line():
     assert content == "Prepare seu ERP com antecedência"
 
     # 3. Test numbered list
-    dot, prefix, p_color, content = CarouselBuilder._parse_semantic_line(
+    dot, prefix, p_color, content, _ = CarouselBuilder._parse_semantic_line(
         "1. Realize o saneamento cadastral de produtos",
         pal=pal,
         is_dark=True,
@@ -242,7 +242,7 @@ def test_parse_semantic_line():
     assert content == "Realize o saneamento cadastral de produtos"
 
     # 4. Test bullet list
-    dot, prefix, p_color, content = CarouselBuilder._parse_semantic_line(
+    dot, prefix, p_color, content, _ = CarouselBuilder._parse_semantic_line(
         "• Alíquota padrão estimada em 27%",
         pal=pal,
         is_dark=True,
@@ -302,7 +302,7 @@ def test_parse_semantic_line_custom_categories():
     }
 
     # Channel-specific danger keyword
-    dot, prefix, p_color, content = CarouselBuilder._parse_semantic_line(
+    dot, prefix, p_color, content, _ = CarouselBuilder._parse_semantic_line(
         "ANTIPATTERN: Injeção de dependência via singleton global",
         pal=pal,
         is_dark=True,
@@ -313,7 +313,7 @@ def test_parse_semantic_line_custom_categories():
     assert content == "Injeção de dependência via singleton global"
 
     # Channel-specific success keyword
-    dot, prefix, p_color, content = CarouselBuilder._parse_semantic_line(
+    dot, prefix, p_color, content, _ = CarouselBuilder._parse_semantic_line(
         "PADRÃO: Usar inversão de controle com containers leves",
         pal=pal,
         is_dark=True,
@@ -323,7 +323,7 @@ def test_parse_semantic_line_custom_categories():
     assert p_color == (16, 185, 129, 255)
 
     # Channel-specific warning keyword
-    dot, prefix, p_color, content = CarouselBuilder._parse_semantic_line(
+    dot, prefix, p_color, content, _ = CarouselBuilder._parse_semantic_line(
         "TRADE-OFF: Maior desacoplamento versus complexidade inicial",
         pal=pal,
         is_dark=True,
@@ -446,6 +446,45 @@ def test_universal_carousel_recipe_layout_cascade(tmp_path):
     assert captured_slides[1]["start_y_ratio"] == 0.20
     assert captured_slides[1]["card_alpha"] == 220
     assert captured_slides[1]["headline_scale"] == 0.052
+
+def test_semantic_line_parsing_mito_verdade():
+    pal = {"accent": "#0A66C2", "danger": "#DC2626", "success": "#059669"}
+    # MITO with bullet
+    dot, prefix, prefix_c, content, icon = CarouselBuilder._parse_semantic_line("• MITO: Aluguel sobe 30%", pal, is_dark=False)
+    assert prefix == "MITO: "
+    assert prefix_c == (220, 38, 38, 255)
+    assert dot == (220, 38, 38, 255)
+    assert content == "Aluguel sobe 30%"
+    assert icon is None
+
+    # VERDADE without bullet
+    dot, prefix, prefix_c, content, icon = CarouselBuilder._parse_semantic_line("VERDADE: Redutor de 60%", pal, is_dark=False)
+    assert prefix == "VERDADE: "
+    assert prefix_c == (5, 150, 105, 255)
+    assert dot == (5, 150, 105, 255)
+    assert content == "Redutor de 60%"
+    assert icon is None
+
+
+def test_semantic_line_parsing_action_icons():
+    pal = {"accent": "#0A66C2"}
+    for word, expected_icon in [
+        ("SALVAR: no seu planejamento", "salvar"),
+        ("COMPARTILHAR: com seus amigos", "compartilhar"),
+        ("COMENTAR: sua dúvida", "comentar"),
+        ("CURTIR: se gostou", "curtir"),
+    ]:
+        dot, prefix, prefix_c, content, icon = CarouselBuilder._parse_semantic_line(word, pal, is_dark=False)
+        assert icon == expected_icon
+        assert prefix.startswith(word.split(":")[0])
+        assert dot is None
+
+
+def test_draw_action_icons():
+    img = Image.new("RGBA", (200, 200), (255, 255, 255, 255))
+    draw = ImageDraw.Draw(img)
+    for icon_name in ("salvar", "compartilhar", "comentar", "curtir"):
+        CarouselBuilder._draw_action_icon(draw, icon_name, 10, 10, 32, (10, 10, 10, 255))
 
 
 if __name__ == "__main__":

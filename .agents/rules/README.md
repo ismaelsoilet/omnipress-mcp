@@ -19,6 +19,7 @@ Este diretório contém os padrões e regras operacionais para agentes de IA e d
 | **Diretriz 09 / Regra 12** | Motores Universais & Receitas | [`12_declarative_recipes_and_universal_engines.md`](./12_declarative_recipes_and_universal_engines.md) | Padrão declarativo anti-scripts; motores universais de carrossel, áudio broadcast (-14 LUFS), legendas e publicação. |
 | **Diretriz 10 / Regra 13** | Documentação Contínua, SemVer & Release | [`13_continuous_documentation_versioning_and_release_policy.md`](./13_continuous_documentation_versioning_and_release_policy.md) | Atualização documental obrigatória e sincronizada, SemVer e registro detalhado no CHANGELOG.md a cada ciclo. |
 | **Diretriz 11 / Regra 14** | Desacoplamento Estrito & Anti-Engenharia Errada | [`14_strict_decoupling_channel_isolation_and_anti_bad_engineering.md`](./14_strict_decoupling_channel_isolation_and_anti_bad_engineering.md) | Invariância total do core em `src/`, cascata declarativa top-down de parâmetros, statelessness e zero gambiarras. |
+| **Diretriz 12 / Regra 15** | Tipografia Titânica e Embalagem de Alto CTR | [`15_high_ctr_thumbnail_typography_and_packaging_standards.md`](./15_high_ctr_thumbnail_typography_and_packaging_standards.md) | As 8 Leis da embalagem: limite de 3-4 palavras, headlines titânicas (160-220px), proibição de fontes < 50px, contorno 11-16px, escudo anti-timestamp do YouTube e teste dos 120px. |
 
 ---
 

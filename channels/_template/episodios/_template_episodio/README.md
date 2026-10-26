@@ -45,7 +45,7 @@
   - [ ] Locução gravada e masterizada na cadeia de estúdio (-14.0 LUFS EBU R128).
   - [ ] Legendas sincronizadas via Whisper (`captions.json`).
   - [ ] Banco de B-Roll 16:9 (mínimo 30-50 imagens de arquivo em alta resolução).
-  - [ ] Thumbnail mobile-first (máximo 3-4 palavras de impacto em amarelo/branco).
+  - [ ] Thumbnail mobile-first (Regra 15: máximo 3-4 palavras de impacto em amarelo/branco, headline titânica 160-220px, zero texto < 50px e teste dos 120px).
   - [ ] Render final (`.mp4`) exportado em 1080p 30fps.
 
 - [ ] **4. Shorts / Reels / TikTok 9:16 (`shorts/`)**:

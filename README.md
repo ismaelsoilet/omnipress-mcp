@@ -116,7 +116,7 @@ Full React & TypeScript video engine (`src/video/`) engineered for YouTube Docum
 - **Synchronized Whisper Subtitles**: Word-by-word dynamic highlighting (`SynchronizedCaptions.tsx`) powered by Whisper JSON timestamps over frosted dark backdrop cards.
 - **Cinematic Components**: Built-in military cipher decryption (`ScrambledText`), 3D floating dust motes (`DustParticles`), anamorphic golden flares (`AnamorphicFlare`), distressed official stamps with camera shake (`ClassifiedStamp`), tactical grids (`TacticalGrid`), film grain (`FilmGrain`), and Ken Burns camera movements (`KenBurnsImage`).
 - **Synchronized Broadcast Soundscape**: Multi-layered 48kHz stereo audio embedded via `<Audio />` with dynamic audio ducking (-18dB to -22dB under speech).
-- **Programmatic Thumbnail Generator**: High-CTR 16:9 thumbnails rendered directly from React (`ThumbnailEpisode.tsx`).
+- **Programmatic Thumbnail Generator (Rule 15)**: High-CTR 16:9 thumbnails rendered directly from React (`ThumbnailEpisode.tsx`) complying with the Titanic Typography Scale (160px–220px, 3-word limit, zero micro-fonts < 50px, and YouTube duration badge clear zone).
 
 ### 6. Multi-Channel Syndication & YouTube Integration
 - **YouTube Direct Integration**: Connects seamlessly with YouTube via Buffer (`buffer_channel_id` mapped in `channel.json`).

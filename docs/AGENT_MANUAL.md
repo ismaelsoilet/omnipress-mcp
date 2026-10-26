@@ -378,6 +378,22 @@ Quando o usuário pedir: *"Renderize a vinheta ou o episódio de vídeo do canal
 
 ---
 
+### Playbook 3.1: Embalagem e Design de Thumbnails de Alto CTR (Regra 15)
+Quando o usuário pedir: *"Crie as thumbnails para o documentário/episódio"* ou quando os cliques estiverem estagnados em **0,90% a 1,5%**:
+
+1. **Meta de Conversão**: Elevação imediata do CTR para **> 5,0% a 10,0%+**.
+2. **Aplicar as 8 Leis da Regra 15**:
+   - **Limite de 3 Palavras (Max 4)**: Apenas 2 a 3 palavras de choque ou mistério emocional (*"A MAIOR FARSA"*, *"18 ANDARES NO SUBSOLO"*, *"CÓPIA VETADA"*, *"ERA TUDO FALSO!"*).
+   - **Proibição de Bula de Remédio**: Zero subtítulos, zero listas com marcadores/bullets, zero metadados técnicos.
+   - **Escala Titânica (160px a 220px)**: Headlines em `Anton` ou `Impact` com 175px-210px. Badges únicos com 52px-65px. Fontes < 50px são **terminantemente proibidas**.
+   - **Safety Heavy Stroke**: Contorno preto de proteção de **10px a 16px** (`stroke_width >= 11`) para descolar o texto do fundo.
+   - **Cromática Periférica**: Linha 1 em Branco Puro (`#FFFFFF`) e Linha 2 em Amarelo Alerta (`#FFE500`).
+   - **Isolamento Chiaroscuro**: Gradiente escuro lateral de 0 a 1100px no lado do texto para contraste puro.
+   - **Escudo Anti-Timestamp**: O canto inferior direito (**320x140px**) deve ser mantido 100% limpo para a etiqueta de tempo do YouTube.
+   - **Teste dos 120px**: Exportar e validar a visualização mobile em 120px; se não der para ler de relance em 500ms, reprovar e redesenhar.
+
+---
+
 ### Playbook 4: Isolamento Multi-Canal e Arquitetura de Pastas (Regra 04)
 Quando gerenciar múltiplos canais ou marcas:
 

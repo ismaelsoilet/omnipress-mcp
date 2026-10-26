@@ -361,27 +361,131 @@ class CarouselBuilder:
             draw_b.rounded_rectangle([box[0], box[1], box[2], box[3]], radius=radius, outline=border_color, width=1)
 
     @staticmethod
+    def _draw_action_icon(
+        draw: ImageDraw.ImageDraw,
+        icon_type: str,
+        x: int,
+        y: int,
+        size: int,
+        color: Tuple[int, int, int, int]
+    ) -> None:
+        """
+        Draws crisp, high-fidelity vector icons for social media actions:
+        - bookmark / salvar
+        - share / compartilhar / repost
+        - comment / comentar / chat
+        - heart / curtir / like
+        """
+        icon_type = icon_type.lower()
+        if "salvar" in icon_type or "bookmark" in icon_type or "save" in icon_type:
+            # Bookmark ribbon
+            w = int(size * 0.72)
+            h = size
+            ox = x + int((size - w) / 2)
+            points = [
+                (ox, y),
+                (ox + w, y),
+                (ox + w, y + h),
+                (ox + w // 2, y + int(h * 0.72)),
+                (ox, y + h),
+            ]
+            draw.polygon(points, fill=color)
+        elif "compartilhar" in icon_type or "share" in icon_type or "repost" in icon_type:
+            # 3-node connected network / share icon
+            r = max(2, int(size * 0.16))
+            lw = max(2, int(size * 0.10))
+            n1 = (x + int(size * 0.22), y + int(size * 0.50))
+            n2 = (x + int(size * 0.78), y + int(size * 0.24))
+            n3 = (x + int(size * 0.78), y + int(size * 0.76))
+            draw.line([n1, n2], fill=color, width=lw)
+            draw.line([n1, n3], fill=color, width=lw)
+            for nx, ny in (n1, n2, n3):
+                draw.ellipse([nx - r, ny - r, nx + r, ny + r], fill=color)
+        elif "comentar" in icon_type or "comment" in icon_type or "chat" in icon_type:
+            # Speech bubble
+            bh = int(size * 0.72)
+            radius = max(3, int(size * 0.22))
+            draw.rounded_rectangle([x, y, x + size, y + bh], radius=radius, fill=color)
+            tail = [
+                (x + int(size * 0.22), y + int(bh * 0.85)),
+                (x + int(size * 0.10), y + size),
+                (x + int(size * 0.48), y + int(bh * 0.85)),
+            ]
+            draw.polygon(tail, fill=color)
+        elif "curtir" in icon_type or "like" in icon_type or "heart" in icon_type:
+            # Heart
+            r = max(3, int(size * 0.25))
+            c1 = (x + int(size * 0.32), y + int(size * 0.34))
+            c2 = (x + int(size * 0.68), y + int(size * 0.34))
+            draw.ellipse([c1[0] - r, c1[1] - r, c1[0] + r, c1[1] + r], fill=color)
+            draw.ellipse([c2[0] - r, c2[1] - r, c2[0] + r, c2[1] + r], fill=color)
+            triangle = [
+                (x + int(size * 0.08), y + int(size * 0.38)),
+                (x + int(size * 0.92), y + int(size * 0.38)),
+                (x + int(size * 0.50), y + int(size * 0.92)),
+            ]
+            draw.polygon(triangle, fill=color)
+            draw.rectangle([x + int(size * 0.15), y + int(size * 0.30), x + int(size * 0.85), y + int(size * 0.44)], fill=color)
+
+    @staticmethod
     def _parse_semantic_line(
         clean_p: str,
         pal: Dict[str, Any],
         is_dark: bool,
         custom_tags: Optional[Dict[str, str]] = None,
         semantic_categories: Optional[Dict[str, Any]] = None,
-    ) -> Tuple[Optional[Tuple[int, int, int, int]], str, Tuple[int, int, int, int], str]:
+    ) -> Tuple[Optional[Tuple[int, int, int, int]], str, Tuple[int, int, int, int], str, Optional[str]]:
         """
-        Agnostically parses a text line to identify semantic callouts, tags,
+        Agnostically parses a text line to identify action callouts, semantic tags,
         numbered lists, or bullets without hardcoded domain restrictions.
         
         Supports channel-level semantic_categories mapping category names to word lists.
         
         Returns:
-            (dot_color, prefix, prefix_color, content)
+            (dot_color, prefix, prefix_color, content, icon_type)
         """
         accent_rgb = hex_to_rgb(pal.get("accent") or pal.get("primary", "#0A66C2"))
-        danger_rgb = hex_to_rgb(pal.get("danger") or pal.get("error", "#DC2626" if not is_dark else "#F87171"))
-        success_rgb = hex_to_rgb(pal.get("success", "#059669" if not is_dark else "#34D399"))
-        warning_rgb = hex_to_rgb(pal.get("warning", "#D97706" if not is_dark else "#FBBF24"))
+        danger_rgb = hex_to_rgb(pal.get("danger") or pal.get("error", "#DC2626" if not is_dark else "#EF4444"))
+        success_rgb = hex_to_rgb(pal.get("success", "#059669" if not is_dark else "#10B981"))
+        warning_rgb = hex_to_rgb(pal.get("warning", "#D97706" if not is_dark else "#F59E0B"))
         body_rgb = (226, 232, 240) if is_dark else (30, 41, 59)
+
+        # Check for optional leading bullet (e.g. '• ', '- ', '* ', '■ ')
+        has_bullet = False
+        bullet_prefix_match = re.match(r'^([\-\•\*\■])\s*(.*)$', clean_p)
+        if bullet_prefix_match:
+            has_bullet = True
+            clean_p = bullet_prefix_match.group(2).strip()
+
+        # 1. Check for Action Callouts (SALVAR, COMPARTILHAR, COMENTAR, CURTIR, SAVE, SHARE, COMMENT, LIKE)
+        action_match = re.match(
+            r'^(SALVAR|COMPARTILHAR|COMENTAR|CURTIR|SAVE|SHARE|COMMENT|LIKE)(?::|\s)\s*(.*)$',
+            clean_p,
+            re.IGNORECASE,
+        )
+        if action_match:
+            act_word = action_match.group(1).upper()
+            content = action_match.group(2).strip()
+            prefix = f"{act_word}: "
+
+            if act_word in ("SALVAR", "SAVE", "BOOKMARK"):
+                icon_type = "salvar"
+                c = (212, 175, 55) if is_dark else (180, 130, 20)  # Gold/Amber
+            elif act_word in ("COMPARTILHAR", "SHARE", "REPOST"):
+                icon_type = "compartilhar"
+                c = (52, 211, 153) if is_dark else (5, 150, 105)  # Emerald green
+            elif act_word in ("COMENTAR", "COMMENT", "DISCUTIR"):
+                icon_type = "comentar"
+                c = (56, 189, 248) if is_dark else (10, 102, 194)  # Cyan/Royal blue
+            elif act_word in ("CURTIR", "LIKE", "HEART"):
+                icon_type = "curtir"
+                c = (244, 63, 94) if is_dark else (225, 29, 72)  # Rose/Crimson
+            else:
+                icon_type = "salvar"
+                c = accent_rgb
+
+            prefix_color = (*c, 255)
+            return None, prefix, prefix_color, content, icon_type
 
         # Category keyword sets (customizable per channel or falling back to defaults)
         cats = semantic_categories or {}
@@ -398,8 +502,8 @@ class CarouselBuilder:
         )
         accent_words = cats.get("accent") if cats.get("accent") is not None else ()
 
-        # 1. Check for generic capitalized semantic tag (e.g., 'TAG: content')
-        tag_match = re.match(r'^([A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇ0-9_\-\s]{2,20}):\s*(.*)$', clean_p)
+        # 2. Check for generic capitalized semantic tag (e.g., 'TAG: content')
+        tag_match = re.match(r'^([A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇ0-9_\-\s]{2,25}):\s*(.*)$', clean_p)
         if tag_match:
             tag_key = tag_match.group(1).strip()
             content = tag_match.group(2).strip()
@@ -407,42 +511,43 @@ class CarouselBuilder:
 
             tag_upper = tag_key.upper()
             tag_lookup = custom_tags.get(tag_upper) or custom_tags.get(f"{tag_upper}:") if custom_tags else None
+            is_semantic_callout = False
+
             if tag_lookup:
                 c = hex_to_rgb(tag_lookup)
+                is_semantic_callout = True
             elif any(k in tag_upper for k in danger_words):
                 c = danger_rgb
+                is_semantic_callout = True
             elif any(k in tag_upper for k in success_words):
                 c = success_rgb
+                is_semantic_callout = True
             elif any(k in tag_upper for k in warning_words):
                 c = warning_rgb
+                is_semantic_callout = True
             elif any(k in tag_upper for k in accent_words):
                 c = accent_rgb
             else:
                 c = accent_rgb
 
-            dot_color = (*c, 255)
+            dot_color = (*c, 255) if (has_bullet or is_semantic_callout) else None
             prefix_color = (*c, 255)
-            return dot_color, prefix, prefix_color, content
+            return dot_color, prefix, prefix_color, content, None
 
-        # 2. Check for numbered list (e.g. '1. ', '2) ')
+        # 3. Check for numbered list (e.g. '1. ', '2) ')
         num_match = re.match(r'^(\d+[\.\)])\s*(.*)$', clean_p)
         if num_match:
             prefix = num_match.group(1) + " "
             prefix_color = (*accent_rgb, 255)
             content = num_match.group(2).strip()
-            return None, prefix, prefix_color, content
+            return None, prefix, prefix_color, content, None
 
-        # 3. Check for bullet list (e.g. '- ', '• ', '* ', '■ ')
-        bullet_match = re.match(r'^([\-\•\*\■])\s*(.*)$', clean_p)
-        if bullet_match:
-            prefix = ""
-            prefix_color = (*accent_rgb, 255)
-            dot_color = (*accent_rgb, 255)
-            content = bullet_match.group(2).strip()
-            return dot_color, prefix, prefix_color, content
+        # 4. Check for bullet list if it had a bullet
+        if has_bullet:
+            return (*accent_rgb, 255), "", (*accent_rgb, 255), clean_p, None
 
-        # 4. Standard line
-        return None, "", (*body_rgb, 255), clean_p
+        # 5. Standard line
+        return None, "", (*body_rgb, 255), clean_p, None
 
     # -------------------------------------------------------------------------
     # Preset Renderers
@@ -649,7 +754,7 @@ class CarouselBuilder:
                     curr_y += int(font_body.size * 0.45)
                     continue
 
-                dot_color, prefix, prefix_color, content = self._parse_semantic_line(
+                dot_color, prefix, prefix_color, content, icon_type = self._parse_semantic_line(
                     clean_p=clean_p,
                     pal=pal,
                     is_dark=is_dark,
@@ -658,7 +763,12 @@ class CarouselBuilder:
                 )
 
                 text_x = margin_x
-                if dot_color:
+                if icon_type:
+                    icon_s = int(font_body.size * 0.95)
+                    icon_y = curr_y + int(font_body.size * 0.08)
+                    self._draw_action_icon(draw, icon_type, margin_x, icon_y, icon_s, prefix_color)
+                    text_x = margin_x + icon_s + 12
+                elif dot_color:
                     dot_d = int(font_body.size * 0.40)
                     dot_y = curr_y + int(font_body.size * 0.42)
                     draw.ellipse([margin_x, dot_y, margin_x + dot_d, dot_y + dot_d], fill=dot_color)
@@ -747,8 +857,18 @@ class CarouselBuilder:
                 self._draw_rounded_image(img, images[0], (margin_x, img_y, margin_x + each_w, img_y + available_h), radius=card_radius, fit_mode=fit_mode)
                 self._draw_rounded_image(img, images[1], (margin_x + each_w + gap, img_y, margin_x + max_w, img_y + available_h), radius=card_radius, fit_mode=fit_mode)
 
-        # Footer dots
+        # Footer
         foot_y = h - int(h * 0.045)
+
+        # Social Proof tweet action icons in footer (Comment, Share/Repost, Like/Heart, Bookmark)
+        foot_icon_size = max(16, int(h * 0.018))
+        foot_icon_y = foot_y - int(foot_icon_size * 0.10)
+        foot_icons = ["comentar", "compartilhar", "curtir", "salvar"]
+        foot_icon_color = (*handle_color[:3], 180)
+        gap = int(w * 0.075)
+        for i, f_icon in enumerate(foot_icons):
+            self._draw_action_icon(draw, f_icon, margin_x + i * gap, foot_icon_y, foot_icon_size, foot_icon_color)
+
         r_text = f"{page_str}   {swipe_str}"
         font_foot = load_font_by_family("sans", size=int(w * footer_scale), is_bold=False)
         bbox_r = draw.textbbox((0, 0), r_text, font=font_foot)

@@ -91,30 +91,38 @@ Your thumbnail appears at roughly **120px wide** on mobile — that's how most v
 - Use **3 colors maximum** per thumbnail
 - Saturate more than real life — thumbnails compete with bright UI
 
-## Text on Thumbnails
+## Text on Thumbnails (Rule 15 — Titanic Typography Standard)
+
+> [!IMPORTANT]
+> Low CTR (0.90% to 1.5%) is almost always caused by tiny, cluttered fonts that become illegible smudges on mobile feeds. Under **Rule 15**, thumbnails follow the **Titanic Typography Scale**: 3 words maximum, massive font sizes (160px–220px), and zero micro-text.
 
 ### When to Use Text
 
-- Lists/numbers: "7 Tips", "Top 10"
-- Strong opinions: "STOP Doing This"
-- Results: "$10K in 30 Days"
-- Comparisons: "vs" between two things
+- Emotional hook / shock: *"A MAIOR FARSA"*, *"ERA TUDO FALSO!"*
+- Mystery / anomaly: *"18 ANDARES NO SUBSOLO"*, *"NUNCA EXISTIU"*
+- Action / veto: *"CÓPIA VETADA!"*, *"SEGREDO DE ESTADO"*
+- Strong stance: *"O GRANDE GOLPE"*, *"PROIBIDO"*
 
 ### When NOT to Use Text
 
-- The video title already says it (redundant)
-- The emotion/visual tells the story
-- You can't make it large enough to read at 120px
+- The video title already says it (redundancy kills curiosity)
+- Technical explanations, bullet points, subtitles, or metadata tables (strictly banned on covers)
+- Anything that requires font size < 50px to fit on screen
 
-### Text Rules
+### Rule 15 Typography Specifications (1920x1080 Master)
 
-| Rule | Reason |
-|------|--------|
-| Max 6 words | Readability at thumbnail size |
-| Min 60pt equivalent | Must be legible at 120px width |
-| Bold sans-serif font | Thin fonts disappear at small sizes |
-| Contrast stroke/shadow | Ensures readability on any background |
-| No small text | If it's not readable small, cut it |
+| Spec | Rule 15 Standard | Rationale |
+|------|-------------------|-----------|
+| **Word Limit** | **Max 3 to 4 words** | Read in 500ms on mobile feed without cognitive overload |
+| **Headline Font Size** | **160px to 220px** | Must be effortlessly legible at 120px mobile width |
+| **Badge / Seal Font Size** | **50px to 65px** | Supporting context (e.g. `● CASO REAL`, `CONFIDENCIAL`) |
+| **Micro-Font Floor** | **Strictly prohibited < 50px** | Zero bullet points, zero subtitles, zero fine print |
+| **Protective Stroke** | **10px to 16px (`stroke_width >= 11`)** | Black `#000000` stroke isolates letters over any background |
+| **Font Family** | **Ultra-condensed heavy (`Anton`, `Impact`, `Montserrat 900`)** | Maximum vertical fill with minimal horizontal sprawling |
+| **Color Contrast** | **Bi-tonal: White (`#FFF`) + Alert Yellow (`#FFE500`)** | Peripheral eye rods trigger instant attention to warning yellow |
+| **Chiaroscuro Shield** | **Dark gradient (`rgba(4,6,10,0.96)`) on text side** | 100% contrast guaranteed without flattening background subject |
+| **YouTube Safe Zone** | **Clear 320x140px bottom-right corner** | Completely clear of YouTube's video duration timestamp badge |
+
 
 ## Face Expression Psychology
 

@@ -116,7 +116,7 @@ Motor de vídeo de alta fidelidade em React & TypeScript (`src/video/`) projetad
 - **Legendas Dinâmicas Sincronizadas (Whisper)**: Destacamento palavra por palavra em ouro (`#FFD700`) via `SynchronizedCaptions.tsx` sobre card translúcido escuro protetor.
 - **Componentes Cinemáticos**: Decodificador militar (`ScrambledText`), partículas de poeira 3D (`DustParticles`), flare anamórfico dourado (`AnamorphicFlare`), carimbo oficial (`ClassifiedStamp`), grade tática (`TacticalGrid`), grão de película (`FilmGrain`) e zoom suave Ken Burns (`KenBurnsImage`).
 - **Paisagem Sonora em 48kHz Sincronizada**: Áudio estéreo broadcast integrado via `<Audio />` com ducking dinâmico automático (-18dB a -22dB durante a voz).
-- **Gerador Programático de Miniaturas (Thumbnails)**: Criação de capas 16:9 de alto CTR via código React (`ThumbnailEpisode.tsx`).
+- **Gerador Programático de Miniaturas (Regra 15)**: Criação de capas 16:9 de alto CTR via código React (`ThumbnailEpisode.tsx`) cumprindo a Escala Tipográfica Titânica (160px–220px, limite de 3 palavras, zero micro-fontes < 50px e escudo contra o badge de tempo do YouTube).
 
 ### 6. Publicação Multi-Canal & Integração Direta com YouTube
 - **Integração Nativa com YouTube**: Conexão direta com canais do YouTube através do Buffer (`buffer_channel_id` configurado em `channel.json`).

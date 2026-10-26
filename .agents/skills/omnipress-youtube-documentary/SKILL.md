@@ -61,19 +61,29 @@ Audiences tune out if the visual or auditory rhythm remains uniform for >60 seco
 
 ---
 
-## 3. High-CTR Packaging (Thumbnail + Title Synergy)
+## 3. High-CTR Packaging & Titanic Typography (Rule 15)
 
-A documentary with 100% retention achieves zero views if nobody clicks:
+A documentary with 100% retention achieves zero views if nobody clicks. If CTR is between **0.90% and 1.5%**, the packaging is failing. Every documentary thumbnail must strictly follow **Rule 15** ([`15_high_ctr_thumbnail_typography_and_packaging_standards.md`](../../rules/15_high_ctr_thumbnail_typography_and_packaging_standards.md)):
 
-1. **The 3-Element Visual Rule**:
-   - Limit the thumbnail to **3 visual focal points** (e.g., 1 high-contrast subject/face, 1 dramatic background/document, 1 bold badge/text element).
-2. **The 120px Mobile Test**:
-   - 70%+ of YouTube impressions happen on mobile. Shrink the thumbnail to 120px wide: if the core idea, emotion, or visual contrast isn't instantly clear, redesign it.
-3. **Curiosity Gap vs. Clickbait**:
-   - **Clickbait**: Makes a promise the video cannot fulfill (causes 10-second retention collapse).
-   - **Curiosity Gap**: Opens a question only watching the video can answer (e.g., *"O Algoritmo Que Quebrou a Receita Federal"*).
-4. **Zero Title-Thumbnail Redundancy**:
-   - If the title says *"Como a Oracle Perdeu o Contrato Bilionário"*, the thumbnail must NOT say *"A Oracle Perdeu"*. The thumbnail should say *"ERRO DE CÓDIGO"* or show a redacted contract with a stamped *"CANCELADO"*.
+1. **The 3-Word Limit (Max 4 Words)**:
+   - Limit text to **3 to 4 power words** maximum (e.g., *"A MAIOR FARSA"*, *"18 ANDARES NO SUBSOLO"*, *"CÓPIA VETADA"*).
+   - Never place bullet points, subtitles, paragraph excerpts, or metadata tables on thumbnail covers.
+2. **Titanic Typography Scale (160px – 220px)**:
+   - Master resolution: 1920x1080 (16:9).
+   - Headlines must be **160px to 220px** in heavy ultra-condensed font (`Anton`, `Impact`, `Montserrat 900`).
+   - Badges/seals must be **50px to 65px**. Any text below **50px** is strictly prohibited.
+   - Letters must carry a protective black stroke of **10px to 16px** (`stroke_width >= 11`) and sit over a dark Chiaroscuro gradient shield on the left.
+3. **High-Luminance Contrast Palette**:
+   - Bi-tonal combo: Pure White (`#FFFFFF`) on Line 1 + Alert Yellow (`#FFE500` / `#FFD700`) on the shock word.
+4. **YouTube Duration Shield (Safe Zone)**:
+   - The bottom-right corner (**320x140px**) is the YouTube Duration Badge Death Zone. Zero text or key details in this zone. Main text must be anchored on the left 50-55%.
+5. **The 3-Element Visual Rule**:
+   - Exactly 3 focal points: 1 dramatic visual/subject on the right, 1 titanic typography block on the left, and 1 contextual seal/badge.
+6. **The 120px Mobile Squint Test**:
+   - 75%+ of impressions occur on mobile. Export a 120px wide preview: if the power words cannot be read effortlessly in under 1 second, the thumbnail is automatically rejected.
+7. **Curiosity Gap vs. Redundancy**:
+   - The thumbnail text must NEVER repeat the video title. The thumbnail provides the emotional shock; the title provides the search context.
+
 
 ---
 

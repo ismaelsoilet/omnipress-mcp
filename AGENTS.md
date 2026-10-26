@@ -42,6 +42,9 @@ When an agent generates a content campaign, it must produce three synchronized a
 - **Universal Readability**: All carousel slides must comply with [`.agents/rules/08_visual_contrast_and_carousel_legibility_standards.md`](.agents/rules/08_visual_contrast_and_carousel_legibility_standards.md).
 - **Protective Backdrop Container**: Text blocks must always be rendered over a dark translucent/opaque backdrop card (`rgba(8, 10, 14, 215)`) with rounded corners and subtle brand accent borders to prevent legibility collapse over light, white, or textured background images.
 - **Safety Typography Stroke**: All text elements (headline, body, and footer) must carry a dark protective stroke (`stroke_width >= 2`, `stroke_fill=(4, 5, 8, 255)`) to guarantee crisp legibility under any lighting conditions.
+- **Mandatory Action Icons Standard (CTA Slides)**: Final synthesis and call-to-action (CTA) slides must **always render native vector action icons** (Bookmark/Save, Share/Repost, Speech Bubble/Comment, Heart/Like) directly on the canvas with distinct semantic colors (Gold, Emerald Green, Royal Blue, Rose/Crimson). Never rely on unicode text emojis which get stripped or fail to render on canvas.
+- **Social Proof Tweet Card Footer**: In the `tweet_card` preset, the bottom footer must render the 4 interactive micro-action icons on the left to mirror native social media UI.
+- **Semantic Contrast Gate (MITO vs. VERDADE)**: `MITO` / `ERRO` / `PROBLEMA` must strictly render in Red (`#DC2626` / `#EF4444`); `VERDADE` / `FATO` / `SOLUÇÃO` must strictly render in Green (`#059669` / `#10B981`).
 
 ### 6. Single Publication & Anti-Duplicate Policy (Rule 09)
 - **Exactly-Once Publishing**: All content must be published or scheduled **EXACTLY ONCE**. Never dispatch duplicate posts or maintain redundant scheduled items for the same creative.
@@ -121,6 +124,17 @@ When an agent generates a content campaign, it must produce three synchronized a
 - **High-Performance Nanosecond Signature Caching**: File reads for channel configs and `.env` files must be cached in memory with nanosecond `(st_mtime_ns, st_size)` signature verification to guarantee zero disk I/O bottlenecks and instant deterministic cache invalidation upon any disk edit.
 - **Generalization Over Bespoke Code (Anti-Gambiarra)**: When a channel needs a new visual feature or layout behavior, agents are strictly forbidden from writing conditional channel checks (`if channel_slug == ...`) or bespoke workaround scripts. Features must be added as generic, reusable schema parameters in `src/` available to all channels.
 
+### 12. High-CTR Thumbnail Typography & Documentary Packaging Standards (Rule 15)
+- **Mathematical CTR Benchmark (>5.0% - 10.0%+)**: Thumbnails for YouTube long-form documentaries and explainer videos must be engineered to convert impressions aggressively, lifting CTR from low baseline levels (0.90% - 1.5%) to high-performance benchmarks (>5.0% - 10.0%+).
+- **The Strict 3-Word Limit (Max 4 Words)**: A thumbnail must NEVER contain more than 3 to 4 words in total. Bullet points, explanatory subtitles, paragraphs, metadata tables, and numbered lists are strictly prohibited on thumbnail covers. Thumbnails must communicate an anomaly, mystery hook, or emotional shock in 1 second.
+- **Titanic Typography Scale**: Main headline fonts on the 1920x1080 master canvas must be between **160px and 220px** (`Anton`, `Impact`, `Montserrat 900`). Single supporting badges or seals must be at least **50px to 65px**. Any text below **50px** is strictly prohibited anywhere on the thumbnail.
+- **Safety Heavy Stroke & Chiaroscuro Isolation**: All power words must have a thick protective black stroke (`stroke_width >= 11`, 10px to 16px) and a deep drop shadow (`0 12px 28px rgba(0,0,0,0.98)`). Text must sit over a dark Chiaroscuro isolation gradient (`rgba(4, 6, 10, 0.96)`) on the left half of the canvas, guaranteeing 100% legibility over any background.
+- **High-Luminance Peripheral Palette**: Main headline words must use High-Luminance Alert Yellow (`#FFE500` / `#FFD700`) for the emotional power word and Pure White (`#FFFFFF`) for the setup word, with Alert Red (`#FF2222`) reserved for veto, secret, or danger terms.
+- **Anti-Timestamp YouTube Shield**: The bottom-right corner (**320px wide by 140px tall**) is the YouTube Duration Badge Death Zone. Absolutely zero text, badges, or essential focal elements may occupy this area. Main typography must be anchored exclusively on the left 50-55% of the canvas.
+- **The 3-Element Focal Rule**: Thumbnails must contain exactly 3 visual components: 1 dramatic visual/subject on the right, 1 titanic 2-3 word typography block on the left, and 1 contextual seal or badge (`CASO REAL`, `CONFIDENCIAL`, or directional cue).
+- **Mandatory 120px Mobile Squint Test**: Every generated thumbnail must be exported and verified as a 120px to 320px mobile preview. If the core words cannot be read effortlessly in under 1 second, the thumbnail is automatically rejected.
+
+
 ---
 
 ## 🇧🇷 Diretrizes em Português
@@ -158,6 +172,9 @@ Ao gerar campanhas de conteúdo, o agente deve produzir 3 formatos integrados:
 - **Legibilidade Universal**: Todos os slides gerados devem obedecer estritamente a [`.agents/rules/08_visual_contrast_and_carousel_legibility_standards.md`](.agents/rules/08_visual_contrast_and_carousel_legibility_standards.md).
 - **Contêiner Protetor Opaco/Translúcido**: Blocos de texto devem sempre ser renderizados sobre um card escuro translúcido (`rgba(8, 10, 14, 215)`) com cantos arredondados e borda sutil no tom da identidade visual do canal, impedindo colapso de contraste em fundos brancos, documentos ou fotos ruidosas.
 - **Contorno de Segurança nas Fontes**: Todos os textos (headline, body e rodapés) devem receber contorno de proteção escuro (`stroke_width >= 2`, `stroke_fill=(4, 5, 8, 255)`) para máxima nitidez visual em qualquer condição de iluminação.
+- **Padrão Mandatório de Ícones de Ação (Lâminas de CTA)**: Lâminas de conclusão e Chamada para Ação (CTA) devem **obrigatoriamente renderizar ícones vetoriais nativos** diretamente na lâmina para cada ação (Salvar/Bookmark em dourado, Compartilhar/Share em verde, Comentar/Bubble em azul/ciano, Curtir/Heart em rosa/carmim). Jamais depender de emojis unicode em texto puro, que quebram ou são descartados em canvas.
+- **Rodapé Social Proof (`tweet_card`)**: No preset `tweet_card`, a barra inferior deve renderizar os 4 micro-ícones sociais interativos à esquerda, conferindo acabamento idêntico ao de postagens reais.
+- **Destaque Semântico Normativo (MITO vs. VERDADE)**: Chamadas de `MITO` / `ERRO` / `PROBLEMA` devem renderizar estritamente em Vermelho (`#DC2626` / `#EF4444`); chamadas de `VERDADE` / `FATO` / `SOLUÇÃO` devem renderizar estritamente em Verde (`#059669` / `#10B981`).
 
 ### 6. Política de Publicação Única e Anti-Duplicação (Regra 09)
 - **Publicação Estritamente Única (Exactly-Once)**: Todo post deve ser publicado ou agendado **EXATAMENTE UMA VEZ**. É expressamente proibido disparar publicações repetidas ou manter agendamentos duplicados do mesmo criativo na fila.
@@ -239,5 +256,16 @@ Ao gerar campanhas de conteúdo, o agente deve produzir 3 formatos integrados:
 - **Cascata Universal de Credenciais**: Chaves de API e tokens de canais devem ser resolvidos exclusivamente via `ChannelManager.get_credential(key, channel_slug)`: `channels/<slug>/.env` -> `<SLUG>_<KEY>` -> `.env` global. É expressamente proibido fazer leitura direta com `os.getenv` em adaptadores.
 - **Cache de Alta Performance com Validação por Nanossegundos**: O acesso a arquivos de canal e `.env` deve utilizar cache em memória validado pela assinatura `(st_mtime_ns, st_size)`, eliminando I/O repetitivo de disco sem perigo de leitura obsoleta.
 - **Generalização em Vez de Código Ad-Hoc (Anti-Gambiarra)**: Diante de uma nova necessidade visual de um canal, é terminantemente proibido criar condicionais no core (`if channel_slug == ...`) ou scripts paliativos. A nova capacidade deve ser implementada como parâmetro genérico e reutilizável em `src/`, disponível para todos os canais com testes unitários associados.
+
+### 12. Padrão de Tipografia Titânica e Embalagem de Thumbnails de Alto CTR (Regra 15)
+- **Meta Numérica de CTR (>5,0% a 10,0%+)**: Thumbnails de documentários e episódios investigativos devem ser concebidas para romper o padrão estagnado de **0,90% a 1,5% de cliques**, alcançando patamar de alta performance (>5,0% a 10,0%+).
+- **Limite Estrito de 3 a 4 Palavras**: É expressamente proibido inserir mais de 3 ou 4 palavras na miniatura. Textos em tópicos (bullets), subtítulos explicativos, parágrafos e cards de metadados são terminantemente proibidos na capa. A miniatura deve gerar choque ou curiosidade em 500ms.
+- **Escala Tipográfica Titânica**: Títulos principais no canvas 1920x1080 devem ter entre **160px e 220px** (`Anton`, `Impact`, `Montserrat 900`). Badges de contexto devem ter entre **50px e 65px**. Qualquer texto inferior a **50px** é estritamente proibido.
+- **Contorno Pesado (Safety Stroke) & Isolamento Chiaroscuro**: Todas as palavras de impacto devem receber contorno preto espesso (**10px a 16px**, `stroke_width >= 11`) e drop-shadow profundo (`0 12px 28px rgba(0,0,0,0.98)`). O texto deve ser aplicado sobre gradiente escuro de isolamento chiaroscuro nos 50-55% esquerdos da tela.
+- **Paleta Cromática de Visão Periférica**: Palavras dramáticas de gancho devem usar Amarelo Alerta (`#FFE500` / `#FFD700`) e Branco Puro (`#FFFFFF`), com Vermelho Alerta (`#FF2222`) reservado para segredos, vetos ou perigo.
+- **Escudo Anti-Timestamp do YouTube**: O canto inferior direito (**320px de largura por 140px de altura**) é a Zona da Morte do YouTube (coberta pela etiqueta de duração do vídeo). Nenhum texto ou elemento informativo pode residir nessa área.
+- **Regra dos 3 Elementos Focais**: A composição é limitada a 3 pontos de foco: 1 sujeito visual dramático à direita, 1 bloco de tipografia titânica de 2-3 palavras à esquerda e 1 selo/badge de autoridade (`CASO REAL`, `CONFIDENCIAL` ou carimbo de `VETADO`).
+- **Teste Mandatório dos 120px no Celular**: Toda miniatura gerada deve ser inspecionada em preview mobile de 120px a 320px. Se a mensagem não puder ser lida instantaneamente em tela de smartphone, o design é reprovado.
+
 
 
