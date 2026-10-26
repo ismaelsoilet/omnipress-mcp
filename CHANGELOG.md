@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.3] — 2026-10-26
+
+### Fixed
+- **Compatibilidade do Runner de CI sem GPU/Blender**:
+  - `tests/test_universal_3d.py`: marcados testes de renderização 3D ao vivo com `@pytest.mark.skipif(not HAS_BLENDER, ...)`.
+  - Adicionado `test_blender_binary_discovery_mocked` para testar o algoritmo de descoberta de binário com mock no PATH.
+  - Adicionados testes para o fluxo sem Blender (`test_render_when_blender_missing` e `test_mcp_tool_when_blender_missing`), garantindo que tanto ambientes com Blender instalado (estações locais com GPU) quanto ambientes headless sem Blender (como runners do GitHub Actions) executem 100% dos testes com sucesso.
+  - `src/utils/runtime_checker.py`: unificada a descoberta de binário do Blender com `Universal3DEngine.find_blender_binary()` para detecção precisa em caminhos locais (`~/.local/bin/blender`).
+
 ## [0.8.2] — 2026-10-26
 
 ### Added

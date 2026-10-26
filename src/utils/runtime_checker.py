@@ -57,7 +57,13 @@ def get_runtime_capabilities() -> Dict[str, Any]:
         remotion_ready = bool(shutil.which("remotion") or shutil.which("npx"))
 
     # Check blender
-    blender_version = check_command_version("blender", "--version")
+    try:
+        from src.engine.universal_3d import Universal3DEngine
+        blender_bin = Universal3DEngine.find_blender_binary() or "blender"
+    except Exception:
+        blender_bin = "blender"
+
+    blender_version = check_command_version(blender_bin, "--version")
     if blender_version and "Blender" in blender_version:
         blender_version = blender_version.split("\n")[0].strip()
 
