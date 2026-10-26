@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2] — 2026-10-26
+
+### Added
+- **Normativa Canônica — Regra 14 (Desacoplamento Estrito & Anti-Engenharia Errada)**:
+  - Adicionado documento normativo [`.agents/rules/14_strict_decoupling_channel_isolation_and_anti_bad_engineering.md`](.agents/rules/14_strict_decoupling_channel_isolation_and_anti_bad_engineering.md) e incorporação formal em `AGENTS.md` (Seção 11) e `.agents/rules/README.md`.
+  - Estipulados os 6 princípios invioláveis: Invariância do Core (Zero Hardcoded Slugs), Cascata Declarativa Top-Down, Imutabilidade e Execução Sem Estado (Statelessness), Resolução Universal de Credenciais via `ChannelManager.get_credential`, Cache por Assinatura de Disco e Generalização Obrigatória de Recursos Visuais (Zero Gambiarras).
+- **Cascata Top-Down de Parâmetros de Layout no `UniversalCarouselEngine`**:
+  - `UniversalCarouselEngine.prepare_assets` agora extrai parâmetros visuais e geométricos declarados no nível raiz ou no bloco `layout_parameters` de `carousel_recipe.json` (`start_y_ratio`, `margin_ratio`, `split_ratio`, `border_radius`, `headline_scale`, `body_scale`, `card_alpha`, etc.) e os propaga automaticamente para cada slide individual, eliminando código boilerplate e garantindo precedência rigorosa de overrides locais.
+- **Validação Automatizada de Cascata**:
+  - Adicionado novo teste unitário `test_universal_carousel_recipe_layout_cascade` em `tests/test_carousel_builder.py`, elevando a suíte de testes para 141 testes automatizados (100% aprovados).
+
+### Changed
+- Universalização de docstrings e exemplos em `src/engine/universal_3d.py`, substituindo menções a canais específicos por `<slug>`.
+
 ## [0.8.1] — 2026-10-26
 
 ### Added

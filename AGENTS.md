@@ -112,6 +112,15 @@ When an agent generates a content campaign, it must produce three synchronized a
   - MINOR (`x.Y.0`): new features, new visual presets, new adapters, new CLI engines, backward-compatible schema enhancements.
   - MAJOR (`X.0.0`): breaking changes to MCP contracts, CLI command signature overhauls, incompatible channel workspace structures.
 
+### 11. Strict Decoupling, Channel Isolation & Anti-Bad-Engineering Standard (Rule 14)
+- **Core Invariance & Zero Hardcoded Slugs**: Core engine code in `src/` (`src/core/`, `src/engine/`, `src/adapters/`, `src/video/`) must **NEVER** contain hardcoded channel slugs, brand names, creator references, or channel-specific file paths. Core code must operate identically whether 1 or 1,000 channels exist.
+- **Declarative Top-Down Parameter Cascading**: All layout, geometry, typography, and styling parameters must flow strictly from the recipe/slide downward:
+  `slide_data` (item override) > `recipe.layout_parameters` / `recipe.<param>` (batch override) > `channel.json -> visual_identity.presets[preset]` > `channel.json -> visual_identity.layout_parameters` > `channel.json -> branding` > universal engine defaults.
+- **Stateless Execution & Zero Mutable Instance Side-Effects**: Adapters and engines must NEVER store request-scoped data in mutable instance fields (e.g. `self._channel_services`, `self.current_post`). Every publishing and rendering operation must be purely functional and re-entrant.
+- **Universal Credential Cascade**: Channel API keys and tokens must be resolved exclusively via `ChannelManager.get_credential(key, channel_slug)`: `channels/<slug>/.env` -> `<SLUG>_<KEY>` -> global `.env`. Direct `os.getenv` calls in adapters are prohibited.
+- **High-Performance Nanosecond Signature Caching**: File reads for channel configs and `.env` files must be cached in memory with nanosecond `(st_mtime_ns, st_size)` signature verification to guarantee zero disk I/O bottlenecks and instant deterministic cache invalidation upon any disk edit.
+- **Generalization Over Bespoke Code (Anti-Gambiarra)**: When a channel needs a new visual feature or layout behavior, agents are strictly forbidden from writing conditional channel checks (`if channel_slug == ...`) or bespoke workaround scripts. Features must be added as generic, reusable schema parameters in `src/` available to all channels.
+
 ---
 
 ## 🇧🇷 Diretrizes em Português
@@ -221,4 +230,14 @@ Ao gerar campanhas de conteúdo, o agente deve produzir 3 formatos integrados:
   - PATCH (`x.y.Z`): correções de bugs, refatorações internas ou melhorias de testes sem quebra de compatibilidade.
   - MINOR (`x.Y.0`): novos recursos, novos presets visuais, novos adaptadores, expansão de motores CLI ou melhorias compatíveis de schema.
   - MAJOR (`X.0.0`): mudanças com quebra de contrato MCP, alterações incompatíveis na CLI ou reestruturação irreversível de canais.
+
+### 11. Padrão de Desacoplamento Estrito, Isolamento de Canais e Erradicação de Engenharia Incorreta (Regra 14)
+- **Invariância Total do Core & Zero Hardcoded Slugs**: O código do motor central em `src/` (`src/core/`, `src/engine/`, `src/adapters/`, `src/video/`) JAMAIS deve conter slugs de canais reais, marcas, nomes de criadores ou caminhos absolutos para pastas de canal. O motor deve se comportar de forma idêntica existindo 1 ou 1.000 canais.
+- **Cascata Declarativa Top-Down de Parâmetros**: Todo e qualquer parâmetro de layout, geometria, tipografia, contraste e estilo deve fluir estritamente de cima para baixo:
+  `slide_data` (item específico) > `recipe.layout_parameters` / `recipe.<param>` (específico do lote) > `channel.json -> visual_identity.presets[preset]` > `channel.json -> visual_identity.layout_parameters` > `channel.json -> branding` > fallbacks universais da engine.
+- **Execução Sem Estado & Zero Efeitos Colaterais Mutáveis**: Adaptadores e motores NUNCA devem reter estado de requisição em atributos mutáveis de instância (`self._channel_services`, `self.current_post`). Toda operação de publicação e renderização deve ser puramente funcional e reentrante.
+- **Cascata Universal de Credenciais**: Chaves de API e tokens de canais devem ser resolvidos exclusivamente via `ChannelManager.get_credential(key, channel_slug)`: `channels/<slug>/.env` -> `<SLUG>_<KEY>` -> `.env` global. É expressamente proibido fazer leitura direta com `os.getenv` em adaptadores.
+- **Cache de Alta Performance com Validação por Nanossegundos**: O acesso a arquivos de canal e `.env` deve utilizar cache em memória validado pela assinatura `(st_mtime_ns, st_size)`, eliminando I/O repetitivo de disco sem perigo de leitura obsoleta.
+- **Generalização em Vez de Código Ad-Hoc (Anti-Gambiarra)**: Diante de uma nova necessidade visual de um canal, é terminantemente proibido criar condicionais no core (`if channel_slug == ...`) ou scripts paliativos. A nova capacidade deve ser implementada como parâmetro genérico e reutilizável em `src/`, disponível para todos os canais com testes unitários associados.
+
 

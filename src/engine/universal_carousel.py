@@ -163,8 +163,32 @@ class UniversalCarouselEngine:
         bgs_dir.mkdir(parents=True, exist_ok=True)
 
         default_preset = recipe.get("preset")
+        recipe_layout = dict(recipe.get("layout_parameters", {}))
+        for k in (
+            "start_y_ratio",
+            "margin_ratio",
+            "split_ratio",
+            "border_radius",
+            "headline_scale",
+            "body_scale",
+            "step_scale",
+            "badge_scale",
+            "footer_scale",
+            "line_height_head",
+            "line_height_body",
+            "card_alpha",
+            "card_pad_x_ratio",
+            "card_pad_y_ratio",
+            "stroke_width",
+            "avatar_size_ratio",
+            "show_verified_badge",
+        ):
+            if k in recipe and k not in recipe_layout:
+                recipe_layout[k] = recipe[k]
+
         prepared_slides = []
-        for idx, slide in enumerate(slides, start=1):
+        for idx, raw_slide in enumerate(slides, start=1):
+            slide = {**recipe_layout, **raw_slide}
             slide_layout = slide.get("layout") or default_preset
             bg_ref = slide.get("bg_image") or slide.get("bg_image_path")
             dst_bg = None
@@ -206,7 +230,8 @@ class UniversalCarouselEngine:
             if slide.get("author_avatar"):
                 resolved_avatar = str(self.resolve_background_image(slide["author_avatar"], channel_slug, recipe_dir))
 
-            slide_dict = {
+            slide_dict = {**slide}
+            slide_dict.update({
                 "bg_image_path": str(dst_bg) if dst_bg else None,
                 "headline": slide.get("headline", ""),
                 "body": slide.get("body", ""),
@@ -226,7 +251,7 @@ class UniversalCarouselEngine:
                 "author": slide.get("author") or recipe.get("author_override"),
                 "background": slide.get("background") or (recipe.get("theme_override", {}).get("background")),
                 "accent": slide.get("accent") or (recipe.get("theme_override", {}).get("accent")),
-            }
+            })
             if slide.get("swipe_str"):
                 slide_dict["swipe_str"] = slide["swipe_str"]
             prepared_slides.append(slide_dict)

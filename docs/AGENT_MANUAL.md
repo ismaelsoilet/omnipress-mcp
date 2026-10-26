@@ -579,5 +579,19 @@ Os artefatos intermediários trocados entre agentes são rigidamente validados c
 - `audit_report.schema.json`: Relatório de conformidade cega com bloqueadores e score.
 - `production_log.schema.json`: Livro de registros de sessão e tempos operacionais mantido pelo AG12.
 
+---
+
+## 11. Padrão de Desacoplamento Estrito, Isolamento de Canais e Erradicação de Engenharia Incorreta (Regra 14)
+
+Devido à alta volatilidade e constante evolução dos canais em `channels/<slug>/` (mudanças de branding, novos formatos de slides, tabelas, receitas e contas sociais), o motor universal em `src/` deve permanecer rigorosamente blindado contra acoplamento e atalhos técnicos (*gambiarras*):
+
+1. **Invariância Absoluta de `src/` (Zero Hardcoded Slugs)**: Nenhum arquivo do core pode conter nomes, slugs de canais reais (`dossie-historico`, `ismael-soilet`, etc.) ou caminhos específicos de canais. Todo comportamento deve ser guiado puramente por parâmetros recebidos (`channel_slug`, `recipe`, `channel_data`).
+2. **Cascata Top-Down de Parâmetros**: Configurações de layout e geometria devem sempre fluir em cascata previsível:
+   `slide_data` > `recipe.layout_parameters` / `recipe.<param>` > `channel.json -> presets[preset]` > `channel.json -> layout_parameters` > fallbacks da engine.
+3. **Execução Sem Estado (Statelessness)**: Proibido armazenar estado de requisição ou serviços em atributos mutáveis de instância (`self._channel_services`, `self.current_post`). Adaptadores e builders devem ser puramente funcionais e reentrantes.
+4. **Resolução de Credenciais por `ChannelManager.get_credential`**: Todas as chaves e tokens de canal devem utilizar o resolvedor universal em 3 camadas (`channels/<slug>/.env` -> `<SLUG>_<KEY>` -> `.env` raiz). Proibido ler `os.getenv` diretamente para credenciais em adaptadores.
+5. **Cache de Alta Performance por Nanossegundos**: Leitura de configurações e `.env` deve utilizar cache em memória validado pela tupla `(st_mtime_ns, st_size)`, garantindo latência 0ms sem risco de leitura obsoleta.
+6. **Generalização de Recursos Visuais**: Qualquer nova demanda visual de canal deve ser implementada como parâmetro genérico e reutilizável em `src/`, com testes unitários associados e disponível para todos os canais igualmente.
+
 
 

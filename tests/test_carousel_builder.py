@@ -1,5 +1,6 @@
 """Unit tests for OmniPress Agnostic Carousel Builder."""
 
+import json
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 import pytest
@@ -374,6 +375,77 @@ def test_render_slide_with_channel_layout_parameters(tmp_path: Path):
     assert res.exists()
     img = Image.open(res)
     assert img.size == (1080, 1440)
+
+
+def test_universal_carousel_recipe_layout_cascade(tmp_path):
+    """Verifies Rule 14 top-down declarative cascading from recipe root & layout_parameters to slides."""
+    from src.engine.universal_carousel import UniversalCarouselEngine
+    from src.core.channel_manager import ChannelManager
+
+    cm = ChannelManager(root_dir=tmp_path)
+    ch_dir = cm.get_channel_dir("tech-blog")
+    ch_dir.mkdir(parents=True, exist_ok=True)
+    ch_file = ch_dir / "channel.json"
+    ch_file.write_text(json.dumps({
+        "slug": "tech-blog",
+        "name": "Tech Blog",
+        "visual_identity": {
+            "layout_parameters": {
+                "start_y_ratio": 0.50,
+                "card_alpha": 180,
+            }
+        }
+    }), encoding="utf-8")
+
+    engine = UniversalCarouselEngine(channel_manager=cm)
+
+    # Recipe specifies global start_y_ratio and layout_parameters (card_alpha)
+    recipe = {
+        "channel_slug": "tech-blog",
+        "post_slug": "cascade_test",
+        "preset": "minimal_dark",
+        "start_y_ratio": 0.33,
+        "layout_parameters": {
+            "card_alpha": 220,
+            "headline_scale": 0.052,
+        },
+        "slides": [
+            {
+                "headline": "Slide 1 Default Cascade",
+                "body": "Inherits recipe root start_y_ratio and layout_parameters",
+            },
+            {
+                "headline": "Slide 2 Item Override",
+                "body": "Overrides start_y_ratio at item level",
+                "start_y_ratio": 0.20,
+            }
+        ]
+    }
+
+    captured_slides = []
+    original_build = engine.carousel_builder.build_carousel
+
+    def spy_build(*args, **kwargs):
+        captured_slides.extend(kwargs.get("slides_data", []))
+        return original_build(*args, **kwargs)
+
+    engine.carousel_builder.build_carousel = spy_build
+
+    rendered_paths = engine.render_recipe_slides(recipe)
+    assert len(rendered_paths) == 2
+    assert all(p.exists() for p in rendered_paths)
+
+    assert len(captured_slides) == 2
+
+    # Slide 1 must inherit recipe start_y_ratio (0.33) and card_alpha (220)
+    assert captured_slides[0]["start_y_ratio"] == 0.33
+    assert captured_slides[0]["card_alpha"] == 220
+    assert captured_slides[0]["headline_scale"] == 0.052
+
+    # Slide 2 must have item-level override (0.20) but retain card_alpha (220)
+    assert captured_slides[1]["start_y_ratio"] == 0.20
+    assert captured_slides[1]["card_alpha"] == 220
+    assert captured_slides[1]["headline_scale"] == 0.052
 
 
 if __name__ == "__main__":

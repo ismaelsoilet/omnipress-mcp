@@ -190,7 +190,7 @@ class Universal3DEngine:
         Example Recipe:
         {
             "template": "device_mockup",
-            "texture": "channels/tecnologia-hoje/media/carousels/slide_01.png",
+            "texture": "channels/<slug>/media/carousels/slide_01.png",
             "output_name": "hero_phone_mockup.png",
             "resolution": "1080x1080",
             "engine": "BLENDER_EEVEE_NEXT",
