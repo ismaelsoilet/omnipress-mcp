@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omnipress.dev/schemas/thumbnail_recipe.schema.json",
+  "title": "OmniPress Thumbnail Recipe (Rule 15)",
+  "description": "Declarative high-CTR thumbnail recipe. Enforces the 3-4 word limit, titanic typography, safety stroke and YouTube death zone.",
+  "type": "object",
+  "required": ["headline", "media"],
+  "additionalProperties": true,
+  "properties": {
+    "$schema": { "type": "string" },
+    "channel_slug": { "type": "string" },
+    "post_slug": { "type": "string" },
+    "aspect_ratio": { "enum": ["16:9", "9:16"] },
+    "word_count": { "type": "integer", "minimum": 1, "maximum": 4 },
+    "headline": {
+      "type": "string",
+      "description": "2-4 power words. Never a sentence, list or subtitle."
+    },
+    "highlight_word": { "type": "string" },
+    "tagline": { "type": "string" },
+    "badge_text": { "type": "string" },
+    "media": { "type": "string" },
+    "media_credit": { "type": "string" },
+    "theme": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "primary": { "type": "string" },
+        "accent": { "type": "string" },
+        "background": { "type": "string" },
+        "highlight": { "type": "string" },
+        "danger": { "type": "string" },
+        "text": { "type": "string" }
+      }
+    },
+    "typography": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "font_path": { "type": "string" },
+        "headline_font_size": { "type": "integer", "minimum": 160, "maximum": 220 },
+        "badge_font_size": { "type": "integer", "minimum": 50 },
+        "stroke_width": { "type": "integer", "minimum": 11, "maximum": 16 }
+      }
+    },
+    "safe_zones": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "respect_youtube_duration_zone": { "type": "boolean" },
+        "text_area_ratio": { "type": "number", "minimum": 0.3, "maximum": 0.6 }
+      }
+    },
+    "output_name": { "type": "string" }
+  }
+}

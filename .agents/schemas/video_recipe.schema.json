@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omnipress.dev/schemas/video_recipe.schema.json",
+  "title": "OmniPress Video Recipe",
+  "description": "Declarative Remotion render recipe consumed by UniversalVideoEngine.",
+  "type": "object",
+  "required": ["composition"],
+  "additionalProperties": true,
+  "properties": {
+    "$schema": { "type": "string" },
+    "channel_slug": { "type": "string" },
+    "episode_slug": { "type": "string" },
+    "composition": { "type": "string" },
+    "props": { "type": "object", "additionalProperties": true },
+    "output": { "type": "string" },
+    "codec": { "enum": ["h264", "h265", "vp8", "vp9", "prores"] },
+    "fps": { "type": "integer", "minimum": 1 },
+    "duration_frames": { "type": "integer", "minimum": 1 },
+    "aspect_ratio": { "enum": ["16:9", "9:16", "1:1", "4:5", "3:4"] },
+    "preview": { "type": "boolean" },
+    "outputs": { "type": "object", "additionalProperties": { "type": "string" } }
+  }
+}

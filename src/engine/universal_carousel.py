@@ -9,22 +9,22 @@ Processes declarative carousel recipes (JSON/YAML) and executes end-to-end:
 
 import json
 import logging
-import os
-import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 from PIL import Image, ImageEnhance
 
 from src.core.channel_manager import ChannelManager
 from src.core.publishing_shield import PublishingShield
+from src.core.schema_validator import validate as validate_schema
 from src.engine.carousel_builder import CarouselBuilder
 from src.utils.storage import BaseStorageProvider, get_default_storage_provider
-from src.utils.sanitizer import sanitize_text
+from src.utils.sanitizer import resolve_profiles, sanitize_text
 
 logger = logging.getLogger("omnipress.universal_carousel")
 
 # Standard dimensions per aspect ratio
 ASPECT_DIMENSIONS = {
+    "4:5": (1080, 1350),
     "3:4": (1080, 1440),
     "1:1": (1080, 1080),
     "9:16": (1080, 1920),
@@ -129,6 +129,7 @@ class UniversalCarouselEngine:
     def load_recipe(self, recipe_input: Union[str, Path, Dict[str, Any]]) -> Tuple[Dict[str, Any], Optional[Path]]:
         """Loads and validates a recipe from a JSON file, path string, or dictionary."""
         if isinstance(recipe_input, dict):
+            validate_schema("carousel_recipe", recipe_input, source="<dict>")
             r_dir = recipe_input.get("_recipe_dir")
             return recipe_input, (Path(r_dir).resolve() if r_dir else None)
 
@@ -138,9 +139,35 @@ class UniversalCarouselEngine:
 
         try:
             data = json.loads(recipe_path.read_text(encoding="utf-8"))
-            return data, recipe_path.parent
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON in carousel recipe: {e}")
+
+        validate_schema("carousel_recipe", data, source=str(recipe_path))
+        return data, recipe_path.parent
+
+    @staticmethod
+    def _resolve_visual_param(
+        key: str,
+        slide: Dict[str, Any],
+        channel: Dict[str, Any],
+        preset_name: Optional[str],
+        default: Any,
+    ) -> Any:
+        """Slide > recipe > preset > channel layout_parameters > branding > default."""
+        if slide.get(key) is not None:
+            return slide[key]
+        vis = channel.get("visual_identity") or {}
+        if preset_name:
+            preset_cfg = (vis.get("presets") or {}).get(preset_name) or {}
+            if preset_cfg.get(key) is not None:
+                return preset_cfg[key]
+        layout = vis.get("layout_parameters") or {}
+        if layout.get(key) is not None:
+            return layout[key]
+        branding = channel.get("branding") or {}
+        if branding.get(key) is not None:
+            return branding[key]
+        return default
 
     def render_recipe_slides(
         self,
@@ -149,8 +176,13 @@ class UniversalCarouselEngine:
     ) -> List[Path]:
         """Prepares backgrounds and renders all slides for the recipe."""
         channel_slug = recipe.get("channel_slug") or self.channel_manager.get_active_channel().get("slug", "default")
+        channel_data = self.channel_manager.get_channel(channel_slug) or {}
         post_slug = recipe.get("post_slug", "untitled_carousel")
-        aspect_ratio = recipe.get("aspect_ratio", "3:4")
+        aspect_ratio = (
+            recipe.get("aspect_ratio")
+            or (channel_data.get("settings") or {}).get("default_aspect_ratio")
+            or "3:4"
+        )
         slides = recipe.get("slides", [])
 
         if not slides:
@@ -182,13 +214,23 @@ class UniversalCarouselEngine:
             "stroke_width",
             "avatar_size_ratio",
             "show_verified_badge",
+            "header_gap_ratio",
+            "headline_gap_ratio",
+            "foot_reserved_ratio",
+            "footer_y_ratio",
+            "img_default_top_ratio",
         ):
             if k in recipe and k not in recipe_layout:
                 recipe_layout[k] = recipe[k]
 
+        if "card_alpha" in recipe_layout and "card_bg_alpha" not in recipe_layout:
+            recipe_layout["card_bg_alpha"] = recipe_layout["card_alpha"]
+
         prepared_slides = []
         for idx, raw_slide in enumerate(slides, start=1):
             slide = {**recipe_layout, **raw_slide}
+            if slide.get("card_bg_alpha") is None and slide.get("card_alpha") is not None:
+                slide["card_bg_alpha"] = slide["card_alpha"]
             slide_layout = slide.get("layout") or default_preset
             bg_ref = slide.get("bg_image") or slide.get("bg_image_path")
             dst_bg = None
@@ -197,9 +239,9 @@ class UniversalCarouselEngine:
                 src_bg = self.resolve_background_image(bg_ref, channel_slug, recipe_dir)
                 dst_bg = bgs_dir / f"bg_slide_{idx:02d}.jpg"
 
-                top_bias = slide.get("top_bias", 0.20)
-                contrast_boost = slide.get("contrast_boost", 1.15)
-                color_boost = slide.get("color_boost", 1.0)
+                top_bias = self._resolve_visual_param("top_bias", slide, channel_data, slide_layout, 0.20)
+                contrast_boost = self._resolve_visual_param("contrast_boost", slide, channel_data, slide_layout, 1.15)
+                color_boost = self._resolve_visual_param("color_boost", slide, channel_data, slide_layout, 1.0)
                 self.prepare_background(
                     src_path=src_bg,
                     dst_path=dst_bg,
@@ -236,10 +278,6 @@ class UniversalCarouselEngine:
                 "headline": slide.get("headline", ""),
                 "body": slide.get("body", ""),
                 "badge_text": slide.get("badge_text"),
-                "gradient_start_ratio": slide.get("gradient_start_ratio", 0.46),
-                "enable_text_card": slide.get("enable_text_card", True),
-                "card_bg_alpha": slide.get("card_bg_alpha", 215),
-                "stroke_width": slide.get("stroke_width", None),
                 "layout": slide_layout,
                 "step_number": slide.get("step_number"),
                 "ui_mockup": slide.get("ui_mockup"),
@@ -281,9 +319,10 @@ class UniversalCarouselEngine:
         self,
         slide_paths: List[Path],
         output_json_path: Optional[Path] = None,
+        channel_slug: Optional[str] = None,
     ) -> List[str]:
         """Uploads slides to configured CDN/object storage provider."""
-        provider = self.storage_provider or get_default_storage_provider()
+        provider = self.storage_provider or get_default_storage_provider(channel_slug=channel_slug)
         uploaded_urls = []
 
         for p in slide_paths:
@@ -315,7 +354,7 @@ class UniversalCarouselEngine:
             return {"success": False, "error": "Publish config requires a non-empty 'caption'"}
 
         # Sanitize for privacy (Rule 01)
-        clean_caption, _ = sanitize_text(caption)
+        clean_caption, _ = sanitize_text(caption, resolve_profiles(channel_slug))
 
         # Platform length validation (Rule 09)
         platforms = publish_config.get("platforms", ["instagram"])
@@ -333,8 +372,8 @@ class UniversalCarouselEngine:
             return {"success": False, "error": f"PublishingShield blocked duplicate post: {reason}"}
 
         adapter = BufferPublisherAdapter()
-        if not adapter.is_configured():
-            return {"success": False, "error": "Buffer adapter is not configured in environment"}
+        if not adapter.is_configured(channel_slug=channel_slug):
+            return {"success": False, "error": f"Buffer adapter is not configured for channel '{channel_slug}'"}
 
         schedule_time = publish_config.get("schedule_time")
         mode = publish_config.get("mode", "customScheduled" if schedule_time else "shareNow")
@@ -398,7 +437,7 @@ class UniversalCarouselEngine:
         cdn_urls = []
         urls_file = post_dir / "cdn_urls.json"
         if upload and rendered_slides:
-            cdn_urls = self.upload_slides(rendered_slides, output_json_path=urls_file)
+            cdn_urls = self.upload_slides(rendered_slides, output_json_path=urls_file, channel_slug=channel_slug)
             result["cdn_urls"] = cdn_urls
         elif urls_file.exists():
             try:
@@ -411,7 +450,7 @@ class UniversalCarouselEngine:
         if schedule:
             if not cdn_urls and rendered_slides:
                 # Auto-upload if not uploaded yet
-                cdn_urls = self.upload_slides(rendered_slides, output_json_path=urls_file)
+                cdn_urls = self.upload_slides(rendered_slides, output_json_path=urls_file, channel_slug=channel_slug)
                 result["cdn_urls"] = cdn_urls
 
             pub_res = self.schedule_or_publish(recipe, cdn_urls, force_duplicate=force_duplicate)

@@ -16,39 +16,13 @@ import { TacticalGrid } from "../components/TacticalGrid";
 import { FilmGrain } from "../components/FilmGrain";
 import { SynchronizedCaptions } from "../components/SynchronizedCaptions";
 import { DocumentaryScene, EpisodeConfig, KenBurnsSceneProps } from "../types";
+import { themeVars } from "../theme";
 
 export const getCameraPreset = (
   index: number,
-  headline?: string,
-  badge?: string
+  _headline?: string,
+  _badge?: string
 ): NonNullable<KenBurnsSceneProps["direction"]> => {
-  const text = `${headline || ""} ${badge || ""}`.toUpperCase();
-  if (
-    text.includes("MENTIRA") ||
-    text.includes("FALSIFICAÇÃO") ||
-    text.includes("VETO") ||
-    text.includes("GOLPE") ||
-    text.includes("REVELAÇÃO")
-  ) {
-    return "snap-zoom";
-  }
-  if (
-    text.includes("GUERRA") ||
-    text.includes("BATALHA") ||
-    text.includes("DECRETO")
-  ) {
-    return "dramatic-push";
-  }
-  if (
-    text.includes("DOCUMENTO") ||
-    text.includes("CONSTITUIÇÃO") ||
-    text.includes("LEI") ||
-    text.includes("PINTURA") ||
-    text.includes("RETRATO")
-  ) {
-    return "tilt-down";
-  }
-
   const presets: NonNullable<KenBurnsSceneProps["direction"]>[] = [
     "zoom-in",
     "pan-left",
@@ -75,7 +49,7 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
   const { fps, width, height, durationInFrames } = useVideoConfig();
   const isVertical = height > width;
 
-  const episodeTitle = config?.title || "EPISÓDIO DOCUMENTAL";
+  const episodeTitle = config?.title || "";
   const scenes = config?.scenes || [];
 
   // Função de Ducking Dinâmico da Trilha Sonora (Regra 10: teto de 0.12 a 0.18 sob a fala)
@@ -98,7 +72,21 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
   };
 
   return (
-    <AbsoluteFill style={{ backgroundColor: "#0A0C10" }}>
+    <AbsoluteFill
+      style={{
+        ...themeVars({
+          primaryColor: config?.introProps?.primaryColor,
+          accentColor: config?.theme?.accent,
+          highlightColor: config?.theme?.highlight,
+          backgroundColor: config?.theme?.background,
+          textColor: config?.theme?.text,
+          secondaryTextColor: config?.theme?.secondaryText,
+          successColor: config?.theme?.success,
+          dangerColor: config?.theme?.danger,
+        }),
+        backgroundColor: "var(--omni-background, #0B1220)",
+      }}
+    >
       {/* 1. Trilha Sonora Master com ducking dinâmico sob a fala */}
       {config?.backgroundMusicSrc && (
         <Sequence from={0} durationInFrames={durationInFrames}>
@@ -149,10 +137,10 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
       {enableIntro && (
         <Sequence from={0} durationInFrames={introDurationFrames}>
           <ChannelIntro
-            channelName={config?.introProps?.channelName || "DOCUMENTÁRIO"}
-            badgeText={config?.introProps?.badgeText || "ARQUIVO ESPECIAL"}
-            subText={config?.introProps?.subText || "PRODUÇÃO ORIGINAL"}
-            classifiedCode={config?.introProps?.classifiedCode || "REF // OFICIAL"}
+            channelName={config?.introProps?.channelName || ""}
+            badgeText={config?.introProps?.badgeText || ""}
+            subText={config?.introProps?.subText || ""}
+            classifiedCode={config?.introProps?.classifiedCode || ""}
             primaryColor={config?.introProps?.primaryColor}
             backgroundColor={config?.introProps?.backgroundColor}
             language={config?.introProps?.language || config?.language || "pt"}
@@ -229,14 +217,14 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
                     style={{
                       display: "inline-block",
                       marginBottom: 20,
-                      color: "#D4AF37",
+                      color: "var(--omni-accent, #3B82F6)",
                       fontFamily: "'Courier New', Courier, monospace",
                       fontSize: isVertical ? 16 : 20,
                       letterSpacing: 4,
                       fontWeight: 800,
                     }}
                   >
-                    {scene.badge || "TRANSIÇÃO // DOCUMENTO OFICIAL"}
+                    {scene.badge || ""}
                   </div>
 
                   <h1
@@ -273,9 +261,9 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
 
                   <div style={{ marginTop: 35 }}>
                     <ClassifiedStamp
-                      text="CONFIDENCIAL"
+                      text={scene.badge || ""}
                       startFrame={15}
-                      color="#B3261E"
+                      color="var(--omni-danger, #EF4444)"
                     />
                   </div>
                 </div>
@@ -284,7 +272,9 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
               // Vinheta Oficial de Encerramento e Compartilhamento com Tipografia de Alto Impacto
               <ChannelOutro
                 durationInFrames={sceneDurationFrames}
-                channelName={config?.introProps?.channelName || "CANAL OFICIAL"}
+                channelName={config?.introProps?.channelName || ""}
+                primaryColor={config?.introProps?.primaryColor}
+                tagline={config?.introProps?.subText || ""}
               />
             ) : scene.type === "heraldic-surgery" || scene.type === "image-morph" ? (
               // Animação Especial: Cirurgia Heráldica / Metamorfose Visual

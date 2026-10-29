@@ -66,7 +66,7 @@ if hasattr(mcp, "custom_route"):
             return JSONResponse({
                 "status": "healthy",
                 "service": "omnipress-mcp",
-                "version": "0.9.0",
+                "version": "0.10.0",
             })
     except (ImportError, Exception):
         pass
@@ -192,6 +192,34 @@ MCP_TOOL_ANNOTATIONS = {
         "idempotentHint": True,
         "openWorldHint": False,
     },
+    "omnipress_render_thumbnail": {
+        "title": "Render Rule 15 Thumbnail",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+    "omnipress_render_documentary": {
+        "title": "Render Documentary Scenes",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+    "omnipress_render_video": {
+        "title": "Render Remotion Video",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+    "omnipress_fetch_assets": {
+        "title": "Fetch Public Archive Asset",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True,
+    },
 }
 
 
@@ -257,8 +285,8 @@ def omnipress_publish_article(
     )
 
     # If webhook configured, notify pipeline of new article
-    if webhook_adapter.is_configured():
-        webhook_adapter.dispatch_event("article_saved", result)
+    if webhook_adapter.is_configured(channel_slug=channel_slug):
+        webhook_adapter.dispatch_event("article_saved", result, channel_slug=channel_slug)
 
     ch_label = f" | Channel: `{channel_slug}`" if channel_slug else ""
     output = [
@@ -284,6 +312,7 @@ def omnipress_publish_article(
             canonical_url=canonical_url,
             published=published,
             force_duplicate=force_duplicate,
+            channel_slug=channel_slug,
         )
         if dev_res.get("success"):
             output.append(f"🌐 Dev.to ({dev_res.get('status')}): {dev_res.get('url')}")
@@ -300,6 +329,7 @@ def omnipress_publish_article(
             canonical_url=canonical_url,
             published=published,
             force_duplicate=force_duplicate,
+            channel_slug=channel_slug,
         )
         if ghost_res.get("success"):
             output.append(f"👻 Ghost CMS ({ghost_res.get('status')}): {ghost_res.get('url')}")
@@ -355,7 +385,7 @@ def omnipress_queue_post(
     results_summary = []
 
     # 1. Try Buffer Adapter (LinkedIn, X, Threads, Instagram)
-    if buffer_adapter.is_configured():
+    if buffer_adapter.is_configured(channel_slug=channel_slug):
         res = buffer_adapter.queue_social_post(
             text=processed_text,
             platforms=target_platforms,
@@ -379,6 +409,7 @@ def omnipress_queue_post(
             text=processed_text,
             platforms=target_platforms,
             title=title,
+            channel_slug=channel_slug,
         )
         if res.get("success"):
             results_summary.append(f"✅ Published to Reddit r/{res.get('subreddit')}: {res.get('url')}")
@@ -386,12 +417,13 @@ def omnipress_queue_post(
             results_summary.append(f"⚠️ Reddit notice: {res.get('error')}")
 
     # 3. Try Webhook Adapter
-    if webhook_adapter.is_configured():
+    if webhook_adapter.is_configured(channel_slug=channel_slug):
         res = webhook_adapter.queue_social_post(
             text=processed_text,
             platforms=target_platforms,
             media_urls=media_urls,
             schedule_time=schedule_time,
+            channel_slug=channel_slug,
         )
         if res.get("success"):
             results_summary.append("✅ Dispatched post event to configured Webhook / n8n pipeline.")
@@ -399,7 +431,11 @@ def omnipress_queue_post(
             results_summary.append(f"⚠️ Webhook notice: {res.get('error')}")
 
     # 4. Fallback if no provider configured
-    has_provider = buffer_adapter.is_configured() or reddit_adapter.is_configured() or webhook_adapter.is_configured()
+    has_provider = (
+        buffer_adapter.is_configured(channel_slug=channel_slug)
+        or reddit_adapter.is_configured(channel_slug=channel_slug)
+        or webhook_adapter.is_configured(channel_slug=channel_slug)
+    )
     if not has_provider:
         results_summary.append(
             "ℹ️ No external provider configured in `.env` (BUFFER_ACCESS_TOKEN, REDDIT_CLIENT_ID, or OMNIPRESS_WEBHOOK_URL).\n"
@@ -531,7 +567,7 @@ def omnipress_create_channel(
     handle: str,
     category: str = "general",
     description: str = "",
-    primary_color: str = "#D4AF37",
+    primary_color: str = "#3B82F6",
     buffer_channel_id: str = "",
     archetype: str = "personal_brand",
 ) -> str:
@@ -571,10 +607,11 @@ def omnipress_create_channel(
 
 @mcp.tool(annotations=get_tool_annotations("omnipress_build_carousel"))
 def omnipress_build_carousel(
-    channel_slug: str,
-    post_slug: str,
-    slides_json: str,
+    channel_slug: str = "",
+    post_slug: str = "",
+    slides_json: str = "",
     aspect_ratio: str = "3:4",
+    recipe_path: Optional[str] = None,
 ) -> str:
     """
     Renders a branded, high-contrast Instagram carousel deck for a channel using CarouselBuilder.
@@ -592,22 +629,32 @@ def omnipress_build_carousel(
     """
     import json
     try:
-        slides_data = json.loads(slides_json)
-    except Exception as e:
-        return f"⚠️ Invalid slides_json: {e}"
+        if recipe_path:
+            from src.engine.universal_carousel import UniversalCarouselEngine
 
-    if not isinstance(slides_data, list) or not slides_data:
-        return "⚠️ slides_json must be a non-empty JSON list of slide objects."
+            engine = UniversalCarouselEngine(channel_manager=channel_manager)
+            recipe_file = Path(recipe_path).resolve()
+            recipe_data, _ = engine.load_recipe(recipe_file)
+            if channel_slug:
+                recipe_data["channel_slug"] = channel_slug
+            if post_slug:
+                recipe_data["post_slug"] = post_slug
+            recipe_data["_recipe_dir"] = str(recipe_file.parent)
+            generated = engine.render_recipe_slides(recipe_data)
+        else:
+            if not slides_json:
+                return "⚠️ Provide either 'recipe_path' (preferred) or 'slides_json'."
+            slides_data = json.loads(slides_json)
+            if not isinstance(slides_data, list) or not slides_data:
+                return "⚠️ slides_json must be a non-empty JSON list of slide objects."
+            generated = carousel_builder.build_carousel(
+                channel_slug=channel_slug,
+                post_slug=post_slug,
+                slides_data=slides_data,
+                aspect_ratio=aspect_ratio,
+            )
 
-    try:
-        generated = carousel_builder.build_carousel(
-            channel_slug=channel_slug,
-            post_slug=post_slug,
-            slides_data=slides_data,
-            aspect_ratio=aspect_ratio,
-        )
-
-        lines = [f"✅ Carousel generated for channel `{channel_slug}` ({len(generated)} slides):"]
+        lines = [f"✅ Carousel generated for channel `{channel_slug or 'active'}` ({len(generated)} slides):"]
         for path in generated:
             lines.append(f"- 🖼️ `{path}`")
         return "\n".join(lines)
@@ -639,8 +686,10 @@ def omnipress_list_recent(limit: int = 5) -> str:
 def omnipress_prepare_dark_script(
     topic: str,
     format: str = "all",
-    tone: str = "mystery",
-    target_audience: str = "geral",
+    tone: str = "",
+    target_audience: str = "",
+    language: str = "",
+    channel_slug: Optional[str] = None,
 ) -> str:
     """
     Generates a high-retention viral dark channel script, scene-by-scene AI image prompts,
@@ -659,62 +708,26 @@ def omnipress_prepare_dark_script(
     - JSON string containing audioDirection, shortScript, visualScenePrompts, instagramCarousel, and youtubeMetadata.
     """
     import json
-    clean_topic = topic.strip()
-    bundle = {
-        "topic": clean_topic,
-        "tone": tone,
-        "targetAudience": target_audience,
-        "audioDirection": {
-            "voice": "pt-BR-AntonioNeural (grave, pausado, tom documental investigativo)",
-            "bgm": "Dark Ambient / Drone misterioso com sub-graves (80-90 BPM)",
-            "pacing": "Pausas dramáticas a cada 5 segundos",
-        },
-        "shortScript": {
-            "durationSeconds": 55,
-            "hook_0_3s": f"Você NUNCA deveria saber sobre isso... mas a verdade sobre {clean_topic} finalmente veio à tona.",
-            "retention_3_15s": "A maioria das pessoas acredita na versão que contam por aí. Mas se você analisar os registros confidenciais, algo perturbador não fecha.",
-            "development_15_45s": "Nos bastidores, o que realmente aconteceu foi orquestrado em silêncio. Três anomalias foram apagadas dos livros: o sumiço dos relatórios originais, o isolamento dos envolvidos e o padrão que continua se repetindo hoje.",
-            "climax_45_50s": "E a pergunta que ninguém quer responder é: quem realmente lucrou com o silêncio desse caso?",
-            "cta_50_55s": "Comente sua teoria abaixo e se inscreva antes que derrubem este conteúdo.",
-        },
-        "visualScenePrompts": [
-            {
-                "scene": 1,
-                "timecode": "00:00 - 00:03",
-                "aiPrompt": "Cinematic 8k, dark moody atmosphere, mysterious silhouette holding classified dossier, dramatic volumetric lighting, 9:16 aspect ratio, ultra-detailed",
-            },
-            {
-                "scene": 2,
-                "timecode": "00:03 - 00:15",
-                "aiPrompt": "Close-up macro of ancient classified parchment papers with redacted black marks, vintage magnifying glass, dark wooden archival desk, 9:16 aspect ratio, photorealistic",
-            },
-            {
-                "scene": 3,
-                "timecode": "00:15 - 00:30",
-                "aiPrompt": "Epic wide angle of an underground vault or forgotten monolithic chamber, brutalist architecture, moody dark cinematography, 9:16 aspect ratio",
-            },
-            {
-                "scene": 4,
-                "timecode": "00:30 - 00:45",
-                "aiPrompt": "Dramatic high contrast portrait of powerful shadowy figures around a dimly lit boardroom map, cinematic rim lighting, 9:16 aspect ratio",
-            },
-            {
-                "scene": 5,
-                "timecode": "00:45 - 00:55",
-                "aiPrompt": "Surreal conceptual artwork of a clock ticking backwards inside a shattered hourglass, dark cosmic backdrop, cinematic illumination, 9:16 aspect ratio",
-            },
-        ],
-        "instagramCarousel": {
-            "slide1_cover": f"O que esconderam sobre: {clean_topic} ⚠️",
-            "slide2_context": "Durante anos contaram a versão conveniente. Os documentos desclassificados mostram o oposto.",
-            "slide7_cta": "Salve para não esquecer e siga a página para os próximos relatórios secretos.",
-        },
-        "youtubeMetadata": {
-            "title": f"O Segredo Oculto Sobre {clean_topic} (O Que Apagaram da História)",
-            "description": f"Investigação aprofundada revelando anomalias e documentos esquecidos sobre {clean_topic}.",
-            "tags": [clean_topic, "misterio", "documentario dark", "canal dark", "curiosidades"],
-        },
-    }
+    from src.engine.brainstorm_engine import BrainstormEngine
+    from src.engine.providers.edge_tts_provider import resolve_voice
+
+    target_channel = channel_slug or channel_manager.get_active_channel_slug()
+    try:
+        voice = resolve_voice(target_channel, None)
+    except Exception:
+        voice = ""
+
+    engine = BrainstormEngine(channel_manager)
+    bundle = engine.prepare_script(
+        topic=topic.strip(),
+        tone=tone,
+        target_audience=target_audience,
+        language=language,
+        voice=voice,
+        channel_slug=target_channel,
+    )
+    bundle["format"] = format
+    bundle["channelSlug"] = target_channel
     return json.dumps(bundle, indent=2, ensure_ascii=False)
 
 
@@ -765,7 +778,7 @@ def omnipress_queue_media_post(
     if "instagram" in normalized or "ig" in normalized or "all" in normalized:
         if not media_urls:
             results.append("⚠️ Instagram Warning: Media is required for Instagram posts.")
-        if instagram_adapter.is_configured():
+        if instagram_adapter.is_configured(channel_slug=channel_slug):
             res = instagram_adapter.queue_social_post(
                 text=processed_caption,
                 platforms=["instagram"],
@@ -780,7 +793,7 @@ def omnipress_queue_media_post(
                 results.append(f"✅ Published directly to Instagram via Meta Graph API: Post ID {res.get('post_id')} ({res.get('permalink')})")
             else:
                 results.append(f"⚠️ Instagram Graph API notice: {res.get('error')}")
-        elif buffer_adapter.is_configured():
+        elif buffer_adapter.is_configured(channel_slug=channel_slug):
             res = buffer_adapter.queue_social_post(
                 text=processed_caption,
                 platforms=["instagram"],
@@ -809,12 +822,13 @@ def omnipress_queue_media_post(
             media_urls=media_urls or [],
             thumbnail_url=thumbnail_url,
             schedule_time=schedule_time,
+            channel_slug=channel_slug,
         )
         results.append(f"🎬 YouTube ({'Shorts' if is_short else 'Long-form'}) Staged at: `{yt_res['filepath']}`")
 
     # X / Twitter
     if "x" in normalized or "twitter" in normalized or "all" in normalized:
-        if buffer_adapter.is_configured():
+        if buffer_adapter.is_configured(channel_slug=channel_slug):
             res = buffer_adapter.queue_social_post(
                 text=processed_caption,
                 platforms=["x"],
@@ -840,10 +854,11 @@ def omnipress_queue_media_post(
 
 @mcp.tool(annotations=get_tool_annotations("omnipress_brainstorm_channel"))
 def omnipress_brainstorm_channel(
-    niche: str = "historia",
-    tone: str = "mystery",
-    target_audience: str = "geral",
-    language: str = "pt-BR",
+    niche: str = "",
+    tone: str = "",
+    target_audience: str = "",
+    language: str = "",
+    channel_slug: Optional[str] = None,
 ) -> str:
     """
     Generates high-retention channel concepts, psychological CTR names, 3 core content pillars,
@@ -861,86 +876,27 @@ def omnipress_brainstorm_channel(
     - JSON string with channel concepts, psychological CTR angles, and 10 viral video topics with hooks.
     """
     import json
-    clean_niche = niche.lower().strip()
-    if any(k in clean_niche for k in ["hist", "antig", "passad", "guerra"]):
-        concepts = [
-            {
-                "name": "Dossiê Histórico",
-                "handle": "@dossiehistorico",
-                "tagline": "O que os livros oficiais apagaram do passado.",
-                "ctrAngle": "Gatilho de segredo de estado e conspiração desclassificada.",
-                "visualPalette": ["#0A0C10", "#D4AF37", "#8B0000"]
-            },
-            {
-                "name": "Crônicas Ocultas",
-                "handle": "@cronicasocultas.oficial",
-                "tagline": "Fatos reais que parecem pesadelo ou ficção.",
-                "ctrAngle": "Gatilho de bizarrice e choque factual.",
-                "visualPalette": ["#070809", "#C0C0C0", "#4A0E17"]
-            },
-            {
-                "name": "O Passado Redigido",
-                "handle": "@passadoredigido",
-                "tagline": "Documentos confidenciais que você nunca deveria ler.",
-                "ctrAngle": "Gatilho de censura e conhecimento proibido.",
-                "visualPalette": ["#111215", "#E63946", "#F1FAEE"]
-            },
-            {
-                "name": "Sombras da História",
-                "handle": "@sombrasdahistoria",
-                "tagline": "As decisões mais sombrias que moldaram o mundo moderno.",
-                "ctrAngle": "Gatilho de poder, decisões secretas de bastidores.",
-                "visualPalette": ["#050505", "#DAA520", "#1C2541"]
-            },
-            {
-                "name": "Arquivos do Tempo",
-                "handle": "@arquivosdotempo",
-                "tagline": "Investigação profunda das maiores anomalias da humanidade.",
-                "ctrAngle": "Gatilho investigativo e documental solene.",
-                "visualPalette": ["#0D1117", "#C9D1D9", "#58A6FF"]
-            }
-        ]
-        pillars = [
-            {"pillar": "1. Documentos Desclassificados & Conspirações Reais", "description": "Arquivos de inteligência e operações militares secretas."},
-            {"pillar": "2. Batalhas Bizarras & O Pior Erro Militar", "description": "Exércitos que lutaram contra si mesmos e blefes inacreditáveis."},
-            {"pillar": "3. Anomalias & Mistérios Não Resolvidos", "description": "Surtos coletivos e artefatos arqueológicos fora do tempo."}
-        ]
-        viral_topics = [
-            {"id": 1, "title": "O Exército Fantasma da Segunda Guerra", "hook_0_3s": "Você sabia que os EUA venceram uma batalha usando tanques de borracha e caixas de som?", "curiosityLoop": "Cenografia de Hollywood enganou 20 divisões alemãs.", "format": "Shorts / Reels (9:16)"},
-            {"id": 2, "title": "A Dança de São Vito de 1518", "hook_0_3s": "Em julho de 1518, uma mulher começou a dançar na rua. Em 30 dias, 400 pessoas dançavam sem parar até a morte.", "curiosityLoop": "Histeria coletiva que médicos tentaram conter com orquestra ao vivo.", "format": "Shorts / Reels (9:16)"},
-            {"id": 3, "title": "A Batalha de Karánsebes", "hook_0_3s": "Um exército de 100 mil homens perdeu 10 mil soldados sem nenhum inimigo por perto.", "curiosityLoop": "Briga por aguardente gerou fogo amigo generalizado.", "format": "Shorts / Reels (9:16)"},
-            {"id": 4, "title": "O Submarino B-59 e o Fim do Mundo", "hook_0_3s": "Em 1962, a Terceira Guerra Mundial foi evitada pelo voto solitário de um único oficial.", "curiosityLoop": "Recusa de lançamento de torpedo nuclear soviético a 50 metros de profundidade.", "format": "Shorts / Reels (9:16)"},
-            {"id": 5, "title": "O Mecanismo de Anticítera", "hook_0_3s": "Cientistas encontraram um computador analógico de 2.000 anos no fundo do mar.", "curiosityLoop": "Engrenagens de bronze que calculavam eclipses desafiando a história.", "format": "Shorts / Reels (9:16)"}
-        ]
-    else:
-        concepts = [
-            {"name": f"{clean_niche.capitalize()} Revelado", "handle": f"@{clean_niche}.revelado", "tagline": f"Os bastidores de {clean_niche}."}
-        ]
-        pillars = [{"pillar": "1. Bastidores", "description": "Casos reais e revelações."}]
-        viral_topics = [{"id": 1, "title": f"O grande segredo sobre {clean_niche}", "hook_0_3s": "A maioria das pessoas ignora isso...", "format": "Shorts (9:16)"}]
+    from src.engine.brainstorm_engine import BrainstormEngine
 
-    bundle = {
-        "niche": clean_niche,
-        "tone": tone,
-        "targetAudience": target_audience,
-        "channelConcepts": concepts,
-        "contentPillars": pillars,
-        "viralTopicsBacklog": viral_topics,
-        "productionSpecs": {
-            "audioVoice": "pt-BR-AntonioNeural (Edge-TTS gravado com tom documental solene)",
-            "audioBgm": "Dark Ambient / Drone com sub-graves em 80-90 BPM",
-            "visualAiPrompts": "Cinematic 8k, dark moody atmosphere, historical archival textures, volumetric amber rim lighting, 9:16 aspect ratio",
-            "recommendedPacing": "Cortes visuais a cada 3 a 5 segundos, pausas dramáticas na locução"
-        }
-    }
+    engine = BrainstormEngine(channel_manager)
+    target_channel = channel_slug or channel_manager.get_active_channel_slug()
+    bundle = engine.run(
+        niche=niche,
+        tone=tone,
+        target_audience=target_audience,
+        language=language,
+        channel_slug=target_channel,
+    )
+    bundle["channelSlug"] = target_channel
     return json.dumps(bundle, indent=2, ensure_ascii=False)
 
 
 @mcp.tool(annotations=get_tool_annotations("omnipress_generate_speech"))
 async def omnipress_generate_speech(
     text: str,
-    voice: str = "pt-BR-AntonioNeural",
+    voice: Optional[str] = None,
     output_filename: Optional[str] = None,
+    channel_slug: Optional[str] = None,
 ) -> str:
     """
     Synthesizes natural, high-definition neural narration audio (Edge-TTS) for Dark Channels, Reels, Shorts.
@@ -962,15 +918,18 @@ async def omnipress_generate_speech(
         from src.engine.dark_media import generate_tts_audio
 
         filename = output_filename or f"speech-{int(time.time()*1000)}.mp3"
-        out_path = PROJECT_ROOT / "media" / "output" / filename
+        target_slug = channel_slug or channel_manager.get_active_channel_slug()
+        out_dir = channel_manager.get_channel_dir(target_slug) / "media" / "voiceover"
+        out_path = out_dir / filename
         out_path.parent.mkdir(parents=True, exist_ok=True)
 
-        await generate_tts_audio(text, out_path, voice=voice)
+        await generate_tts_audio(text, out_path, voice=voice, channel_slug=target_slug)
         result = {
             "success": True,
             "audio_path": str(out_path.resolve()),
             "audio_size_bytes": out_path.stat().st_size if out_path.exists() else 0,
-            "voice": voice
+            "voice": voice or "",
+            "channel_slug": target_slug,
         }
         return json.dumps(result, indent=2, ensure_ascii=False)
     except Exception as e:
@@ -984,7 +943,8 @@ async def omnipress_render_dark_video(
     image_paths: Optional[List[str]] = None,
     output_filename: Optional[str] = None,
     aspect_ratio: str = "9:16",
-    voice: str = "pt-BR-AntonioNeural",
+    voice: Optional[str] = None,
+    channel_slug: Optional[str] = None,
 ) -> str:
     """
     Renders an MP4 video (vertical 9:16 or 16:9) by combining neural audio narration with images using ffmpeg.
@@ -1007,14 +967,16 @@ async def omnipress_render_dark_video(
         from src.engine.dark_media import generate_tts_audio, render_video_with_ffmpeg
 
         filename = output_filename or f"video-{int(time.time()*1000)}.mp4"
-        out_path = PROJECT_ROOT / "media" / "output" / filename
+        target_slug = channel_slug or channel_manager.get_active_channel_slug()
+        out_dir = channel_manager.get_channel_dir(target_slug) / "media" / "output"
+        out_path = out_dir / filename
         out_path.parent.mkdir(parents=True, exist_ok=True)
         audio_file = out_path.with_suffix(".mp3")
 
         if audio_path and Path(audio_path).exists():
             audio_file = Path(audio_path).resolve()
         elif text:
-            await generate_tts_audio(text, audio_file, voice=voice)
+            await generate_tts_audio(text, audio_file, voice=voice, channel_slug=target_slug)
         else:
             return json.dumps({"success": False, "error": "Forneça text ou audio_path válido."})
 
@@ -1050,6 +1012,7 @@ def omnipress_render_3d(
     resolution: str = "1080x1080",
     engine: str = "BLENDER_EEVEE_NEXT",
     samples: int = 32,
+    recipe_path: Optional[str] = None,
 ) -> str:
     """Renders a photorealistic 3D visual asset using headless Blender 4.2+ LTS.
 
@@ -1074,16 +1037,16 @@ def omnipress_render_3d(
 
     cm = channel_manager
     engine_3d = Universal3DEngine(channel_manager=cm)
-
-    if not engine_3d.is_available():
-        return json.dumps({
-            "status": "error",
-            "error": "Blender binary not found in PATH or standard user directories. Install Blender 4.2+ LTS.",
-        }, indent=2, ensure_ascii=False)
+    target_slug = channel_slug or cm.get_active_channel_slug()
 
     try:
-        # Resolve target channel directory if slug provided
-        target_slug = channel_slug or os.getenv("OMNIPRESS_ACTIVE_CHANNEL", "default")
+        if recipe_path:
+            result = engine_3d.render_recipe(
+                recipe=Path(recipe_path).resolve(),
+                channel_slug=target_slug,
+            )
+            return json.dumps(result, indent=2, ensure_ascii=False)
+
         ch_dir = cm.get_channel_dir(target_slug)
         out_dir = ch_dir / "media" / "visuals" / "3d"
         out_path = out_dir / output_filename
@@ -1097,6 +1060,7 @@ def omnipress_render_3d(
             resolution=resolution,
             engine=engine,
             samples=samples,
+            channel_slug=target_slug,
         )
 
         return json.dumps({
@@ -1109,6 +1073,130 @@ def omnipress_render_3d(
         }, indent=2, ensure_ascii=False)
     except BlenderRenderError as e:
         return json.dumps({"status": "error", "error": f"Blender render error: {str(e)}"}, indent=2, ensure_ascii=False)
+    except (ValueError, FileNotFoundError) as e:
+        return json.dumps({"status": "error", "error": f"Validation error: {str(e)}"}, indent=2, ensure_ascii=False)
+    except Exception as e:
+        return json.dumps({"status": "error", "error": str(e)}, indent=2, ensure_ascii=False)
+
+
+@mcp.tool(annotations=get_tool_annotations("omnipress_render_thumbnail"))
+def omnipress_render_thumbnail(
+    recipe_path: str,
+    channel_slug: Optional[str] = None,
+    validate_only: bool = False,
+) -> str:
+    """Renders a Rule 15 high-CTR thumbnail from a declarative recipe.
+
+    Use when:
+    - Producing a 16:9 YouTube thumbnail with titanic typography and a clear duration death zone.
+
+    Do NOT use when:
+    - Rendering carousel slides (use omnipress_build_carousel) or full video (use omnipress_render_video).
+
+    Returns:
+    - JSON with output_path, rule15 approval and the thumbnail manifest path.
+    """
+    import json
+    from src.engine.universal_thumbnail import UniversalThumbnailEngine
+
+    try:
+        engine = UniversalThumbnailEngine(channel_manager=channel_manager)
+        result = engine.render_recipe(
+            recipe=Path(recipe_path).resolve(),
+            channel_slug=channel_slug,
+            validate_only=validate_only,
+        )
+        return json.dumps(result, indent=2, ensure_ascii=False)
+    except Exception as e:
+        return json.dumps({"status": "error", "error": str(e)}, indent=2, ensure_ascii=False)
+
+
+@mcp.tool(annotations=get_tool_annotations("omnipress_render_documentary"))
+def omnipress_render_documentary(
+    recipe_path: str,
+    channel_slug: Optional[str] = None,
+) -> str:
+    """Renders documentary scene cards and emits a Remotion-ready episode_config.json.
+
+    Use when:
+    - Building authentic documentary scenes with protective text cards over archival imagery.
+
+    Do NOT use when:
+    - Rendering a final MP4 (use omnipress_render_video after this step).
+
+    Returns:
+    - JSON with rendered scene paths and the episode_config.json path.
+    """
+    import json
+    from src.engine.universal_documentary import UniversalDocumentaryEngine
+
+    try:
+        engine = UniversalDocumentaryEngine(channel_manager=channel_manager)
+        result = engine.execute_recipe(
+            recipe=Path(recipe_path).resolve(),
+            channel_slug=channel_slug,
+        )
+        return json.dumps(result, indent=2, ensure_ascii=False)
+    except Exception as e:
+        return json.dumps({"status": "error", "error": str(e)}, indent=2, ensure_ascii=False)
+
+
+@mcp.tool(annotations=get_tool_annotations("omnipress_render_video"))
+def omnipress_render_video(
+    recipe_path: str,
+    channel_slug: Optional[str] = None,
+) -> str:
+    """Renders a Remotion composition from a declarative video recipe.
+
+    Use when:
+    - Rendering intros, episodes or shorts from a JSON recipe instead of manual CLI flags.
+
+    Do NOT use when:
+    - Rendering still carousel slides (use omnipress_build_carousel).
+
+    Returns:
+    - JSON with the MP4/WebM output path, checksum and composition id.
+    """
+    import json
+    from src.engine.universal_video import UniversalVideoEngine
+
+    try:
+        engine = UniversalVideoEngine(channel_manager=channel_manager)
+        result = engine.render_recipe(
+            recipe=Path(recipe_path).resolve(),
+            channel_slug=channel_slug,
+        )
+        return json.dumps(result, indent=2, ensure_ascii=False)
+    except Exception as e:
+        return json.dumps({"status": "error", "error": str(e)}, indent=2, ensure_ascii=False)
+
+
+@mcp.tool(annotations=get_tool_annotations("omnipress_fetch_assets"))
+def omnipress_fetch_assets(
+    recipe_path: str,
+    channel_slug: Optional[str] = None,
+) -> str:
+    """Fetches a public-domain asset from an allowlisted archive.
+
+    Use when:
+    - Acquiring authentic archival imagery with license and attribution recorded.
+
+    Do NOT use when:
+    - Generating AI imagery (use the image recipe/provider instead).
+
+    Returns:
+    - JSON with output_path, source_url, license and attribution.
+    """
+    import json
+    from src.engine.universal_assets import UniversalAssetsEngine
+
+    try:
+        engine = UniversalAssetsEngine(channel_manager=channel_manager)
+        result = engine.fetch(
+            recipe=Path(recipe_path).resolve(),
+            channel_slug=channel_slug,
+        )
+        return json.dumps(result, indent=2, ensure_ascii=False)
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)}, indent=2, ensure_ascii=False)
 

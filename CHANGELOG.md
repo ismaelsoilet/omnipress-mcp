@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] — 2026-10-29
+
+### Added
+- **Camada de Providers e Capability Registry (Regra 14)**:
+  - `src/core/capabilities.py`: fonte única de sondagem de runtimes (Python, FFmpeg, Node/npm, Remotion, Blender, Edge-TTS, Whisper, IA de imagem/música, rede), com versão, binário resolvido, env var, consumidores e hint de instalação.
+  - `src/engine/providers/`: contrato `RenderProvider` stateless, capability-gated e path-safe, com implementações `blender`, `remotion`, `ffmpeg`, `edge_tts`, `whisper`, `ai_image`, `prompt_export` e `stock_asset`.
+  - `omnipress doctor --json` expõe o registry para CI e agentes.
+- **Engines Universais Faltantes (Regra 12)**:
+  - `universal_thumbnail` + `rule15_validator`: thumbnails 16:9/9:16 com limite de 3–4 palavras, tipografia 160–220px, stroke ≥ 11px, chiaroscuro e death zone do YouTube livre, além de previews mobile de 120px/320px.
+  - `universal_documentary`: cenas documentais com mídia autêntica obrigatória, card protetor da Regra 08, modos `render` e `manifest`, e geração de `episode_config.json` compatível com Remotion.
+  - `universal_video`: render Remotion via recipe (`video_recipe.json` e `intro_recipe.json` legado).
+  - `universal_assets`: aquisição de acervos públicos com allowlist de domínios, licença e atribuição.
+  - `universal_deploy`: entrega de arquivos em `public/` com manifesto de hashes.
+  - `universal_audio.mix_soundtrack`: mixagem de trilha com ducking e teto de volume `0.20` (Regra 10).
+  - `universal_captions.verify_timeline`: linter de gaps/duração/sobreposição de chunks (`align-captions --verify`).
+- **Schemas Declarativos (Draft-07)**: `channel`, `carousel_recipe`, `post_recipe`, `thumbnail_recipe`, `documentary_recipe`, `caption_recipe`, `3d_recipe`, `template_manifest`, `video_recipe`, `audio_recipe`, `voice_recipe`, `image_recipe`, `asset_recipe`, com validação em runtime (`OMNIPRESS_SCHEMA_STRICT`).
+- **Registry Declarativo de Templates 3D**: `src/engine/templates_3d/<name>/{template.py, manifest.json}` + `channels/<slug>/blender_templates/`, com allowlist por canal e `--validate-only`/`--list-templates`.
+- **CLI/MCP**: comandos `thumbnail`, `documentary`, `video`, `assets`, `deploy`; `render-3d` com `--validate-only`, `--dry-run` e `--list-templates`; ferramentas MCP `omnipress_render_thumbnail`, `omnipress_render_documentary`, `omnipress_render_video` e `omnipress_fetch_assets`.
+- **Migração do dossiê**: 27 `carousel_recipe.json` (210 slides) e 3 `documentary_recipe.json` (246 cenas) gerados por ferramentas AST idempotentes em `scripts/migrations/`.
+- **Travas de CI**: `test_architecture_invariants`, `test_recipe_schemas`, `test_release_invariants`, `test_channel_layout_contract`, `test_providers` e `test_rule15_thumbnails` reescrito para o validador de produção.
+
+### Changed
+- **Cascade Top-Down (Regra 14)**: `card_bg_alpha` canônico com alias `card_alpha`; `gradient_start_ratio`, `enable_text_card`, `top_bias`, `contrast_boost` e `color_boost` agora percorrem slide → recipe → preset → canal → branding; `settings.default_aspect_ratio` é respeitado.
+- **Paleta e tipografia no cascade**: novo `_resolve_palette`/`_resolve_fonts`; `tweet_card` e `split_editorial` passaram a usar fontes do canal; `classic_card` usa `visual_identity.palette` e `presets`.
+- **Defaults neutros**: accent padrão `#3B82F6`, background `#0B1220`; removidos dourado, voz `pt-BR-AntonioNeural`, nomes/handles e prompts editoriais do `src/`.
+- **Remotion agnóstico**: novo `src/video/theme.ts` com CSS custom properties; 40 ocorrências de dourado substituídas; defaults textuais de câmera/carimbo/tagline neutralizados; `WordByWordCaptions` sem vocabulário embutido.
+- **Adaptadores stateless (Regra 14)**: removidos snapshots de `os.getenv` dos construtores de Buffer, Dev.to, Ghost, Instagram, Reddit, Webhook, YouTube e Markdown; credenciais somente via `ChannelManager.get_credential`.
+- **Sanitização por perfil**: `sanitize_text(text, profiles)` com perfis `br`, `generic_pii`, `intl` e `none`; canal define via `settings.sanitize_profiles`.
+
+### Removed
+- 67 scripts de carrossel (`render_carousel_*`, `upload_carousel_*`, `schedule_carousel_*`, `publish_carousel_*`) e `auto_queue_runner.py`.
+- Scripts de geração de cenas documentais de `ep03`/`ep04` substituídos pelos manifests.
+- `src/engine/blender_templates/brazil_flag.py` e o registry hardcoded de templates.
+- `channels/default/` e `channels/test-channel/` (diretórios scratch).
+
+### Deprecated
+- Aliases legados preservados: `omnipress_list_recent`, `slides_json` em `omnipress_build_carousel`, `brazil_flag` retorna erro direcionado a template de canal, e `intro_recipe.json` é normalizado para `video_recipe`.
+
+## [0.9.1] — 2026-10-29
+
+### Added
+- **Desacoplamento Universal de Adaptadores e Isolamento de Canal (Regra 04 & Regra 14)**:
+  - `WebhookPublisherAdapter`: adicionado `get_credentials(channel_slug)` e suporte a `channel_slug` em `is_configured`, `queue_social_post` e `dispatch_event`, lendo `OMNIPRESS_WEBHOOK_URL` e `OMNIPRESS_WEBHOOK_SECRET` isolados em `channels/<slug>/.env`.
+  - `YouTubeStagingAdapter`: implementada resolução de pasta de staging isolada via `_resolve_staging_dir(channel_slug)` direcionando metadados e mídias para `channels/<slug>/media/staging`, e webhook com precedência por canal.
+  - `RedditPublisherAdapter`: adicionada resolução de `REDDIT_DEFAULT_SUBREDDIT` via `ChannelManager.get_credential("REDDIT_DEFAULT_SUBREDDIT", channel_slug)`.
+  - `get_default_storage_provider`: suporte a `channel_slug`, permitindo buckets S3/R2 ou endpoints locais isolados por marca/canal.
+  - `UniversalPublisherEngine`: suporte a despacho modular para múltiplos provedores (`buffer`, `instagram`, `reddit`, `webhook`, `markdown`) via parâmetro `provider` ou campo declarativo no recipe JSON.
+  - `omnipress_generate_speech` e `omnipress_render_dark_video`: adicionado parâmetro `channel_slug` para salvar arquivos diretamente no workspace do canal (`channels/<slug>/media/voiceover` e `channels/<slug>/media/output`).
+  - `tests/test_decoupling_rule14.py`: 6 novos testes unitários cobrindo isolamento de credenciais, staging por canal e roteamento modular de adaptadores.
+
+### Changed
+- **Imutabilidade e Execução Sem Estado (Statelessness)**:
+  - `BufferPublisherAdapter`: removido atributo mutável de instância `self._channel_services` e leitura manual de `.env`, substituídos por resolução funcional direta via `ChannelManager.get_credential("BUFFER_<PLAT>_PROFILE_ID", channel_slug)`.
+  - `CarouselBuilder`: substituída concatenação direta `Path(f"channels/{slug}/{item}")` por `ChannelManager.get_channel_dir(slug)`.
+  - `src/server.py`: propagação explícita de `channel_slug` em `omnipress_publish_article` (para Dev.to, Ghost e Webhooks), `omnipress_queue_post` (para Buffer, Reddit e Webhook) e `omnipress_queue_media_post` (para Instagram Graph, Buffer e YouTube).
+  - Purgadas menções e exemplos a canais específicos em `src/core/channel_manager.py` e `src/server.py` (`@dossiedopassado`).
+
 ## [0.9.0] — 2026-10-26
 
 ### Added

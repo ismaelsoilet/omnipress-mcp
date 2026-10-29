@@ -151,14 +151,28 @@ class S3StorageProvider(BaseStorageProvider):
             raise RuntimeError("boto3 is required for S3StorageProvider. Install via 'uv add boto3'")
 
 
-def get_default_storage_provider() -> BaseStorageProvider:
+def get_default_storage_provider(channel_slug: Optional[str] = None) -> BaseStorageProvider:
     """
-    Resolves the active storage provider from environment variables.
-    Priority:
-    1. S3 / R2 / MinIO (if S3_BUCKET_NAME is set)
-    2. Local static server (if OMNIPRESS_PUBLIC_URL is set)
+    Resolves the active storage provider with Rule 04 channel precedence:
+    1. S3 / R2 / MinIO (if S3_BUCKET_NAME / R2_BUCKET_NAME is set in channel or global env)
+    2. Local static server (if OMNIPRESS_PUBLIC_URL is set in channel or global env)
     3. Catbox fallback
     """
+    try:
+        from src.core.channel_manager import ChannelManager
+        cm = ChannelManager()
+        s3_bucket = cm.get_credential("S3_BUCKET_NAME", channel_slug) or cm.get_credential("R2_BUCKET_NAME", channel_slug)
+        if s3_bucket:
+            endpoint = cm.get_credential("S3_ENDPOINT_URL", channel_slug) or cm.get_credential("R2_ENDPOINT_URL", channel_slug)
+            prefix = cm.get_credential("S3_PUBLIC_URL_PREFIX", channel_slug) or cm.get_credential("R2_PUBLIC_URL_PREFIX", channel_slug)
+            return S3StorageProvider(s3_bucket, endpoint_url=endpoint or None, public_url_prefix=prefix or None)
+
+        public_url = cm.get_credential("OMNIPRESS_PUBLIC_URL", channel_slug)
+        if public_url:
+            return LocalStaticStorageProvider(public_url)
+    except Exception:
+        pass
+
     s3_bucket = os.getenv("S3_BUCKET_NAME") or os.getenv("R2_BUCKET_NAME")
     if s3_bucket:
         endpoint = os.getenv("S3_ENDPOINT_URL") or os.getenv("R2_ENDPOINT_URL")

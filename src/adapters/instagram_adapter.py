@@ -16,26 +16,20 @@ class InstagramGraphAdapter(BasePublisherAdapter):
     BASE_URL = f"https://graph.facebook.com/{GRAPH_API_VERSION}"
 
     def __init__(self):
-        self.access_token = os.getenv("INSTAGRAM_ACCESS_TOKEN", "").strip()
-        self.account_id = (
-            os.getenv("INSTAGRAM_ACCOUNT_ID", "").strip()
-            or os.getenv("INSTAGRAM_BUSINESS_ACCOUNT_ID", "").strip()
-        )
+        # Credentials are resolved at call time through ChannelManager (Rule 14).
+        pass
 
     def get_credentials(self, channel_slug: Optional[str] = None) -> tuple[str, str]:
         """Resolves (access_token, account_id) with strict Rule 04 channel precedence."""
-        try:
-            from src.core.channel_manager import ChannelManager
-            cm = ChannelManager()
-            token = cm.get_credential("INSTAGRAM_ACCESS_TOKEN", channel_slug) or self.access_token
-            acct = (
-                cm.get_credential("INSTAGRAM_ACCOUNT_ID", channel_slug)
-                or cm.get_credential("INSTAGRAM_BUSINESS_ACCOUNT_ID", channel_slug)
-                or self.account_id
-            )
-            return token, acct
-        except Exception:
-            return self.access_token, self.account_id
+        from src.core.channel_manager import ChannelManager
+
+        cm = ChannelManager()
+        token = cm.get_credential("INSTAGRAM_ACCESS_TOKEN", channel_slug)
+        acct = (
+            cm.get_credential("INSTAGRAM_ACCOUNT_ID", channel_slug)
+            or cm.get_credential("INSTAGRAM_BUSINESS_ACCOUNT_ID", channel_slug)
+        )
+        return token, acct
 
     def is_configured(self, channel_slug: Optional[str] = None) -> bool:
         """Returns True if Meta Instagram Graph API credentials are set in environment or channel."""

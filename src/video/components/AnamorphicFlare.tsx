@@ -47,9 +47,9 @@ export const AnamorphicFlare: React.FC<AnamorphicFlareProps> = ({
         style={{
           width: "120%",
           height: 3,
-          background: `linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.2) 20%, ${color} 50%, rgba(212, 175, 55, 0.2) 80%, transparent 100%)`,
+          background: `linear-gradient(90deg, transparent 0%, rgba(var(--omni-accent-rgb, 59, 130, 246), 0.2) 20%, ${color} 50%, rgba(var(--omni-accent-rgb, 59, 130, 246), 0.2) 80%, transparent 100%)`,
           transform: `scaleX(${scaleX})`,
-          boxShadow: `0 0 25px 4px ${color}, 0 0 60px 8px rgba(212, 175, 55, 0.6)`,
+          boxShadow: `0 0 25px 4px ${color}, 0 0 60px 8px rgba(var(--omni-accent-rgb, 59, 130, 246), 0.6)`,
         }}
       />
 
@@ -60,7 +60,7 @@ export const AnamorphicFlare: React.FC<AnamorphicFlareProps> = ({
           width: 140,
           height: 140,
           borderRadius: "50%",
-          background: `radial-gradient(circle, ${color} 0%, rgba(212, 175, 55, 0.4) 40%, transparent 75%)`,
+          background: `radial-gradient(circle, ${color} 0%, rgba(var(--omni-accent-rgb, 59, 130, 246), 0.4) 40%, transparent 75%)`,
           filter: "blur(6px)",
           transform: `scale(${scaleX * 0.8})`,
         }}

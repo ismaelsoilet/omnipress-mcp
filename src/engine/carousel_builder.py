@@ -14,6 +14,10 @@ from PIL import Image, ImageDraw, ImageFont
 
 from src.core.channel_manager import ChannelManager
 
+_PARAM_ALIASES = {
+    "card_bg_alpha": ("card_alpha",),
+}
+
 
 def hex_to_rgb(hex_code: str) -> Tuple[int, int, int]:
     """Converts a hex color (#RRGGBB) to an RGB tuple."""
@@ -23,7 +27,7 @@ def hex_to_rgb(hex_code: str) -> Tuple[int, int, int]:
     try:
         return int(hex_code[0:2], 16), int(hex_code[2:4], 16), int(hex_code[4:6], 16)
     except Exception:
-        return (212, 175, 55)  # Default gold
+        return (59, 130, 246)  # Neutral blue fallback (never a channel brand)
 
 
 def load_safe_font(font_path: Optional[str], size: int, is_bold: bool = False) -> Any:
@@ -191,6 +195,11 @@ class CarouselBuilder:
         if slide_data and slide_data.get(param_name) is not None:
             return slide_data[param_name]
 
+        # Backward-compatible aliases (canonical key wins)
+        for alias in _PARAM_ALIASES.get(param_name, ()):
+            if slide_data and slide_data.get(alias) is not None:
+                return slide_data[alias]
+
         if channel_data:
             vis_id = channel_data.get("visual_identity", {})
             if preset_name:
@@ -205,6 +214,64 @@ class CarouselBuilder:
                 return branding[param_name]
 
         return default
+
+    def _resolve_palette(
+        self,
+        channel_data: Optional[Dict[str, Any]],
+        slide_data: Optional[Dict[str, Any]] = None,
+        preset_name: Optional[str] = None,
+    ) -> Dict[str, str]:
+        """Resolves the full palette through the Rule 14 cascade (hex strings).
+
+        Order: slide_data.theme > presets[preset].palette > visual_identity.palette
+               > branding.theme_colors > neutral engine defaults.
+        """
+        channel = channel_data or {}
+        slide = slide_data or {}
+        vis_id = channel.get("visual_identity", {}) or {}
+        preset_cfg = (vis_id.get("presets") or {}).get(preset_name or "", {}) or {}
+        preset_pal = preset_cfg.get("palette", {}) or {}
+        channel_pal = vis_id.get("palette", {}) or {}
+        theme_colors = (channel.get("branding") or {}).get("theme_colors", {}) or {}
+        slide_theme = slide.get("theme", {}) or {}
+
+        defaults = {
+            "primary": "#3B82F6",
+            "background": "#FFFFFF",
+            "card_background": "#F8FAFC",
+            "text": "#0F172A",
+            "secondary_text": "#64748B",
+            "accent": "#3B82F6",
+            "border": "#E2E8F0",
+        }
+
+        resolved: Dict[str, str] = {}
+        for key, fallback in defaults.items():
+            resolved[key] = str(
+                slide.get(f"palette_{key}")
+                or slide_theme.get(key)
+                or preset_pal.get(key)
+                or channel_pal.get(key)
+                or theme_colors.get(key)
+                or fallback
+            )
+        return resolved
+
+    def _resolve_fonts(
+        self,
+        channel_data: Optional[Dict[str, Any]],
+        preset_name: Optional[str] = None,
+    ) -> Dict[str, str]:
+        """Resolves typography through preset > visual_identity > branding."""
+        channel = channel_data or {}
+        vis_id = channel.get("visual_identity", {}) or {}
+        preset_cfg = (vis_id.get("presets") or {}).get(preset_name or "", {}) or {}
+        branding_typo = (channel.get("branding") or {}).get("typography", {}) or {}
+        merged: Dict[str, str] = {}
+        for source in (branding_typo, vis_id.get("typography", {}) or {}, preset_cfg.get("typography", {}) or {}):
+            if isinstance(source, dict):
+                merged.update({k: v for k, v in source.items() if isinstance(v, str)})
+        return merged
 
     # -------------------------------------------------------------------------
     # Helper Vector Components
@@ -566,10 +633,11 @@ class CarouselBuilder:
         slide_data: Dict[str, Any]
     ) -> Path:
         """Preset B: Minimalist Dark Editorial."""
-        vis_id = channel_data.get("visual_identity", {})
-        pal = vis_id.get("palette", {})
-        typo = vis_id.get("typography", {})
-        bg_color = hex_to_rgb(slide_data.get("background") or pal.get("background", "#08080A"))
+        pal = self._resolve_palette(channel_data, slide_data, "minimal_dark")
+        typo = self._resolve_fonts(channel_data, "minimal_dark")
+        bg_color = hex_to_rgb(slide_data.get("background") or pal["background"])
+        text_rgba = (*hex_to_rgb(pal["text"]), 255)
+        secondary_rgba = (*hex_to_rgb(pal["secondary_text"]), 220)
 
         margin_ratio = self._resolve_param("margin_ratio", slide_data, channel_data, "minimal_dark", 0.08)
         headline_scale = self._resolve_param("headline_scale", slide_data, channel_data, "minimal_dark", 0.046)
@@ -596,13 +664,13 @@ class CarouselBuilder:
         curr_y = int(h * start_y_ratio)
 
         if step_number:
-            draw.text((margin_x, curr_y), step_number, fill=(255, 255, 255, 255), font=font_serif_step)
+            draw.text((margin_x, curr_y), step_number, fill=text_rgba, font=font_serif_step)
             curr_y += int(w * 0.07)
 
         # Headline
         head_lines = wrap_text_by_pixel(headline, font_serif_head, max_w, draw)
         for line in head_lines:
-            draw.text((margin_x, curr_y), line, fill=(255, 255, 255, 255), font=font_serif_head)
+            draw.text((margin_x, curr_y), line, fill=text_rgba, font=font_serif_head)
             curr_y += int(font_serif_head.size * line_h_head)
 
         curr_y += int(h * 0.03)
@@ -611,7 +679,7 @@ class CarouselBuilder:
         if body:
             body_lines = wrap_text_by_pixel(body, font_serif_body, max_w, draw)
             for line in body_lines:
-                draw.text((margin_x, curr_y), line, fill=(215, 220, 230, 255), font=font_serif_body)
+                draw.text((margin_x, curr_y), line, fill=secondary_rgba, font=font_serif_body)
                 curr_y += int(font_serif_body.size * line_h_body)
 
         # UI Mockup (Search bar / UI pill)
@@ -626,12 +694,12 @@ class CarouselBuilder:
             self._draw_search_bar_mockup(draw, bar_x, bar_y, bar_w, bar_h, query, font_query)
 
         # Footer
-        handle = channel_data.get("branding", {}).get("handle", "@seuperfil")
+        handle = channel_data.get("branding", {}).get("handle", "")
         foot_y = h - int(h * 0.05)
-        draw.text((margin_x, foot_y), handle, fill=(120, 130, 145, 220), font=font_foot)
+        draw.text((margin_x, foot_y), handle, fill=secondary_rgba, font=font_foot)
         r_text = f"{page_str}   {swipe_str}"
         bbox_r = draw.textbbox((0, 0), r_text, font=font_foot)
-        draw.text((w - margin_x - (bbox_r[2] - bbox_r[0]), foot_y), r_text, fill=(120, 130, 145, 220), font=font_foot)
+        draw.text((w - margin_x - (bbox_r[2] - bbox_r[0]), foot_y), r_text, fill=secondary_rgba, font=font_foot)
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
         img.convert("RGB").save(output_path, quality=95)
@@ -650,9 +718,9 @@ class CarouselBuilder:
         slide_data: Dict[str, Any]
     ) -> Path:
         """Preset A: Social Proof & Tweet Card Mockup."""
-        vis_id = channel_data.get("visual_identity", {})
-        pal = vis_id.get("palette", {})
-        bg_color = hex_to_rgb(slide_data.get("background") or pal.get("background", "#FFFFFF"))
+        pal = self._resolve_palette(channel_data, slide_data, "tweet_card")
+        typo = self._resolve_fonts(channel_data, "tweet_card")
+        bg_color = hex_to_rgb(slide_data.get("background") or pal["background"])
         is_dark = bg_color[0] < 50
 
         margin_ratio = self._resolve_param("margin_ratio", slide_data, channel_data, "tweet_card", 0.075)
@@ -664,6 +732,11 @@ class CarouselBuilder:
         line_h_head = self._resolve_param("line_height_head", slide_data, channel_data, "tweet_card", 1.25)
         line_h_body = self._resolve_param("line_height_body", slide_data, channel_data, "tweet_card", 1.32)
         card_radius = self._resolve_param("border_radius", slide_data, channel_data, "tweet_card", 18)
+        header_gap_ratio = self._resolve_param("header_gap_ratio", slide_data, channel_data, "tweet_card", 0.022)
+        headline_gap_ratio = self._resolve_param("headline_gap_ratio", slide_data, channel_data, "tweet_card", 0.012)
+        foot_reserved_ratio = self._resolve_param("foot_reserved_ratio", slide_data, channel_data, "tweet_card", 0.065)
+        footer_y_ratio = self._resolve_param("footer_y_ratio", slide_data, channel_data, "tweet_card", 0.045)
+        img_default_top_ratio = self._resolve_param("img_default_top_ratio", slide_data, channel_data, "tweet_card", 0.44)
 
         img = Image.new("RGBA", (w, h), (*bg_color, 255))
         draw = ImageDraw.Draw(img)
@@ -672,31 +745,36 @@ class CarouselBuilder:
         max_w = w - (margin_x * 2)
 
         # Author header
-        auth_data = slide_data.get("author") or vis_id.get("author", {})
-        author_name = auth_data.get("name") or channel_data.get("name", "Autor")
-        handle = auth_data.get("handle") or channel_data.get("branding", {}).get("handle", "@autor")
+        auth_data = (
+            slide_data.get("author")
+            or (channel_data.get("visual_identity", {}) or {}).get("author", {})
+        )
+        author_name = auth_data.get("name") or channel_data.get("name", "")
+        handle = auth_data.get("handle") or channel_data.get("branding", {}).get("handle", "")
         avatar_path = auth_data.get("avatar_path")
         if avatar_path and not Path(avatar_path).is_file():
             ch_p = channel_data.get("path")
             if ch_p and (Path(ch_p) / avatar_path).is_file():
                 avatar_path = str(Path(ch_p) / avatar_path)
-            elif (Path("channels") / channel_data.get("slug", "") / avatar_path).is_file():
-                avatar_path = str(Path("channels") / channel_data.get("slug", "") / avatar_path)
+            else:
+                ch_dir = self.channel_manager.get_channel_dir(channel_data.get("slug", ""))
+                if (ch_dir / avatar_path).is_file():
+                    avatar_path = str(ch_dir / avatar_path)
 
         is_verified = self._resolve_param("show_verified_badge", slide_data, channel_data, "tweet_card", auth_data.get("verified", True))
 
         start_y = int(h * start_y_ratio)
         avatar_size = int(w * avatar_size_ratio)
-        border_c = hex_to_rgb(pal.get("border", "#E0DFDC"))
+        border_c = hex_to_rgb(pal["border"])
         self._draw_circular_avatar(img, avatar_path, margin_x, start_y, avatar_size, fallback_initials=author_name, border_color=border_c)
 
         # Name and Verified badge
         text_start_x = margin_x + avatar_size + int(w * 0.03)
-        font_name = load_font_by_family("sans", size=int(w * 0.038), is_bold=True)
-        font_handle = load_font_by_family("sans", size=int(w * 0.026), is_bold=False)
+        font_name = load_font_by_family("sans", size=int(w * 0.038), is_bold=True, custom_path=typo.get("bold_font"))
+        font_handle = load_font_by_family("sans", size=int(w * 0.026), is_bold=False, custom_path=typo.get("regular_font"))
 
-        name_color = (255, 255, 255, 255) if is_dark else (15, 23, 42, 255)
-        handle_color = (148, 163, 184, 255) if is_dark else (100, 116, 139, 255)
+        name_color = (*hex_to_rgb(pal["text"]), 255)
+        handle_color = (*hex_to_rgb(pal["secondary_text"]), 255)
 
         draw.text((text_start_x, start_y + int(avatar_size * 0.08)), author_name, fill=name_color, font=font_name)
         if is_verified:
@@ -707,7 +785,7 @@ class CarouselBuilder:
 
         draw.text((text_start_x, start_y + int(avatar_size * 0.55)), handle, fill=handle_color, font=font_handle)
 
-        curr_y = start_y + avatar_size + int(h * 0.022)
+        curr_y = start_y + avatar_size + int(h * header_gap_ratio)
 
         # Headline
         clean_headline = re.sub(r'[\U00010000-\U0010ffff]', '', headline)
@@ -715,13 +793,13 @@ class CarouselBuilder:
         clean_headline = re.sub(r'[\ufe00-\ufe0f]', '', clean_headline).strip()
 
         head_size = slide_data.get("headline_font_size") or int(w * headline_scale)
-        font_head = load_font_by_family("sans", size=head_size, is_bold=True)
+        font_head = load_font_by_family("sans", size=head_size, is_bold=True, custom_path=typo.get("bold_font"))
         head_lines = wrap_text_by_pixel(clean_headline, font_head, max_w, draw)
         for line in head_lines:
             draw.text((margin_x, curr_y), line, fill=name_color, font=font_head)
             curr_y += int(font_head.size * line_h_head)
 
-        curr_y += int(h * 0.012)
+        curr_y += int(h * headline_gap_ratio)
 
         # Body/Lead
         if body:
@@ -731,19 +809,19 @@ class CarouselBuilder:
             clean_body = re.sub(r'[\u200d]', '', clean_body).strip()
 
             body_size = slide_data.get("body_font_size") or int(w * body_scale)
-            font_body = load_font_by_family("sans", size=body_size, is_bold=False)
-            font_body_bold = load_font_by_family("sans", size=body_size, is_bold=True)
-            body_color = (226, 232, 240, 255) if is_dark else (30, 41, 59, 255)
+            font_body = load_font_by_family("sans", size=body_size, is_bold=False, custom_path=typo.get("regular_font"))
+            font_body_bold = load_font_by_family("sans", size=body_size, is_bold=True, custom_path=typo.get("bold_font"))
+            body_color = (*hex_to_rgb(pal["text"]), 255)
             custom_tags = (
                 slide_data.get("prefixes")
                 or slide_data.get("tag_colors")
-                or vis_id.get("semantic_tags")
-                or vis_id.get("tag_colors")
+                or (channel_data.get("visual_identity", {}) or {}).get("semantic_tags")
+                or (channel_data.get("visual_identity", {}) or {}).get("tag_colors")
                 or {}
             )
             semantic_cats = (
                 slide_data.get("semantic_categories")
-                or vis_id.get("semantic_categories")
+                or (channel_data.get("visual_identity", {}) or {}).get("semantic_categories")
                 or None
             )
 
@@ -830,14 +908,22 @@ class CarouselBuilder:
                 ch_p = channel_data.get("path")
                 if ch_p and (Path(ch_p) / img_item).is_file():
                     images.append(Path(ch_p) / img_item)
-                elif Path(f"channels/{channel_data.get('slug', '')}/{img_item}").is_file():
-                    images.append(Path(f"channels/{channel_data.get('slug', '')}/{img_item}"))
+                elif channel_data.get("slug"):
+                    try:
+                        from src.core.channel_manager import ChannelManager
+                        c_dir = ChannelManager().get_channel_dir(channel_data.get("slug"))
+                        if (c_dir / img_item).is_file():
+                            images.append(c_dir / img_item)
+                        else:
+                            images.append(p_img)
+                    except Exception:
+                        images.append(p_img)
                 else:
                     images.append(p_img)
 
         if images:
-            foot_reserved = int(h * 0.065)
-            default_top = int(h * 0.44)
+            foot_reserved = int(h * foot_reserved_ratio)
+            default_top = int(h * img_default_top_ratio)
 
             # Image MUST start strictly below text, never overlapping
             if not body or not body.strip():
@@ -858,7 +944,7 @@ class CarouselBuilder:
                 self._draw_rounded_image(img, images[1], (margin_x + each_w + gap, img_y, margin_x + max_w, img_y + available_h), radius=card_radius, fit_mode=fit_mode)
 
         # Footer
-        foot_y = h - int(h * 0.045)
+        foot_y = h - int(h * footer_y_ratio)
 
         # Social Proof tweet action icons in footer (Comment, Share/Repost, Like/Heart, Bookmark)
         foot_icon_size = max(16, int(h * 0.018))
@@ -891,10 +977,13 @@ class CarouselBuilder:
         slide_data: Dict[str, Any]
     ) -> Path:
         """Preset C: Corporate & Editorial Authority."""
-        vis_id = channel_data.get("visual_identity", {})
-        pal = vis_id.get("palette", {})
-        corporate_blue = hex_to_rgb(slide_data.get("card_background") or pal.get("card_background", "#0C2333"))
-        accent_color = hex_to_rgb(slide_data.get("accent") or pal.get("accent", "#F59E0B"))
+        pal = self._resolve_palette(channel_data, slide_data, "split_editorial")
+        typo = self._resolve_fonts(channel_data, "split_editorial")
+        corporate_blue = hex_to_rgb(slide_data.get("card_background") or pal["card_background"])
+        accent_color = hex_to_rgb(slide_data.get("accent") or pal["accent"])
+        bg_rgb = hex_to_rgb(slide_data.get("background") or pal["background"])
+        text_rgba = (*hex_to_rgb(pal["text"]), 255)
+        secondary_rgba = (*hex_to_rgb(pal["secondary_text"]), 220)
 
         split_ratio = self._resolve_param("split_ratio", slide_data, channel_data, "split_editorial", 0.44)
         margin_ratio = self._resolve_param("margin_ratio", slide_data, channel_data, "split_editorial", 0.08)
@@ -907,7 +996,7 @@ class CarouselBuilder:
         line_h_head = self._resolve_param("line_height_head", slide_data, channel_data, "split_editorial", 1.35)
         line_h_body = self._resolve_param("line_height_body", slide_data, channel_data, "split_editorial", 1.40)
 
-        img = Image.new("RGBA", (w, h), (10, 12, 16, 255))
+        img = Image.new("RGBA", (w, h), (*bg_rgb, 255))
 
         split_y = int(h * split_ratio)
         top_img_path = slide_data.get("top_image") or slide_data.get("bg_image_path")
@@ -919,7 +1008,11 @@ class CarouselBuilder:
         draw.rectangle([0, split_y, w, h], fill=(*corporate_blue, 255))
 
         # Circular author cutout overlapping split line
-        author_avatar = slide_data.get("author_avatar") or vis_id.get("author", {}).get("avatar_path")
+        author_avatar = slide_data.get("author_avatar") or (channel_data.get("visual_identity", {}) or {}).get("author", {}).get("avatar_path")
+        if author_avatar and not Path(author_avatar).is_file():
+            ch_dir = self.channel_manager.get_channel_dir(channel_data.get("slug", ""))
+            if (ch_dir / author_avatar).is_file():
+                author_avatar = str(ch_dir / author_avatar)
         av_size = int(w * avatar_size_ratio)
         av_x = w - int(w * margin_ratio) - av_size
         av_y = split_y - int(av_size * 0.48)
@@ -935,46 +1028,72 @@ class CarouselBuilder:
         curr_y = split_y + int(h * 0.05)
 
         # Brand Badge & Label
-        badge_text = slide_data.get("badge_text") or channel_data.get("branding", {}).get("badge_text") or channel_data.get("name", "CHANNEL").upper()
-        font_badge = load_font_by_family("sans", size=int(w * badge_scale), is_bold=True)
-        draw.text((margin_x, curr_y), badge_text, fill=(*accent_color, 255), font=font_badge)
+        badge_text = slide_data.get("badge_text") or channel_data.get("branding", {}).get("badge_text") or ""
+        font_badge = load_font_by_family("sans", size=int(w * badge_scale), is_bold=True, custom_path=typo.get("bold_font"))
+        if badge_text:
+            draw.text((margin_x, curr_y), badge_text, fill=(*accent_color, 255), font=font_badge)
         curr_y += int(font_badge.size * 1.8)
 
-        # Headline with Square Bullets (■)
-        font_head = load_font_by_family("sans", size=int(w * headline_scale), is_bold=True)
+        # Headline with configurable bullet style
+        font_head = load_font_by_family("sans", size=int(w * headline_scale), is_bold=True, custom_path=typo.get("bold_font"))
         lines = headline.split("\n") if "\n" in headline else wrap_text_by_pixel(headline, font_head, max_text_w, draw)
 
+        bullet_style = (
+            slide_data.get("bullet_style")
+            or (channel_data.get("visual_identity", {}) or {}).get("elements", {}).get("bullet_style")
+            or "square"
+        )
         bullet_s = int(w * bullet_scale)
         for line in lines:
-            draw.rectangle([margin_x, curr_y + 8, margin_x + bullet_s, curr_y + 8 + bullet_s], fill=(*accent_color, 255))
-            draw.text((margin_x + bullet_s + 14, curr_y), line.strip(), fill=(255, 255, 255, 255), font=font_head)
+            bullet_y = curr_y + 8
+            if bullet_style == "dot":
+                draw.ellipse(
+                    [margin_x, bullet_y + bullet_s // 4, margin_x + bullet_s, bullet_y + bullet_s + bullet_s // 4],
+                    fill=(*accent_color, 255),
+                )
+            elif bullet_style == "dash":
+                draw.rectangle(
+                    [margin_x, bullet_y + bullet_s // 2, margin_x + bullet_s + 6, bullet_y + bullet_s // 2 + 3],
+                    fill=(*accent_color, 255),
+                )
+            elif bullet_style == "arrow":
+                draw.polygon(
+                    [
+                        (margin_x, bullet_y),
+                        (margin_x + bullet_s, bullet_y + bullet_s // 2),
+                        (margin_x, bullet_y + bullet_s),
+                    ],
+                    fill=(*accent_color, 255),
+                )
+            else:
+                draw.rectangle(
+                    [margin_x, bullet_y, margin_x + bullet_s, bullet_y + bullet_s],
+                    fill=(*accent_color, 255),
+                )
+            draw.text((margin_x + bullet_s + 14, curr_y), line.strip(), fill=text_rgba, font=font_head)
             curr_y += int(font_head.size * line_h_head)
 
         curr_y += int(h * 0.02)
 
         # Body text
         if body:
-            font_body = load_font_by_family("sans", size=int(w * body_scale), is_bold=False)
+            font_body = load_font_by_family("sans", size=int(w * body_scale), is_bold=False, custom_path=typo.get("regular_font"))
             b_lines = wrap_text_by_pixel(body, font_body, max_text_w, draw)
             for bline in b_lines:
-                draw.text((margin_x, curr_y), bline, fill=(225, 235, 245, 255), font=font_body)
+                draw.text((margin_x, curr_y), bline, fill=(*hex_to_rgb(pal["text"]), 235), font=font_body)
                 curr_y += int(font_body.size * line_h_body)
 
         # Watermark in bottom right
-        watermark = (
-            slide_data.get("watermark_text")
-            or vis_id.get("elements", {}).get("watermark_text")
-            or channel_data.get("branding", {}).get("badge_text")
-            or channel_data.get("name", "OMNIPRESS")[:3].upper()
-        )
+        watermark = slide_data.get("watermark_text") or (channel_data.get("visual_identity", {}) or {}).get("elements", {}).get("watermark_text") or ""
         foot_y = h - int(h * 0.055)
-        font_wm = load_font_by_family("sans", size=int(w * 0.036), is_bold=True)
-        draw.text((w - margin_x - int(w * 0.08), foot_y - 6), watermark, fill=(255, 255, 255, 230), font=font_wm)
+        if watermark:
+            font_wm = load_font_by_family("sans", size=int(w * 0.036), is_bold=True, custom_path=typo.get("bold_font"))
+            draw.text((w - margin_x - int(w * 0.08), foot_y - 6), watermark, fill=text_rgba, font=font_wm)
 
-        # Footer handle
-        font_foot = load_font_by_family("sans", size=int(w * footer_scale), is_bold=False)
+        # Footer
+        font_foot = load_font_by_family("sans", size=int(w * footer_scale), is_bold=False, custom_path=typo.get("regular_font"))
         r_text = f"{page_str}   {swipe_str}"
-        draw.text((margin_x, foot_y), r_text, fill=(180, 200, 220, 200), font=font_foot)
+        draw.text((margin_x, foot_y), r_text, fill=secondary_rgba, font=font_foot)
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
         img.convert("RGB").save(output_path, quality=95)
@@ -1004,12 +1123,16 @@ class CarouselBuilder:
         channel = channel_data or self.channel_manager.get_channel(channel_slug) or self.channel_manager.get_active_channel()
         data = slide_data or {}
         branding = channel.get("branding", {})
-        colors = branding.get("theme_colors", {})
-        typography = branding.get("typography", {})
+        pal = self._resolve_palette(channel, data, "classic_card")
+        typography = self._resolve_fonts(channel, "classic_card")
 
-        primary_rgb = hex_to_rgb(colors.get("primary", "#D4AF37"))
-        handle = branding.get("handle", "@canal")
-        badge = badge_text or branding.get("badge_text", channel.get("name", "OMNIPRESS"))
+        primary_rgb = hex_to_rgb(pal["primary"])
+        bg_rgb = hex_to_rgb(pal["background"])
+        card_rgb = hex_to_rgb(pal["card_background"])
+        text_rgb = hex_to_rgb(pal["text"])
+        secondary_rgb = hex_to_rgb(pal["secondary_text"])
+        handle = branding.get("handle", "")
+        badge = badge_text or branding.get("badge_text", "")
 
         bold_font_path = typography.get("bold_font")
         reg_font_path = typography.get("regular_font")
@@ -1019,7 +1142,18 @@ class CarouselBuilder:
         body_scale = self._resolve_param("body_scale", data, channel, "classic_card", 0.034)
         footer_scale = self._resolve_param("footer_scale", data, channel, "classic_card", 0.024)
         badge_scale = self._resolve_param("badge_scale", data, channel, "classic_card", 0.024)
-        resolved_card_bg_alpha = self._resolve_param("card_bg_alpha", data, channel, "classic_card", card_bg_alpha)
+        resolved_card_bg_alpha = self._resolve_param(
+            "card_bg_alpha", data, channel, "classic_card",
+            215 if card_bg_alpha is None else card_bg_alpha,
+        )
+        gradient_start_ratio = self._resolve_param(
+            "gradient_start_ratio", data, channel, "classic_card",
+            0.46 if gradient_start_ratio is None else gradient_start_ratio,
+        )
+        enable_text_card = self._resolve_param(
+            "enable_text_card", data, channel, "classic_card",
+            True if enable_text_card is None else enable_text_card,
+        )
         card_radius = self._resolve_param("border_radius", data, channel, "classic_card", 16)
         card_pad_x_ratio = self._resolve_param("card_pad_x_ratio", data, channel, "classic_card", 0.035)
         card_pad_y_ratio = self._resolve_param("card_pad_y_ratio", data, channel, "classic_card", 0.02)
@@ -1036,7 +1170,7 @@ class CarouselBuilder:
                 else:
                     img = raw_img.convert("RGBA")
         else:
-            img = Image.new("RGBA", (w, h), (10, 12, 16, 255))
+            img = Image.new("RGBA", (w, h), (*bg_rgb, 255))
 
         # Crop to target aspect ratio if needed
         ratio_map = {"3:4": 3 / 4, "4:5": 4 / 5, "1:1": 1.0, "9:16": 9 / 16, "16:9": 16 / 9}
@@ -1076,33 +1210,35 @@ class CarouselBuilder:
         for y in range(grad_start, h):
             progress = (y - grad_start) / max(1, (h - grad_start))
             alpha = int(252 * (progress ** 0.85))
-            draw.line([(0, y), (w, y)], fill=(8, 10, 14, min(252, alpha)))
+            draw.line([(0, y), (w, y)], fill=(*bg_rgb, min(252, alpha)))
 
         # Top vignette
         for y in range(int(h * 0.13)):
             alpha = int(180 * (1 - (y / (h * 0.13))))
-            draw.line([(0, y), (w, y)], fill=(8, 10, 14, min(180, alpha)))
+            draw.line([(0, y), (w, y)], fill=(*bg_rgb, min(180, alpha)))
 
         # Top Badge
-        badge_content = f"• {badge.upper()} | {handle.upper()} •"
+        badge_parts = [p for p in (badge.upper(), handle.upper()) if p]
+        badge_content = f"• {' | '.join(badge_parts)} •" if badge_parts else ""
         bx, by = int(w * 0.06), int(h * 0.045)
         max_badge_w = w - (bx * 2) - 28
         badge_size = max(14, int(w * badge_scale))
         font_badge = load_safe_font(bold_font_path, size=badge_size, is_bold=True)
-        bbox_b = draw.textbbox((0, 0), badge_content, font=font_badge)
-        bw, bh = bbox_b[2] - bbox_b[0], bbox_b[3] - bbox_b[1]
-        while bw > max_badge_w and badge_size > 10:
-            badge_size -= 1
-            font_badge = load_safe_font(bold_font_path, size=badge_size, is_bold=True)
+        if badge_content:
             bbox_b = draw.textbbox((0, 0), badge_content, font=font_badge)
             bw, bh = bbox_b[2] - bbox_b[0], bbox_b[3] - bbox_b[1]
+            while bw > max_badge_w and badge_size > 10:
+                badge_size -= 1
+                font_badge = load_safe_font(bold_font_path, size=badge_size, is_bold=True)
+                bbox_b = draw.textbbox((0, 0), badge_content, font=font_badge)
+                bw, bh = bbox_b[2] - bbox_b[0], bbox_b[3] - bbox_b[1]
 
-        draw.rounded_rectangle(
-            [bx - 14, by - 8, bx + bw + 14, by + bh + 8],
-            radius=8,
-            fill=(*primary_rgb, 235)
-        )
-        draw.text((bx, by), badge_content, fill=(10, 12, 16, 255), font=font_badge)
+            draw.rounded_rectangle(
+                [bx - 14, by - 8, bx + bw + 14, by + bh + 8],
+                radius=8,
+                fill=(*primary_rgb, 235)
+            )
+            draw.text((bx, by), badge_content, fill=(*bg_rgb, 255), font=font_badge)
 
         # Protective Opaque/Translucent Text Backdrop Card (Rule 08)
         if enable_text_card and (head_lines or body_lines):
@@ -1117,21 +1253,21 @@ class CarouselBuilder:
             draw.rounded_rectangle(
                 card_box,
                 radius=card_radius,
-                fill=(8, 10, 14, resolved_card_bg_alpha),
+                fill=(*card_rgb, resolved_card_bg_alpha),
                 outline=(*primary_rgb, 60),
                 width=1,
             )
 
         # Text with Safety Stroke
         calc_stroke_w = stroke_w if stroke_w is not None else max(2, int(w * 0.0025))
-        stroke_color = (4, 5, 8, 255)
+        stroke_color = (*bg_rgb, 255)
 
         curr_y = start_y
         for line in head_lines:
             draw.text(
                 (margin_x, curr_y),
                 line,
-                fill=(255, 255, 255, 255),
+                fill=(*text_rgb, 255),
                 font=font_head,
                 stroke_width=calc_stroke_w,
                 stroke_fill=stroke_color,
@@ -1143,7 +1279,7 @@ class CarouselBuilder:
             draw.text(
                 (margin_x, curr_y),
                 line,
-                fill=(225, 230, 235, 255),
+                fill=(*secondary_rgb, 255),
                 font=font_body,
                 stroke_width=max(1, calc_stroke_w - 1),
                 stroke_fill=stroke_color,
@@ -1167,7 +1303,7 @@ class CarouselBuilder:
         draw.text(
             (w - margin_x - rw, foot_y),
             right_text,
-            fill=(200, 205, 215, 220),
+            fill=(*secondary_rgb, 220),
             font=font_foot,
             stroke_width=1,
             stroke_fill=stroke_color,
@@ -1206,9 +1342,9 @@ class CarouselBuilder:
         Presets: 'tweet_card', 'minimal_dark', 'split_editorial', 'classic_card'.
         """
         channel = self.channel_manager.get_channel(channel_slug) or self.channel_manager.get_active_channel()
-        data = slide_data or {}
-        if bg_image_path:
-            data.setdefault("bg_image_path", str(bg_image_path))
+        data = dict(slide_data or {})
+        if bg_image_path and not data.get("bg_image_path"):
+            data["bg_image_path"] = str(bg_image_path)
 
         # Resolve preset
         chosen_preset = preset or data.get("layout") or channel.get("visual_identity", {}).get("default_preset", "classic_card")
@@ -1285,13 +1421,19 @@ class CarouselBuilder:
         channel_slug: str,
         post_slug: str,
         slides_data: List[Dict[str, Any]],
-        aspect_ratio: str = "3:4",
+        aspect_ratio: Optional[str] = None,
         default_preset: Optional[str] = None
     ) -> List[Path]:
         """
         Builds a complete multi-slide carousel for a given channel and post.
         Saves slides into channels/<channel_slug>/media/carousels/<post_slug>/
         """
+        channel = self.channel_manager.get_channel(channel_slug) or {}
+        resolved_aspect = (
+            aspect_ratio
+            or (channel.get("settings") or {}).get("default_aspect_ratio")
+            or "3:4"
+        )
         out_dir = self.channel_manager.get_media_dir(channel_slug, "carousels") / post_slug
         out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1317,11 +1459,11 @@ class CarouselBuilder:
                 badge_text=slide.get("badge_text"),
                 page_str=page_str,
                 swipe_str=swipe_text,
-                gradient_start_ratio=slide.get("gradient_start_ratio", 0.46),
-                aspect_ratio=aspect_ratio,
-                enable_text_card=slide.get("enable_text_card", True),
-                card_bg_alpha=slide.get("card_bg_alpha", 215),
-                stroke_width=slide.get("stroke_width", None),
+                gradient_start_ratio=slide.get("gradient_start_ratio"),
+                aspect_ratio=resolved_aspect,
+                enable_text_card=slide.get("enable_text_card"),
+                card_bg_alpha=slide.get("card_bg_alpha", slide.get("card_alpha")),
+                stroke_width=slide.get("stroke_width"),
                 preset=slide_layout,
                 slide_data=slide,
             )

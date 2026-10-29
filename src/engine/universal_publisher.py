@@ -12,7 +12,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from src.core.channel_manager import ChannelManager
 from src.core.publishing_shield import PublishingShield
-from src.utils.sanitizer import sanitize_text
+from src.core.schema_validator import validate as validate_schema
+from src.utils.sanitizer import resolve_profiles, sanitize_text
 
 logger = logging.getLogger("omnipress.universal_publisher")
 
@@ -32,8 +33,9 @@ class UniversalPublisherEngine:
         self.channel_manager = channel_manager or ChannelManager()
 
     def load_recipe(self, recipe_input: Union[str, Path, Dict[str, Any]]) -> Dict[str, Any]:
-        """Loads and parses a publishing recipe JSON or dict."""
+        """Loads, parses and schema-validates a publishing recipe JSON or dict."""
         if isinstance(recipe_input, dict):
+            validate_schema("post_recipe", recipe_input, source="<dict>")
             return recipe_input
 
         path = Path(recipe_input).resolve()
@@ -41,17 +43,21 @@ class UniversalPublisherEngine:
             raise FileNotFoundError(f"Publish recipe not found: {path}")
 
         try:
-            return json.loads(path.read_text(encoding="utf-8"))
+            data = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON in publish recipe: {e}")
+
+        validate_schema("post_recipe", data, source=str(path))
+        return data
 
     def validate_content(
         self,
         text: str,
         platforms: List[str],
+        channel_slug: Optional[str] = None,
     ) -> Tuple[str, List[str]]:
         """Sanitizes text and validates platform character limits."""
-        cleaned_text, _ = sanitize_text(text)
+        cleaned_text, _ = sanitize_text(text, resolve_profiles(channel_slug))
         errors = []
 
         for p in platforms:
@@ -74,6 +80,7 @@ class UniversalPublisherEngine:
         mode: Optional[str] = None,
         force_duplicate: bool = False,
         dry_run: bool = False,
+        provider: Optional[str] = None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """Dispatches social post to configured adapter with pre-flight checks."""
@@ -97,7 +104,7 @@ class UniversalPublisherEngine:
                 text = thread[0] if isinstance(thread[0], str) else thread[0].get("text", "")
 
         # 1. Sanitize and validate length
-        cleaned_text, validation_errors = self.validate_content(text, target_platforms)
+        cleaned_text, validation_errors = self.validate_content(text, target_platforms, channel_slug)
         if validation_errors:
             # If thread is present on X, the main text is just tweet 1
             if not (thread and any(p.lower() in ("x", "twitter") for p in target_platforms)):
@@ -136,17 +143,41 @@ class UniversalPublisherEngine:
                 "thread_count": len(thread) if thread else 0,
             }
 
-        # 3. Dispatch to publisher adapter
-        adapter = BufferPublisherAdapter()
+        # 3. Resolve and dispatch to publisher adapter
+        target_provider = (provider or kwargs.get("publisher") or "buffer").lower().strip()
+        provider_name = target_provider
+        if target_provider == "buffer":
+            adapter = BufferPublisherAdapter()
+        elif target_provider in ("instagram", "instagram_graph", "meta"):
+            from src.adapters.instagram_adapter import InstagramGraphAdapter
+            adapter = InstagramGraphAdapter()
+            provider_name = "instagram_graph"
+        elif target_provider == "reddit":
+            from src.adapters.reddit_adapter import RedditPublisherAdapter
+            adapter = RedditPublisherAdapter()
+            provider_name = "reddit"
+        elif target_provider == "webhook":
+            from src.adapters.webhook_adapter import WebhookPublisherAdapter
+            adapter = WebhookPublisherAdapter()
+            provider_name = "webhook"
+        elif target_provider in ("markdown", "archive"):
+            from src.adapters.markdown_adapter import MarkdownArchiveAdapter
+            adapter = MarkdownArchiveAdapter()
+            provider_name = "markdown_archive"
+        else:
+            adapter = BufferPublisherAdapter()
+            provider_name = "buffer"
+
         if not adapter.is_configured(channel_slug=channel_slug):
             return {
                 "success": False,
-                "error": f"Buffer publisher adapter is not configured for channel '{channel_slug}' or in .env.",
+                "error": f"{adapter.__class__.__name__} is not configured for channel '{channel_slug}' or in .env.",
                 "channel_slug": channel_slug,
             }
 
         passed_kwargs = dict(kwargs)
         passed_kwargs.pop("thread", None)
+        passed_kwargs.pop("publisher", None)
 
         res = adapter.queue_social_post(
             text=cleaned_text,
@@ -156,6 +187,7 @@ class UniversalPublisherEngine:
             channel_slug=channel_slug,
             mode=effective_mode,
             thread=thread,
+            force_duplicate=force_duplicate,
             **passed_kwargs,
         )
 
@@ -165,7 +197,7 @@ class UniversalPublisherEngine:
                 channel_id=channel_slug,
                 text=cleaned_text,
                 media_urls=media_urls,
-                provider="buffer",
+                provider=provider_name,
                 status="queued" if schedule_time else "published",
                 response=res,
             )
@@ -205,6 +237,7 @@ class UniversalPublisherEngine:
 
         schedule_time = recipe.get("schedule_time") or recipe.get("publish", {}).get("schedule_time")
         mode = recipe.get("mode") or recipe.get("publish", {}).get("mode")
+        provider = recipe.get("provider") or recipe.get("publisher") or recipe.get("publish", {}).get("provider")
 
         return self.publish_social_post(
             channel_slug=channel_slug,
@@ -216,4 +249,5 @@ class UniversalPublisherEngine:
             force_duplicate=force_duplicate,
             dry_run=dry_run,
             thread=thread,
+            provider=provider,
         )

@@ -9,9 +9,9 @@ export interface TacticalGridProps {
 }
 
 export const TacticalGrid: React.FC<TacticalGridProps> = ({
-  color = "#D4AF37",
-  code = "DOC-REF // 1963-TUR",
-  dateStr = "CLASSIFIED ARCHIVE",
+  color = "var(--omni-accent, #3B82F6)",
+  code = "",
+  dateStr = "",
   opacity = 0.25,
 }) => {
   const frame = useCurrentFrame();

@@ -9,6 +9,7 @@ import {
 } from "remotion";
 import { FilmGrain } from "./FilmGrain";
 import { DustParticles } from "./DustParticles";
+import { themeVars } from "../theme";
 
 export interface ChannelOutroProps {
   durationInFrames: number;
@@ -21,6 +22,7 @@ export interface ChannelOutroProps {
   stampText?: string;
   playlistTitle?: string;
   debateQuestion?: string;
+  tagline?: string;
 }
 
 /**
@@ -33,15 +35,16 @@ export interface ChannelOutroProps {
  */
 export const ChannelOutro: React.FC<ChannelOutroProps> = ({
   durationInFrames,
-  channelName = "CANAL OFICIAL",
+  channelName = "",
   avatarSrc,
   bannerSrc,
   primaryColor = "#3B82F6",
-  title = "COMPARTILHE O CONHECIMENTO",
-  subtitle = "Compartilhe este conteúdo com colegas e amigos que se interessam por este tema.",
-  stampText = "✔ CONTEÚDO OFICIAL // COMPARTILHE",
-  playlistTitle = "Episódios & Análises",
-  debateQuestion = "Qual é a sua visão sobre este tema? Deixe sua opinião nos comentários.",
+  title = "",
+  subtitle = "",
+  stampText = "",
+  playlistTitle = "",
+  debateQuestion = "",
+  tagline = "",
 }) => {
   const frame = useCurrentFrame();
   const { width, height } = useVideoConfig();
@@ -76,7 +79,8 @@ export const ChannelOutro: React.FC<ChannelOutroProps> = ({
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: "#070A0F",
+        ...themeVars({ primaryColor }),
+        backgroundColor: "var(--omni-background, #0B1220)",
         overflow: "hidden",
       }}
     >
@@ -94,7 +98,7 @@ export const ChannelOutro: React.FC<ChannelOutroProps> = ({
       <AbsoluteFill
         style={{
           backgroundImage:
-            "linear-gradient(rgba(212, 175, 55, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(212, 175, 55, 0.04) 1px, transparent 1px)",
+            "linear-gradient(rgba(var(--omni-accent-rgb, 59, 130, 246), 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--omni-accent-rgb, 59, 130, 246), 0.04) 1px, transparent 1px)",
           backgroundSize: "60px 60px",
           opacity: 0.7,
         }}
@@ -248,7 +252,7 @@ export const ChannelOutro: React.FC<ChannelOutroProps> = ({
                 textTransform: "uppercase",
               }}
             >
-              INVESTIGAÇÃO HISTÓRICA, HERÁLDICA & ARQUIVOS SECRETOS
+              {tagline}
             </p>
           </div>
 
@@ -269,7 +273,7 @@ export const ChannelOutro: React.FC<ChannelOutroProps> = ({
                 flex: 1,
                 height: 240,
                 backgroundColor: "rgba(14, 20, 30, 0.85)",
-                border: "1.5px dashed rgba(212, 175, 55, 0.45)",
+                border: "1.5px dashed rgba(var(--omni-accent-rgb, 59, 130, 246), 0.45)",
                 borderRadius: 12,
                 display: "flex",
                 flexDirection: "column",
@@ -361,7 +365,7 @@ export const ChannelOutro: React.FC<ChannelOutroProps> = ({
                 flex: 1,
                 height: 240,
                 backgroundColor: "rgba(14, 20, 30, 0.85)",
-                border: "1.5px dashed rgba(212, 175, 55, 0.45)",
+                border: "1.5px dashed rgba(var(--omni-accent-rgb, 59, 130, 246), 0.45)",
                 borderRadius: 12,
                 display: "flex",
                 flexDirection: "column",

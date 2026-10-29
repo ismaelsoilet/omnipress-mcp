@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "../../.agents/schemas/channel.schema.json",
   "id": "template-channel",
   "name": "Nome do Perfil ou Canal",
   "slug": "template-channel",
@@ -63,9 +63,38 @@
       "body_scale": 0.038,
       "footer_scale": 0.022,
       "border_radius": 18,
-      "card_alpha": 215,
+      "card_bg_alpha": 215,
       "avatar_size_ratio": 0.09,
       "show_verified_badge": true
+    },
+    "presets": {
+      "classic_card": {
+        "layout_parameters": {
+          "margin_ratio": 0.065,
+          "headline_scale": 0.046,
+          "line_height_head": 1.25,
+          "card_bg_alpha": 215
+        }
+      },
+      "tweet_card": {
+        "layout_parameters": {
+          "margin_ratio": 0.075,
+          "headline_scale": 0.054,
+          "line_height_head": 1.25
+        }
+      },
+      "minimal_dark": {
+        "layout_parameters": {
+          "margin_ratio": 0.08,
+          "headline_scale": 0.046
+        }
+      },
+      "split_editorial": {
+        "layout_parameters": {
+          "split_ratio": 0.44,
+          "margin_ratio": 0.08
+        }
+      }
     },
     "semantic_tags": {
       "DICA": "#8B5CF6",
@@ -117,17 +146,44 @@
   },
   "video": {
     "enabled": false,
+    "voice": "",
+    "language": "",
     "channel_name": "NOME DO CANAL",
     "badge_text": "CONTEÚDO OFICIAL // NÍVEL 1",
     "sub_text": "HISTÓRIAS, CURIOSIDADES E INVESTIGAÇÕES",
     "classified_code": "REF // CANAL-OFICIAL",
     "primary_color": "#3B82F6",
-    "background_color": "#0A0C10",
+    "background_color": "#0B1220",
     "default_aspect_ratio": "9:16",
-    "standard_short_duration_sec": 65.0
+    "standard_short_duration_sec": 65.0,
+    "caption_highlight_words": []
+  },
+  "render": {
+    "theme": {
+      "primary": "#3B82F6",
+      "accent": "#3B82F6",
+      "background": "#0B1220"
+    },
+    "providers": {},
+    "blender": {
+      "enabled": false,
+      "binary_env": "BLENDER_PATH",
+      "engine": "BLENDER_EEVEE_NEXT",
+      "samples": 32,
+      "factory_startup": true,
+      "transparent_default": true,
+      "color_management": "",
+      "resolution_by_ratio": {
+        "16:9": "1920x1080",
+        "9:16": "1080x1920",
+        "1:1": "1080x1080"
+      },
+      "template_allowlist": []
+    }
   },
   "settings": {
     "auto_sanitize": true,
+    "sanitize_profiles": ["br"],
     "default_aspect_ratio": "4:5"
   }
 }

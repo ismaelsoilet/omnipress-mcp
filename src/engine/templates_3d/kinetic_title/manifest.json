@@ -1,0 +1,15 @@
+{
+  "$schema": "../../../../.agents/schemas/template_manifest.schema.json",
+  "name": "kinetic_title",
+  "description": "Extruded 3D typography with configurable material and bevel.",
+  "outputs": ["png"],
+  "capabilities": ["blender"],
+  "params": [
+    { "name": "text", "type": "string", "default": "TEXT" },
+    { "name": "material", "type": "string", "default": "chrome", "enum": ["chrome", "gold", "neon_cyan", "obsidian"] },
+    { "name": "extrude", "type": "number", "default": 0.1 },
+    { "name": "bevel", "type": "number", "default": 0.02 },
+    { "name": "tilt_x", "type": "number", "default": 10.0 },
+    { "name": "tilt_y", "type": "number", "default": -8.0 }
+  ]
+}

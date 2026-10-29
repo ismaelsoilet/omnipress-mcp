@@ -15,6 +15,7 @@ import { DustParticles } from "../components/DustParticles";
 import { AnamorphicFlare } from "../components/AnamorphicFlare";
 import { ScrambledText } from "../components/ScrambledText";
 import { ClassifiedStamp } from "../components/ClassifiedStamp";
+import { themeVars } from "../theme";
 
 export const ChannelIntro: React.FC<ChannelIntroProps> = ({
   channelName,
@@ -22,7 +23,7 @@ export const ChannelIntro: React.FC<ChannelIntroProps> = ({
   subText,
   classifiedCode,
   primaryColor = "#3B82F6", // Padrão agnóstico, customizável por props
-  backgroundColor = "#0A0C10",
+  backgroundColor = "var(--omni-background, #0B1220)",
   language = "pt",
   audioSrc,
   enableAudio = true,
@@ -32,17 +33,11 @@ export const ChannelIntro: React.FC<ChannelIntroProps> = ({
 
   // Textos padrão bilíngues agnósticos
   const isEn = language === "en";
-  const finalTitle = channelName || (isEn ? "CHANNEL NAME" : "NOME DO CANAL");
-  const finalBadge =
-    badgeText || (isEn ? "FEATURED CONTENT // OFFICIAL" : "CONTEÚDO OFICIAL // DESTAQUE");
-  const finalSub =
-    subText ||
-    (isEn
-      ? "OFFICIAL RECORDS • THE UNTOLD STORY"
-      : "DOCUMENTOS & INVESTIGAÇÕES");
-  const finalCode =
-    classifiedCode || (isEn ? "REF // OMNIPRESS-EN" : "REF // OMNIPRESS-PT");
-  const stampText = isEn ? "OFFICIAL" : "OFICIAL";
+  const finalTitle = channelName || "";
+  const finalBadge = badgeText || "";
+  const finalSub = subText || "";
+  const finalCode = classifiedCode || "";
+  const stampText = "";
 
   // 1. Animação de entrada com física de mola (Spring)
   const introSpring = spring({
@@ -91,6 +86,7 @@ export const ChannelIntro: React.FC<ChannelIntroProps> = ({
   return (
     <AbsoluteFill
       style={{
+        ...themeVars({ primaryColor, backgroundColor }),
         backgroundColor,
         overflow: "hidden",
         opacity: fadeOut,
@@ -214,7 +210,7 @@ export const ChannelIntro: React.FC<ChannelIntroProps> = ({
               borderRadius: "50%",
               backgroundColor: "rgba(12, 15, 20, 0.95)",
               border: `2px solid ${primaryColor}`,
-              boxShadow: `0 0 35px rgba(212, 175, 55, 0.35), inset 0 0 20px rgba(212, 175, 55, 0.25)`,
+              boxShadow: `0 0 35px rgba(var(--omni-accent-rgb, 59, 130, 246), 0.35), inset 0 0 20px rgba(var(--omni-accent-rgb, 59, 130, 246), 0.25)`,
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
@@ -230,7 +226,7 @@ export const ChannelIntro: React.FC<ChannelIntroProps> = ({
               strokeWidth="1.7"
               strokeLinecap="round"
               strokeLinejoin="round"
-              style={{ filter: "drop-shadow(0 0 8px rgba(212, 175, 55, 0.7))" }}
+              style={{ filter: "drop-shadow(0 0 8px rgba(var(--omni-accent-rgb, 59, 130, 246), 0.7))" }}
             >
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               <path d="M12 8v4" />
@@ -242,7 +238,7 @@ export const ChannelIntro: React.FC<ChannelIntroProps> = ({
         {/* Badge Superior com Decodificação Militar Cipher */}
         <div
           style={{
-            backgroundColor: "rgba(212, 175, 55, 0.12)",
+            backgroundColor: "rgba(var(--omni-accent-rgb, 59, 130, 246), 0.12)",
             border: `1px solid ${primaryColor}`,
             borderRadius: 4,
             padding: "6px 22px",
@@ -253,7 +249,7 @@ export const ChannelIntro: React.FC<ChannelIntroProps> = ({
             letterSpacing: 4,
             textTransform: "uppercase",
             marginBottom: 16,
-            boxShadow: "0 0 15px rgba(212, 175, 55, 0.2)",
+            boxShadow: "0 0 15px rgba(var(--omni-accent-rgb, 59, 130, 246), 0.2)",
           }}
         >
           <ScrambledText text={finalBadge} startFrame={6} durationInFrames={36} />
@@ -271,7 +267,7 @@ export const ChannelIntro: React.FC<ChannelIntroProps> = ({
               letterSpacing: isVertical ? 6 : 11,
               textTransform: "uppercase",
               textAlign: "center",
-              textShadow: `0 0 30px rgba(212, 175, 55, 0.65), 0 6px 18px rgba(0, 0, 0, 0.95)`,
+              textShadow: `0 0 30px rgba(var(--omni-accent-rgb, 59, 130, 246), 0.65), 0 6px 18px rgba(0, 0, 0, 0.95)`,
             }}
           >
             {finalTitle}

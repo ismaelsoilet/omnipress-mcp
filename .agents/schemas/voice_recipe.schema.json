@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omnipress.dev/schemas/voice_recipe.schema.json",
+  "title": "OmniPress Voice Recipe",
+  "description": "Declarative neural text-to-speech recipe consumed by the edge_tts provider.",
+  "type": "object",
+  "required": ["text", "output"],
+  "additionalProperties": true,
+  "properties": {
+    "$schema": { "type": "string" },
+    "channel_slug": { "type": "string" },
+    "text": { "type": "string", "minLength": 1 },
+    "output": { "type": "string" },
+    "voice": { "type": "string" },
+    "rate": { "type": "string" },
+    "pitch": { "type": "string" },
+    "volume": { "type": "string" }
+  }
+}

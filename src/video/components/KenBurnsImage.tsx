@@ -102,7 +102,7 @@ export const KenBurnsImage: React.FC<KenBurnsSceneProps> = ({
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: "#06080C",
+        backgroundColor: "var(--omni-background, #0B1220)",
         overflow: "hidden",
       }}
     >
@@ -181,8 +181,8 @@ export const KenBurnsImage: React.FC<KenBurnsSceneProps> = ({
             alignItems: "center",
             gap: 10,
             backgroundColor: "rgba(8, 10, 14, 0.88)",
-            border: "1.2px solid rgba(212, 175, 55, 0.50)",
-            borderLeft: "4.5px solid #D4AF37",
+            border: "1.2px solid rgba(var(--omni-accent-rgb, 59, 130, 246), 0.50)",
+            borderLeft: "4.5px solid var(--omni-accent, #3B82F6)",
             borderRadius: 8,
             padding: isVertical ? "10px 22px" : "8px 18px",
             boxShadow: "0 6px 20px rgba(0, 0, 0, 0.8)",

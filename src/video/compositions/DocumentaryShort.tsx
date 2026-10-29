@@ -14,10 +14,15 @@ import { ActData, ActTimeline, DocumentaryScene } from "../types";
 import { SynchronizedCaptions } from "../components/SynchronizedCaptions";
 import { WordByWordCaptions } from "../components/WordByWordCaptions";
 import { MitoRealidadeOverlays, OverlayEvent } from "../components/MitoRealidadeOverlays";
+import { themeVars } from "../theme";
 
 export interface DocumentaryShortProps {
   title?: string;
   badge?: string;
+  accentColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  highlightColor?: string;
   musicSrc?: string;
   musicVolume?: number;
   voiceoverSrc?: string;
@@ -31,8 +36,12 @@ export interface DocumentaryShortProps {
 }
 
 export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
-  title = "Título do Short Vertical",
-  badge = "CONTEÚDO OFICIAL // SHORTS",
+  title = "",
+  badge = "",
+  accentColor,
+  backgroundColor,
+  textColor,
+  highlightColor,
   musicSrc,
   musicVolume = 0.35,
   voiceoverSrc,
@@ -77,7 +86,12 @@ export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
   );
 
   return (
-    <AbsoluteFill style={{ backgroundColor: "#0A0C10" }}>
+    <AbsoluteFill
+      style={{
+        ...themeVars({ accentColor, backgroundColor, textColor, highlightColor }),
+        backgroundColor: "var(--omni-background, #0B1220)",
+      }}
+    >
       {/* 1. Trilha Sonora do Short (suavizada com fade-in e fade-out automático) */}
       {musicSrc && (
         <Audio src={staticFile(musicSrc)} volume={effectiveMusicVolume} />
@@ -125,7 +139,7 @@ export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
           justifyContent: "space-between",
           alignItems: "center",
           backgroundColor: "rgba(8, 10, 14, 0.88)",
-          border: "1.5px solid rgba(212, 175, 55, 0.5)",
+          border: "1.5px solid rgba(var(--omni-accent-rgb, 59, 130, 246), 0.5)",
           borderRadius: 14,
           padding: "16px 28px",
           backdropFilter: "blur(12px)",
@@ -135,7 +149,7 @@ export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
       >
         <div
           style={{
-            color: "#D4AF37",
+            color: "var(--omni-accent, #3B82F6)",
             fontFamily: "'Courier New', Courier, monospace",
             fontSize: 22,
             fontWeight: 800,

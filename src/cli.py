@@ -23,7 +23,13 @@ from src.core.channel_manager import ChannelManager
 
 
 def cmd_doctor(args: argparse.Namespace) -> int:
-    """Runs system diagnostics on Node, ffmpeg, Python, and TTS."""
+    """Runs system diagnostics on the capability registry (optionally as JSON)."""
+    if getattr(args, "json", False):
+        import json
+        from src.utils.runtime_checker import format_doctor_json
+
+        print(json.dumps(format_doctor_json(), indent=2, ensure_ascii=False))
+        return 0
     print(format_doctor_report())
     return 0
 
@@ -195,13 +201,13 @@ def cmd_sync_buffer(args: argparse.Namespace) -> int:
     ch_env = cm.get_channel_env(slug)
     env_file = Path(channel["path"]) / ".env"
     if env_file.exists() and not ch_env.get("BUFFER_API_KEY"):
-        print(f"⚠️ Atenção: O arquivo 'channels/{slug}/.env' existe, mas 'BUFFER_API_KEY' ainda está vazia.")
-        print(f"   Por favor, insira o Personal API Key do Buffer da sua conta em channels/{slug}/.env antes de sincronizar.")
+        print(f"⚠️ Atenção: O arquivo .env do canal '{slug}' existe, mas 'BUFFER_API_KEY' ainda está vazia.")
+        print(f"   Por favor, insira o Personal API Key do Buffer da sua conta no .env do canal antes de sincronizar.")
         return 1
 
     if not adapter.is_configured(channel_slug=slug):
         print(f"❌ Buffer is not configured for channel '{slug}'.")
-        print(f"   Please define BUFFER_API_KEY in channels/{slug}/.env or root .env.")
+        print(f"   Please define BUFFER_API_KEY in the channel .env or root .env.")
         return 1
 
     print(f"🔍 Querying Buffer API for channel '{slug}'...")
@@ -370,7 +376,7 @@ def cmd_carousel(args: argparse.Namespace) -> int:
 
 
 def cmd_master_audio(args: argparse.Namespace) -> int:
-    """Masters voiceover to broadcast standards (Rule 10)."""
+    """Masters voiceover to broadcast standards and optionally mixes a soundtrack bed (Rule 10)."""
     from src.engine.universal_audio import UniversalAudioEngine, find_ffmpeg_binary
 
     input_path = Path(args.input).resolve()
@@ -380,6 +386,12 @@ def cmd_master_audio(args: argparse.Namespace) -> int:
 
     output_path = Path(args.output).resolve()
     ffmpeg_bin = find_ffmpeg_binary()
+    mix_bed = getattr(args, "mix_bed", None)
+    voice_output = (
+        output_path.with_name(f"{output_path.stem}_voice{output_path.suffix}")
+        if mix_bed
+        else output_path
+    )
 
     print("============================================================")
     print("      OmniPress Universal Audio Mastering Engine (Rule 10)  ")
@@ -388,23 +400,41 @@ def cmd_master_audio(args: argparse.Namespace) -> int:
     print(f"  Output      : {output_path.name}")
     print(f"  Target LUFS : {args.target_lufs} LUFS")
     print(f"  Sample Rate : {args.sample_rate} Hz")
+    if mix_bed:
+        print(f"  Soundtrack  : {mix_bed} (bed volume {args.bed_volume})")
     print("------------------------------------------------------------")
 
     engine = UniversalAudioEngine(ffmpeg_bin=ffmpeg_bin)
     res = engine.master_voiceover(
         input_audio=input_path,
-        output_audio=output_path,
+        output_audio=voice_output,
         target_lufs=args.target_lufs,
         sample_rate=args.sample_rate,
         bitrate=args.bitrate,
     )
 
-    if res.get("success"):
-        print(f"✅ Mastered audio generated successfully: {output_path}")
-        return 0
-    else:
+    if not res.get("success"):
         print(f"❌ Audio mastering failed: {res.get('error')}")
         return 1
+
+    if mix_bed:
+        mix_res = engine.mix_soundtrack(
+            voice_path=voice_output,
+            music_path=Path(mix_bed).resolve(),
+            output_path=output_path,
+            music_volume=args.bed_volume,
+            ducking=not args.no_ducking,
+            target_lufs=args.target_lufs,
+        )
+        if not mix_res.get("success"):
+            print(f"❌ Soundtrack mix failed: {mix_res.get('error')}")
+            return 1
+        print(f"✅ Mastered voice: {voice_output}")
+        print(f"✅ Mixed soundtrack deliverable: {output_path}")
+        return 0
+
+    print(f"✅ Mastered audio generated successfully: {output_path}")
+    return 0
 
 
 def cmd_align_captions(args: argparse.Namespace) -> int:
@@ -424,6 +454,10 @@ def cmd_align_captions(args: argparse.Namespace) -> int:
         words_per_chunk=args.words_per_chunk,
         uppercase=not args.lowercase,
         act_id=getattr(args, "act_id", "short_01"),
+        verify=getattr(args, "verify", False),
+        min_gap=getattr(args, "min_gap", 0.08),
+        max_gap=getattr(args, "max_gap", 1.6),
+        max_chunk=getattr(args, "max_chunk", 1.6),
     )
 
     if res.get("success"):
@@ -432,6 +466,15 @@ def cmd_align_captions(args: argparse.Namespace) -> int:
         print(f"   Total Words : {res.get('total_words')}")
         print(f"   Total Chunks: {res.get('total_chunks')}")
         print(f"   Duration    : {res.get('duration')}s")
+        if getattr(args, "verify", False):
+            verification = res.get("verification") or {}
+            print("   Verification:", "PASS" if verification.get("success") else "FAIL")
+            for error in verification.get("errors", []):
+                print(f"     - ERROR: {error}")
+            for warning in verification.get("warnings", []):
+                print(f"     - WARN : {warning}")
+            if not verification.get("success"):
+                return 1
         return 0
     else:
         print(f"❌ Captions alignment failed: {res.get('error')}")
@@ -494,21 +537,29 @@ def cmd_publish(args: argparse.Namespace) -> int:
 
 
 def cmd_render_3d(args: argparse.Namespace) -> int:
-    """Renders 3D assets via Universal3DEngine using Blender 4.2+ LTS headless."""
+    """Renders 3D assets through the Blender provider and declarative templates."""
     import json
     from src.engine.universal_3d import Universal3DEngine, BlenderRenderError
 
     cm = ChannelManager()
     engine = Universal3DEngine(channel_manager=cm)
 
+    if getattr(args, "list_templates", False):
+        templates = engine.list_templates(getattr(args, "channel", None))
+        payload = {
+            name: {
+                "source": entry.get("source"),
+                "outputs": entry.get("outputs") or ["png"],
+                "params": [p.get("name") for p in (entry.get("params") or [])],
+            }
+            for name, entry in templates.items()
+        }
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return 0
+
     print("============================================================")
     print("      OmniPress Universal 3D Blender Engine (Rule 12)       ")
     print("============================================================")
-
-    if not engine.is_available():
-        print("❌ Error: Blender binary not found in PATH or standard user directories.")
-        print("   Install Blender 4.2+ LTS to use 3D asset rendering.")
-        return 1
 
     try:
         if args.recipe:
@@ -516,8 +567,13 @@ def cmd_render_3d(args: argparse.Namespace) -> int:
             if not recipe_path.exists():
                 print(f"❌ Error: Recipe file not found: {recipe_path}")
                 return 1
-            print(f"Executing declarative 3D recipe: {recipe_path}")
-            res = engine.render_recipe(recipe=recipe_path, channel_slug=args.channel)
+            dry_run = bool(getattr(args, "validate_only", False) or getattr(args, "dry_run", False))
+            print(f"{'Validating' if dry_run else 'Executing'} declarative 3D recipe: {recipe_path}")
+            res = engine.render_recipe(
+                recipe=recipe_path,
+                channel_slug=args.channel,
+                dry_run=dry_run,
+            )
         else:
             if not args.output:
                 print("❌ Error: Must specify --output when running without a --recipe.")
@@ -534,6 +590,7 @@ def cmd_render_3d(args: argparse.Namespace) -> int:
                 resolution=args.resolution,
                 engine=args.engine,
                 samples=args.samples,
+                channel_slug=args.channel,
             )
             res = {
                 "status": "success",
@@ -544,14 +601,132 @@ def cmd_render_3d(args: argparse.Namespace) -> int:
                 "file_size_bytes": rendered_path.stat().st_size if rendered_path.exists() else 0,
             }
 
-        print("🎉 3D Asset rendered successfully:")
+        print(f"🎉 3D {'validated' if res.get('status') == 'valid' else 'asset rendered'} successfully:")
         print(json.dumps(res, indent=2, ensure_ascii=False))
         return 0
     except BlenderRenderError as e:
         print(f"❌ Blender render error: {e}")
         return 1
+    except (ValueError, FileNotFoundError) as e:
+        print(f"❌ Validation error: {e}")
+        return 1
     except Exception as e:
         print(f"❌ Unexpected error during 3D rendering: {e}")
+        return 1
+
+
+def cmd_thumbnail(args: argparse.Namespace) -> int:
+    """Renders Rule 15 high-CTR thumbnails from a declarative recipe."""
+    import json
+    from src.engine.universal_thumbnail import UniversalThumbnailEngine
+
+    engine = UniversalThumbnailEngine(ChannelManager())
+    recipe_path = Path(args.recipe).resolve()
+    if not recipe_path.exists():
+        print(f"❌ Error: Recipe file not found: {recipe_path}")
+        return 1
+
+    try:
+        res = engine.render_recipe(
+            recipe_path,
+            channel_slug=args.channel,
+            validate_only=getattr(args, "validate_only", False),
+        )
+        if getattr(args, "preview", None):
+            previews = engine.mobile_previews(
+                Path(res["output_path"]), widths=args.preview
+            )
+            res["previews"] = [str(p) for p in previews]
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0
+    except Exception as e:
+        print(f"❌ Thumbnail error: {e}")
+        return 1
+
+
+def cmd_documentary(args: argparse.Namespace) -> int:
+    """Renders documentary scene cards and emits a Remotion episode_config.json."""
+    import json
+    from src.engine.universal_documentary import UniversalDocumentaryEngine
+
+    engine = UniversalDocumentaryEngine(ChannelManager())
+    recipe_path = Path(args.recipe).resolve()
+    if not recipe_path.exists():
+        print(f"❌ Error: Recipe file not found: {recipe_path}")
+        return 1
+    try:
+        res = engine.execute_recipe(recipe_path, channel_slug=args.channel)
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0
+    except Exception as e:
+        print(f"❌ Documentary error: {e}")
+        return 1
+
+
+def cmd_video(args: argparse.Namespace) -> int:
+    """Renders a Remotion composition from a declarative video recipe."""
+    import json
+    from src.engine.universal_video import UniversalVideoEngine
+
+    engine = UniversalVideoEngine(ChannelManager())
+    recipe_path = Path(args.recipe).resolve()
+    if not recipe_path.exists():
+        print(f"❌ Error: Recipe file not found: {recipe_path}")
+        return 1
+    try:
+        res = engine.render_recipe(recipe_path, channel_slug=args.channel)
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0
+    except Exception as e:
+        print(f"❌ Video render error: {e}")
+        return 1
+
+
+def cmd_assets(args: argparse.Namespace) -> int:
+    """Fetches allowlisted public-domain assets or prepares an existing asset."""
+    import json
+    from src.engine.universal_assets import UniversalAssetsEngine
+
+    engine = UniversalAssetsEngine(ChannelManager())
+    try:
+        if getattr(args, "recipe", None):
+            res = engine.fetch(Path(args.recipe).resolve(), channel_slug=args.channel)
+        elif getattr(args, "prepare", None):
+            if not args.output:
+                print("❌ Error: --output is required with --prepare.")
+                return 1
+            res = engine.prepare(
+                source=args.prepare,
+                output=args.output,
+                aspect_ratio=args.aspect_ratio,
+                top_bias=args.top_bias,
+            )
+        else:
+            print("❌ Error: provide --recipe or --prepare.")
+            return 1
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0
+    except Exception as e:
+        print(f"❌ Asset error: {e}")
+        return 1
+
+
+def cmd_deploy(args: argparse.Namespace) -> int:
+    """Copies approved deliverables into a public directory with a hash manifest."""
+    import json
+    from src.engine.universal_deploy import UniversalDeployEngine
+
+    engine = UniversalDeployEngine(ChannelManager())
+    try:
+        res = engine.deploy(
+            files=args.files,
+            target_dir=args.target_dir,
+            manifest_name=args.manifest_name,
+        )
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0
+    except Exception as e:
+        print(f"❌ Deploy error: {e}")
         return 1
 
 
@@ -560,12 +735,13 @@ def main(argv: Optional[list] = None) -> int:
         prog="omnipress",
         description="OmniPress CLI - Universal Agentic Publishing Protocol & Management Suite",
     )
-    parser.add_argument("--version", action="version", version="OmniPress MCP 0.9.0")
+    parser.add_argument("--version", action="version", version="OmniPress MCP 0.10.0")
 
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
 
     # doctor
-    subparsers.add_parser("doctor", help="Run system environment and runtime capability diagnostics")
+    doctor_p = subparsers.add_parser("doctor", help="Run system environment and runtime capability diagnostics")
+    doctor_p.add_argument("--json", action="store_true", help="Emit the capability registry as JSON")
 
     # status
     subparsers.add_parser("status", help="Show active channels and publication ledger history")
@@ -615,6 +791,9 @@ def main(argv: Optional[list] = None) -> int:
     audio_p.add_argument("--target-lufs", type=float, default=-14.0, help="Target loudness (default: -14.0 LUFS)")
     audio_p.add_argument("--sample-rate", type=int, default=48000, help="Sample rate in Hz (default: 48000)")
     audio_p.add_argument("--bitrate", default="192k", help="MP3 bitrate (default: 192k)")
+    audio_p.add_argument("--mix-bed", help="Optional soundtrack bed to mix under the narration")
+    audio_p.add_argument("--bed-volume", type=float, default=0.18, help="Soundtrack volume under speech (max 0.20)")
+    audio_p.add_argument("--no-ducking", action="store_true", help="Disable sidechain ducking of the soundtrack")
 
     # align-captions (Universal Engine)
     captions_p = subparsers.add_parser("align-captions", help="Convert Whisper JSON to Remotion chunked captions")
@@ -623,6 +802,10 @@ def main(argv: Optional[list] = None) -> int:
     captions_p.add_argument("--words-per-chunk", type=int, default=3, help="Words per subtitle chunk (default: 3)")
     captions_p.add_argument("--lowercase", action="store_true", help="Keep original casing instead of uppercase")
     captions_p.add_argument("--act-id", default="short_01", help="Act ID key for Remotion synchronization (default: short_01)")
+    captions_p.add_argument("--verify", action="store_true", help="Lint chunk timings and exit non-zero on errors")
+    captions_p.add_argument("--min-gap", type=float, default=0.08, help="Minimum gap between chunks (default: 0.08s)")
+    captions_p.add_argument("--max-gap", type=float, default=1.6, help="Maximum gap between chunks (default: 1.6s)")
+    captions_p.add_argument("--max-chunk", type=float, default=1.6, help="Maximum chunk duration (default: 1.6s)")
 
     # publish (Universal Engine)
     publish_p = subparsers.add_parser("publish", help="Publish or schedule posts with PublishingShield (Rule 09)")
@@ -639,22 +822,57 @@ def main(argv: Optional[list] = None) -> int:
     # render-3d (Universal 3D Engine)
     render_3d_p = subparsers.add_parser("render-3d", help="Render 3D visual assets via Blender headless (Rule 12)")
     render_3d_p.add_argument("--recipe", "-r", help="Path to 3D recipe JSON file")
-    render_3d_p.add_argument("--template", choices=["device_mockup", "rotating_badge", "kinetic_title", "waving_flag", "brazil_flag"], default="device_mockup", help="Template name")
+    render_3d_p.add_argument("--template", default="device_mockup", help="Registered template name (see --list-templates)")
     render_3d_p.add_argument("--texture", help="Path to image texture (device screen or coin emblem)")
     render_3d_p.add_argument("--text", help="Text string for kinetic_title")
-    render_3d_p.add_argument("--material", help="Material preset (gold, silver, chrome, obsidian)")
+    render_3d_p.add_argument("--material", help="Material preset (template-specific)")
     render_3d_p.add_argument("-o", "--output", help="Output file path for rendered image")
     render_3d_p.add_argument("-c", "--channel", help="Target channel slug")
     render_3d_p.add_argument("--resolution", default="1080x1080", help="Render resolution (e.g. 1080x1080, 1920x1080)")
     render_3d_p.add_argument("--engine", choices=["BLENDER_EEVEE_NEXT", "CYCLES"], default="BLENDER_EEVEE_NEXT", help="Render engine")
     render_3d_p.add_argument("--samples", type=int, default=32, help="Render sample count")
+    render_3d_p.add_argument("--validate-only", action="store_true", help="Validate recipe/template without invoking Blender")
+    render_3d_p.add_argument("--dry-run", action="store_true", help="Alias for --validate-only")
+    render_3d_p.add_argument("--list-templates", action="store_true", help="List registered builtin and channel templates")
+
+    # thumbnail (Rule 15 Engine)
+    thumb_p = subparsers.add_parser("thumbnail", help="Render Rule 15 high-CTR thumbnails from a recipe")
+    thumb_p.add_argument("--recipe", "-r", required=True, help="Path to thumbnail_recipe.json")
+    thumb_p.add_argument("-c", "--channel", help="Target channel slug")
+    thumb_p.add_argument("--validate-only", action="store_true", help="Validate Rule 15 without rendering")
+    thumb_p.add_argument("--preview", nargs="*", type=int, default=None, help="Generate mobile previews at the given widths")
+
+    # documentary (Universal Scene Engine)
+    doc_p = subparsers.add_parser("documentary", help="Render documentary scene cards and episode_config.json")
+    doc_p.add_argument("--recipe", "-r", required=True, help="Path to documentary_recipe.json")
+    doc_p.add_argument("-c", "--channel", help="Target channel slug")
+
+    # video (Remotion Engine)
+    video_p = subparsers.add_parser("video", help="Render a Remotion composition from a video recipe")
+    video_p.add_argument("--recipe", "-r", required=True, help="Path to video_recipe.json or intro_recipe.json")
+    video_p.add_argument("-c", "--channel", help="Target channel slug")
+
+    # assets (Public-domain acquisition)
+    assets_p = subparsers.add_parser("assets", help="Fetch allowlisted public-domain assets or prepare local media")
+    assets_p.add_argument("--recipe", "-r", help="Path to asset_recipe.json")
+    assets_p.add_argument("--prepare", help="Local source image to crop/resize")
+    assets_p.add_argument("-o", "--output", help="Output path for --prepare")
+    assets_p.add_argument("-c", "--channel", help="Target channel slug")
+    assets_p.add_argument("--aspect-ratio", default="16:9", choices=["16:9", "9:16", "1:1", "4:5", "3:4"])
+    assets_p.add_argument("--top-bias", type=float, default=0.20)
+
+    # deploy (Public deliverables)
+    deploy_p = subparsers.add_parser("deploy", help="Copy approved deliverables into a public directory with hashes")
+    deploy_p.add_argument("files", nargs="+", help="Files to deploy")
+    deploy_p.add_argument("--target-dir", default="public", help="Destination directory (default: public)")
+    deploy_p.add_argument("--manifest-name", default="deploy_manifest.json")
 
     # build-carousel (legacy alias)
     build_p = subparsers.add_parser("build-carousel", help="Render portrait carousel slides (legacy)")
     build_p.add_argument("--channel", required=True, help="Target channel slug")
     build_p.add_argument("--post", required=True, help="Unique post slug for output directory")
     build_p.add_argument("--config", required=True, help="Path to JSON file with slides array")
-    build_p.add_argument("--aspect-ratio", default="3:4", choices=["3:4", "1:1"], help="Carousel aspect ratio")
+    build_p.add_argument("--aspect-ratio", default="3:4", choices=["3:4", "4:5", "1:1", "9:16", "16:9"], help="Carousel aspect ratio")
 
     args = parser.parse_args(argv)
 
@@ -682,6 +900,16 @@ def main(argv: Optional[list] = None) -> int:
         return cmd_publish(args)
     elif args.command == "render-3d":
         return cmd_render_3d(args)
+    elif args.command == "thumbnail":
+        return cmd_thumbnail(args)
+    elif args.command == "documentary":
+        return cmd_documentary(args)
+    elif args.command == "video":
+        return cmd_video(args)
+    elif args.command == "assets":
+        return cmd_assets(args)
+    elif args.command == "deploy":
+        return cmd_deploy(args)
     elif args.command == "build-carousel":
         return cmd_build_carousel(args)
     else:

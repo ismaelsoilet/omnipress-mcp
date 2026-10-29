@@ -17,22 +17,20 @@ class BufferPublisherAdapter(BasePublisherAdapter):
     REST_API_URL = "https://api.bufferapp.com/1/updates/create.json"
 
     def __init__(self):
-        # Support both BUFFER_API_KEY (modern) and BUFFER_ACCESS_TOKEN (legacy)
-        self.api_key = (
-            os.getenv("BUFFER_API_KEY", "").strip()
-            or os.getenv("BUFFER_ACCESS_TOKEN", "").strip()
-        )
-        self.linkedin_profile_id = os.getenv("BUFFER_LINKEDIN_PROFILE_ID", "").strip()
-        self.x_profile_id = os.getenv("BUFFER_X_PROFILE_ID", "").strip()
-        self.threads_profile_id = os.getenv("BUFFER_THREADS_PROFILE_ID", "").strip()
-        self.instagram_profile_id = os.getenv("BUFFER_INSTAGRAM_PROFILE_ID", "").strip()
-        self._channel_services: Dict[str, str] = {}
+        # Credentials and profile IDs are resolved at call time through ChannelManager
+        # with Rule 04 precedence (Rule 14: no constructor-time env snapshots).
+        pass
+
+    @property
+    def _channel_services(self) -> Dict[str, str]:
+        """Stateless backward-compatibility property (Rule 14)."""
+        return {}
 
     def get_api_key(self, channel_slug: Optional[str] = None) -> str:
         """
         Resolves the effective Buffer API key with strict Rule 04 precedence:
         1. channels/<channel_slug>/.env (BUFFER_API_KEY or BUFFER_ACCESS_TOKEN)
-        2. Channel-prefixed process env var (e.g. ISMAEL_SOILET_BUFFER_API_KEY)
+        2. Channel-prefixed process env var (e.g. <SLUG>_BUFFER_API_KEY)
         3. Global process env var (BUFFER_API_KEY or BUFFER_ACCESS_TOKEN)
         4. self.api_key instance default
         """
@@ -45,7 +43,7 @@ class BufferPublisherAdapter(BasePublisherAdapter):
         except Exception:
             pass
 
-        return getattr(self, "api_key", "")
+        return ""
 
     def is_configured(self, channel_slug: Optional[str] = None) -> bool:
         """Returns True if Buffer API key/token is configured globally or for channel."""
@@ -180,22 +178,19 @@ class BufferPublisherAdapter(BasePublisherAdapter):
             elif plat == "x" and "x_twitter" in ch_social and ch_social["x_twitter"].get("buffer_channel_id"):
                 resolved_id = ch_social["x_twitter"].get("buffer_channel_id")
 
-            # Step 2: check channel .env overrides
-            if not resolved_id and ch_env:
-                env_plat_key = f"BUFFER_{plat.upper()}_PROFILE_ID"
-                if ch_env.get(env_plat_key):
-                    resolved_id = ch_env[env_plat_key].strip()
-
-            # Step 3: fall back to global environment profile ID for this specific platform
+            # Step 2: check channel credentials via ChannelManager (Rule 04 / Rule 14)
             if not resolved_id:
-                if plat == "linkedin" and self.linkedin_profile_id:
-                    resolved_id = self.linkedin_profile_id
-                elif plat == "x" and self.x_profile_id:
-                    resolved_id = self.x_profile_id
-                elif plat == "threads" and self.threads_profile_id:
-                    resolved_id = self.threads_profile_id
-                elif plat == "instagram" and self.instagram_profile_id:
-                    resolved_id = self.instagram_profile_id
+                try:
+                    from src.core.channel_manager import ChannelManager
+                    cm = ChannelManager()
+                    env_plat_key = f"BUFFER_{plat.upper()}_PROFILE_ID"
+                    cred_id = cm.get_credential(env_plat_key, channel_slug)
+                    if cred_id:
+                        resolved_id = cred_id
+                except Exception:
+                    pass
+
+            # Step 3: fall back to auto-discovery from Buffer (instance env snapshots removed)
 
             # Step 4: if still not found, auto-discover from connected channels in Buffer using effective key
             if not resolved_id and effective_key:
@@ -221,12 +216,6 @@ class BufferPublisherAdapter(BasePublisherAdapter):
 
             if resolved_id and resolved_id not in target_dict:
                 target_dict[resolved_id] = plat
-
-        # Maintain backward-compatible _channel_services on instance
-        if not hasattr(self, "_channel_services"):
-            self._channel_services = {}
-        for r_id, srv in target_dict.items():
-            self._channel_services[r_id] = srv
 
         return [{"id": r_id, "service": srv} for r_id, srv in target_dict.items()]
 
@@ -330,15 +319,24 @@ class BufferPublisherAdapter(BasePublisherAdapter):
         }
         """
 
-        assets = []
-        if media_urls:
-            for url in media_urls[:10]:
-                assets.append({"image": {"url": url}})
-
         created_posts = []
         for target in targets:
             ch_id = target["id"]
             service = target["service"]
+
+            # Enforce platform-specific media limits (LinkedIn max 9, X max 4, Instagram max 10)
+            service_limit = 10
+            if service == "linkedin":
+                service_limit = 9
+            elif service in ("x", "twitter"):
+                service_limit = 4
+            elif service == "instagram":
+                service_limit = 10
+
+            target_assets = []
+            if media_urls:
+                for url in media_urls[:service_limit]:
+                    target_assets.append({"image": {"url": url}})
 
             input_payload: Dict[str, Any] = {
                 "text": text,
@@ -348,8 +346,8 @@ class BufferPublisherAdapter(BasePublisherAdapter):
             }
             if schedule_time and resolved_mode == "customScheduled":
                 input_payload["dueAt"] = schedule_time
-            if assets:
-                input_payload["assets"] = assets
+            if target_assets:
+                input_payload["assets"] = target_assets
 
             # Inject Instagram post metadata strictly when target is Instagram
             if service == "instagram":
@@ -435,7 +433,10 @@ class BufferPublisherAdapter(BasePublisherAdapter):
                 "message": f"Successfully {'published' if resolved_mode == 'shareNow' else 'queued'} {len(created_posts)} post(s) via Buffer.",
             }
 
-        return self._fallback_rest_queue(text, target_ids, media_urls, schedule_time, mode=resolved_mode)
+        return self._fallback_rest_queue(
+            text, target_ids, media_urls, schedule_time,
+            mode=resolved_mode, channel_slug=channel_slug,
+        )
 
     def _fallback_rest_queue(
         self,
@@ -444,9 +445,11 @@ class BufferPublisherAdapter(BasePublisherAdapter):
         media_urls: Optional[List[str]] = None,
         schedule_time: Optional[str] = None,
         mode: Optional[str] = None,
+        channel_slug: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Fallback to Buffer legacy REST endpoint (only for legacy 1/... OAuth tokens)."""
-        if not self.api_key.startswith("1/"):
+        effective_key = self.get_api_key(channel_slug)
+        if not effective_key.startswith("1/"):
             return {
                 "success": False,
                 "provider": "buffer_graphql",
@@ -454,7 +457,7 @@ class BufferPublisherAdapter(BasePublisherAdapter):
             }
         publish_now = (mode == "shareNow") or (not schedule_time and mode != "addToQueue")
         payload: Dict[str, Any] = {
-            "access_token": self.api_key,
+            "access_token": effective_key,
             "profile_ids[]": profile_ids,
             "text": text,
             "top": False,

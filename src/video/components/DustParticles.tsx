@@ -19,7 +19,7 @@ export const DustParticles: React.FC<{ count?: number }> = ({ count = 32 }) => {
   // Partículas determinísticas (geradas uma vez via useMemo com seed constante)
   const particles = useMemo<Particle[]>(() => {
     const list: Particle[] = [];
-    const colors = ["#D4AF37", "#FFE699", "#C5A059", "#FFFFFF"];
+    const colors = ["var(--omni-accent, #3B82F6)", "var(--omni-highlight, #FACC15)", "var(--omni-accent, #3B82F6)", "#FFFFFF"];
 
     for (let i = 0; i < count; i++) {
       const pseudoRand = (seed: number) => {

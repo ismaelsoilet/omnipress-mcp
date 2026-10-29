@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omnipress.dev/schemas/image_recipe.schema.json",
+  "title": "OmniPress Image Generation Recipe",
+  "description": "Declarative AI image recipe with mandatory prompt-export fallback when generation is unavailable.",
+  "type": "object",
+  "required": ["prompt", "output"],
+  "additionalProperties": true,
+  "properties": {
+    "$schema": { "type": "string" },
+    "channel_slug": { "type": "string" },
+    "provider": { "enum": ["ai_image", "prompt_export"] },
+    "model": { "type": "string" },
+    "prompt": { "type": "string", "minLength": 1 },
+    "negative_prompt": { "type": "string" },
+    "aspect_ratio": { "enum": ["16:9", "9:16", "1:1", "4:5", "3:4"] },
+    "width": { "type": "integer", "minimum": 64 },
+    "height": { "type": "integer", "minimum": 64 },
+    "seed": { "type": ["integer", "null"] },
+    "output": { "type": "string" },
+    "fallback_export": { "type": "string" },
+    "external_targets": {
+      "type": "array",
+      "items": { "enum": ["midjourney", "flux", "stable_diffusion", "ideogram", "leonardo"] }
+    }
+  }
+}

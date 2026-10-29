@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omnipress.dev/schemas/caption_recipe.schema.json",
+  "title": "OmniPress Caption Recipe",
+  "description": "Whisper input to Remotion caption chunk recipe consumed by UniversalCaptionsEngine.",
+  "type": "object",
+  "required": ["input"],
+  "additionalProperties": true,
+  "properties": {
+    "$schema": { "type": "string" },
+    "channel_slug": { "type": "string" },
+    "input": { "type": "string", "description": "Raw Whisper JSON (or audio path when the whisper provider is enabled)." },
+    "output": { "type": "string" },
+    "words_per_chunk": { "type": "integer", "minimum": 2, "maximum": 4 },
+    "max_duration_sec": { "type": "number", "exclusiveMinimum": 0 },
+    "uppercase": { "type": "boolean" },
+    "act_id": { "type": "string" },
+    "verify": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "min_gap": { "type": "number", "minimum": 0 },
+        "max_gap": { "type": "number", "exclusiveMinimum": 0 },
+        "max_chunk": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    }
+  }
+}

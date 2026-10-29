@@ -24,11 +24,16 @@ class MarkdownArchiveAdapter(BasePublisherAdapter):
     """Saves long-form articles with YAML frontmatter locally, with multi-channel support."""
 
     def __init__(self, base_dir: Optional[str] = None):
-        self.explicit_base_dir = base_dir is not None
-        self.default_dir = Path(base_dir or os.getenv("ARTICLES_DIR", "./articles")).resolve()
-        self.default_dir.mkdir(parents=True, exist_ok=True)
+        self.base_dir_arg = Path(base_dir).resolve() if base_dir else None
 
-    def is_configured(self) -> bool:
+    @property
+    def default_dir(self) -> Path:
+        """Resolves the global archive directory at call time (never a constructor snapshot)."""
+        target = self.base_dir_arg or Path(os.getenv("ARTICLES_DIR", "./articles")).resolve()
+        target.mkdir(parents=True, exist_ok=True)
+        return target
+
+    def is_configured(self, channel_slug: Optional[str] = None) -> bool:
         """Local file archive is always configured and ready."""
         return True
 
@@ -82,19 +87,23 @@ class MarkdownArchiveAdapter(BasePublisherAdapter):
     def _resolve_target_dir(self, channel_slug: Optional[str] = None) -> Path:
         """Resolves target directory, respecting channel isolation if available."""
         if channel_slug:
-            c_dir = PROJECT_ROOT / "channels" / channel_slug / "articles"
+            from src.core.channel_manager import ChannelManager
+
+            c_dir = ChannelManager().get_channel_dir(channel_slug) / "articles"
             c_dir.mkdir(parents=True, exist_ok=True)
             return c_dir
 
-        if self.explicit_base_dir:
+        if self.base_dir_arg:
             return self.default_dir
 
-        active_env = os.getenv("OMNIPRESS_ACTIVE_CHANNEL", "").strip()
-        if active_env:
-            c_dir = PROJECT_ROOT / "channels" / active_env / "articles"
-            if c_dir.parent.exists():
-                c_dir.mkdir(parents=True, exist_ok=True)
-                return c_dir
+        from src.core.channel_manager import ChannelManager
+
+        cm = ChannelManager()
+        active_slug = cm.get_active_channel_slug()
+        active_dir = cm.get_channel_dir(active_slug) / "articles"
+        if active_dir.parent.exists():
+            active_dir.mkdir(parents=True, exist_ok=True)
+            return active_dir
 
         return self.default_dir
 

@@ -83,7 +83,7 @@ def test_carousel_builder_helpers():
     assert hex_to_rgb("#D4AF37") == (212, 175, 55)
     assert hex_to_rgb("#3B82F6") == (59, 130, 246)
     assert hex_to_rgb("#FFF") == (255, 255, 255)
-    assert hex_to_rgb("invalid") == (212, 175, 55)
+    assert hex_to_rgb("invalid") == (59, 130, 246)
 
 
 def test_carousel_builder_rendering(tmp_path: Path):

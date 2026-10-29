@@ -73,21 +73,20 @@ def test_mcp_tool_annotations():
 
 
 def test_render_invalid_template(tmp_path: Path):
-    """Verifies that invalid template names raise ValueError when binary is configured."""
+    """Verifies that invalid template names raise ValueError."""
     engine = Universal3DEngine()
-    # Ensure binary is set (either real or mock) to test template resolution validation
-    if not engine.is_available():
-        engine.blender_bin = "/mock/bin/blender"
 
     out_file = tmp_path / "out.png"
     with pytest.raises(ValueError, match="Unknown 3D template"):
         engine.render(template="non_existent_template", output_path=out_file)
 
 
-def test_render_when_blender_missing(tmp_path: Path):
+def test_render_when_blender_missing(tmp_path: Path, monkeypatch):
     """Verifies that BlenderRenderError is raised when Blender is not available."""
+    monkeypatch.setattr(
+        Universal3DEngine, "find_blender_binary", classmethod(lambda cls, channel_slug=None: None)
+    )
     engine = Universal3DEngine()
-    engine.blender_bin = None
 
     out_file = tmp_path / "out.png"
     with pytest.raises(BlenderRenderError, match="Blender binary not found"):
@@ -96,7 +95,9 @@ def test_render_when_blender_missing(tmp_path: Path):
 
 def test_mcp_tool_when_blender_missing(monkeypatch):
     """Verifies MCP tool omnipress_render_3d returns clean error JSON when Blender is absent."""
-    monkeypatch.setattr(Universal3DEngine, "find_blender_binary", classmethod(lambda cls: None))
+    monkeypatch.setattr(
+        Universal3DEngine, "find_blender_binary", classmethod(lambda cls, channel_slug=None: None)
+    )
     res_str = omnipress_render_3d(
         template="device_mockup",
         output_filename="fail.png",

@@ -11,46 +11,26 @@ Implements the 6-stage studio voice treatment and loudness mastering gate (Rule 
 
 import json
 import logging
-import os
-import shutil
-import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
+
+from src.core.capabilities import resolve_ffmpeg_binary
+from src.engine.providers.ffmpeg_provider import FFmpegProvider
 
 logger = logging.getLogger("omnipress.universal_audio")
 
 
 def find_ffmpeg_binary() -> str:
-    """Finds the active ffmpeg executable in PATH or standard system/user locations."""
-    # 1. Environment override
-    env_ffmpeg = os.getenv("FFMPEG_PATH")
-    if env_ffmpeg and Path(env_ffmpeg).is_file() and os.access(env_ffmpeg, os.X_OK):
-        return env_ffmpeg
-
-    # 2. In PATH
-    which_ffmpeg = shutil.which("ffmpeg")
-    if which_ffmpeg:
-        return which_ffmpeg
-
-    # 3. Known fallback locations
-    candidates = [
-        Path.home() / ".local" / "bin" / "ffmpeg",
-        Path("/usr/local/bin/ffmpeg"),
-        Path("/usr/bin/ffmpeg"),
-    ]
-    for c in candidates:
-        if c.is_file() and os.access(c, os.X_OK):
-            return str(c)
-
-    # Return default 'ffmpeg' and let subprocess fail with informative message
-    return "ffmpeg"
+    """Finds the active ffmpeg executable (env -> local bin -> PATH)."""
+    return resolve_ffmpeg_binary() or "ffmpeg"
 
 
 class UniversalAudioEngine:
     """Universal Broadcast Voice Mastering Engine complying with Rule 10."""
 
     def __init__(self, ffmpeg_bin: Optional[str] = None):
-        self.ffmpeg_bin = ffmpeg_bin or find_ffmpeg_binary()
+        self.ffmpeg_bin_override = ffmpeg_bin or ""
+        self.provider = FFmpegProvider()
 
     def build_mastering_filtergraph(
         self,
@@ -129,8 +109,6 @@ class UniversalAudioEngine:
         )
 
         cmd = [
-            self.ffmpeg_bin,
-            "-y",
             "-vn",
             "-i", str(input_path),
             "-af", filtergraph,
@@ -147,7 +125,7 @@ class UniversalAudioEngine:
         cmd.append(str(output_path))
 
         try:
-            res = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            self.provider.run_args(cmd)
             return {
                 "success": True,
                 "input_file": str(input_path),
@@ -156,20 +134,45 @@ class UniversalAudioEngine:
                 "sample_rate": sample_rate,
                 "filtergraph": filtergraph,
             }
-        except subprocess.CalledProcessError as e:
-            logger.error("FFmpeg mastering failed: %s", e.stderr)
+        except Exception as e:
+            logger.error("FFmpeg mastering failed: %s", e)
             return {
                 "success": False,
                 "input_file": str(input_path),
                 "output_file": str(output_path),
-                "error": e.stderr or str(e),
+                "error": str(e),
                 "filtergraph": filtergraph,
             }
-        except FileNotFoundError:
+
+    def mix_soundtrack(
+        self,
+        voice_path: Union[str, Path],
+        music_path: Union[str, Path],
+        output_path: Union[str, Path],
+        music_volume: float = 0.18,
+        ducking: bool = True,
+        target_lufs: float = -14.0,
+        channel_slug: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Mixes a soundtrack bed under narration with Rule 10 volume ceiling and ducking."""
+        if music_volume > 0.20:
             return {
                 "success": False,
-                "error": f"FFmpeg binary not found at '{self.ffmpeg_bin}'. Please install ffmpeg or set FFMPEG_PATH.",
+                "error": "music_volume must be <= 0.20 (Rule 10 volume ceiling under speech).",
             }
+        try:
+            result = self.provider.mix_soundtrack(
+                voice_path=Path(voice_path).resolve(),
+                music_path=Path(music_path).resolve(),
+                output_path=Path(output_path).resolve(),
+                music_volume=music_volume,
+                ducking=ducking,
+                target_lufs=target_lufs,
+                channel_slug=channel_slug,
+            )
+            return {"success": True, **result}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
 
     def surgical_debreather(
         self,

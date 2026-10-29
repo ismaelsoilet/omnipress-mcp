@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "omnipress-mcp"
-version = "0.9.0"
+version = "0.10.0"
 description = "Agentic multi-channel publishing engine for Antigravity via Model Context Protocol (MCP)"
 readme = "README.md"
 authors = [{ name = "OmniPress Team" }]
@@ -19,6 +19,8 @@ dependencies = [
     "Pillow>=10.0.0",
     "numpy>=1.24.0",
     "scipy>=1.10.0",
+    "cairosvg>=2.9.1",
+    "jsonschema>=4.20.0",
 ]
 keywords = ["mcp", "antigravity", "publishing", "remotion", "social-media", "automation", "audio-mastering", "carousel"]
 classifiers = [

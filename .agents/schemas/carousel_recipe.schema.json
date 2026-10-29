@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omnipress.dev/schemas/carousel_recipe.schema.json",
+  "title": "OmniPress Carousel Recipe",
+  "description": "Declarative carousel recipe consumed by UniversalCarouselEngine.",
+  "type": "object",
+  "required": ["slides"],
+  "additionalProperties": true,
+  "definitions": {
+    "slide": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "headline": { "type": "string" },
+        "body": { "type": "string" },
+        "badge_text": { "type": "string" },
+        "layout": { "enum": ["classic_card", "tweet_card", "minimal_dark", "split_editorial"] },
+        "step_number": { "type": ["integer", "string"] },
+        "swipe_str": { "type": "string" },
+        "watermark_text": { "type": "string" },
+        "bullet_style": { "enum": ["square", "dot", "dash", "arrow"] },
+        "bg_image": { "type": "string" },
+        "bg_image_path": { "type": "string" },
+        "image_asset": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "image_fit": { "enum": ["cover", "contain"] },
+        "top_image": { "type": "string" },
+        "author_avatar": { "type": "string" },
+        "author": { "type": "object", "additionalProperties": true },
+        "background": { "type": "string" },
+        "accent": { "type": "string" },
+        "card_background": { "type": "string" },
+        "ui_mockup": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "type": { "type": "string" },
+            "query": { "type": "string" }
+          }
+        },
+        "headline_font_size": { "type": "integer", "minimum": 1 },
+        "body_font_size": { "type": "integer", "minimum": 1 },
+        "top_bias": { "type": "number", "minimum": 0, "maximum": 1 },
+        "contrast_boost": { "type": "number", "exclusiveMinimum": 0 },
+        "color_boost": { "type": "number", "exclusiveMinimum": 0 },
+        "gradient_start_ratio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "enable_text_card": { "type": "boolean" },
+        "card_bg_alpha": { "type": "integer", "minimum": 0, "maximum": 255 },
+        "card_alpha": { "type": "integer", "minimum": 0, "maximum": 255 },
+        "stroke_width": { "type": "integer", "minimum": 0 },
+        "prefixes": { "type": "object", "additionalProperties": true },
+        "tag_colors": { "type": "object", "additionalProperties": { "type": "string" } },
+        "semantic_categories": { "type": "object", "additionalProperties": true }
+      }
+    }
+  },
+  "properties": {
+    "$schema": { "type": "string" },
+    "channel_slug": { "type": "string" },
+    "post_slug": { "type": "string" },
+    "aspect_ratio": { "enum": ["16:9", "9:16", "1:1", "4:5", "3:4"] },
+    "preset": { "enum": ["classic_card", "tweet_card", "minimal_dark", "split_editorial"] },
+    "layout_parameters": { "type": "object", "additionalProperties": true },
+    "theme_override": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "background": { "type": "string" },
+        "text": { "type": "string" },
+        "accent": { "type": "string" },
+        "card_background": { "type": "string" }
+      }
+    },
+    "author_override": { "type": "object", "additionalProperties": true },
+    "slides": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/slide" }
+    },
+    "publish": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["caption"],
+      "properties": {
+        "caption": { "type": "string", "minLength": 1 },
+        "platforms": {
+          "type": "array",
+          "items": { "enum": ["instagram", "linkedin", "x", "twitter", "threads", "youtube", "tiktok"] }
+        },
+        "mode": { "enum": ["shareNow", "customScheduled", "addToQueue"] },
+        "schedule_time": { "type": "string" },
+        "provider": { "type": "string" }
+      }
+    }
+  }
+}

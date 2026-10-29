@@ -70,11 +70,11 @@ export const ScrambledText: React.FC<ScrambledTextProps> = ({
             color: item.locked
               ? style?.color || "#FFFFFF"
               : goldGlitch
-              ? "#D4AF37"
+              ? "var(--omni-accent, #3B82F6)"
               : "rgba(255, 255, 255, 0.4)",
             textShadow: item.locked
               ? style?.textShadow || "none"
-              : "0 0 8px rgba(212, 175, 55, 0.8)",
+              : "0 0 8px rgba(var(--omni-accent-rgb, 59, 130, 246), 0.8)",
             opacity: item.locked ? 1 : 0.85,
             transition: "color 0.1s ease",
           }}

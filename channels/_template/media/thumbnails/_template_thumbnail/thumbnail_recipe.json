@@ -1,0 +1,26 @@
+{
+  "$schema": "../../../../.agents/schemas/thumbnail_recipe.schema.json",
+  "channel_slug": "template-channel",
+  "post_slug": "example-thumbnail",
+  "aspect_ratio": "16:9",
+  "headline": "EXAMPLE HEADLINE",
+  "highlight_word": "HEADLINE",
+  "badge_text": "EXAMPLE",
+  "tagline": "ARCHIVE 1963",
+  "media": "media/raw/source.jpg",
+  "theme": {
+    "primary": "#3B82F6",
+    "highlight": "#FACC15",
+    "text": "#FFFFFF"
+  },
+  "typography": {
+    "headline_font_size": 190,
+    "badge_font_size": 56,
+    "stroke_width": 12
+  },
+  "safe_zones": {
+    "respect_youtube_duration_zone": true,
+    "text_area_ratio": 0.55
+  },
+  "output_name": "example-thumbnail.jpg"
+}

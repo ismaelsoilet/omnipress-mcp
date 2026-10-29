@@ -1,5 +1,6 @@
 import React from "react";
 import { AbsoluteFill, staticFile } from "remotion";
+import { themeVars } from "../theme";
 
 export interface ThumbnailEpisodeProps {
   titleLine1?: string;
@@ -9,6 +10,11 @@ export interface ThumbnailEpisodeProps {
   imageSrc?: string;
   cellarSrc?: string;
   showClassifiedStamp?: boolean;
+  stampText?: string;
+  accentColor?: string;
+  highlightColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
   // Legacy / optional props preserved for backward compatibility
   depthTag?: string;
   peopleTag?: string;
@@ -29,18 +35,24 @@ export interface ThumbnailEpisodeProps {
  * 8. 120px Mobile Squint Tested: Effortlessly readable on phone feeds in < 1 second.
  */
 export const ThumbnailEpisode: React.FC<ThumbnailEpisodeProps> = ({
-  titleLine1 = "MANCHETE PRINCIPAL",
-  titleLine2 = "SEGUNDA LINHA",
-  tagText = "CASO REAL // 1944",
+  titleLine1 = "",
+  titleLine2 = "",
+  tagText = "",
   calloutText = "",
   imageSrc = "",
   cellarSrc = "",
   showClassifiedStamp = false,
+  stampText = "",
+  accentColor,
+  highlightColor,
+  backgroundColor,
+  textColor,
 }) => {
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: "#06080C",
+        ...themeVars({ accentColor, highlightColor, backgroundColor, textColor }),
+        backgroundColor: "var(--omni-background, #0B1220)",
         fontFamily: "'Anton', 'Impact', 'Montserrat', sans-serif",
         overflow: "hidden",
       }}
@@ -115,7 +127,7 @@ export const ThumbnailEpisode: React.FC<ThumbnailEpisodeProps> = ({
         style={{
           position: "absolute",
           inset: 20,
-          border: "2px solid rgba(212, 175, 55, 0.45)",
+          border: "2px solid rgba(var(--omni-accent-rgb, 59, 130, 246), 0.45)",
           borderRadius: 8,
           pointerEvents: "none",
           zIndex: 20,
@@ -143,11 +155,11 @@ export const ThumbnailEpisode: React.FC<ThumbnailEpisodeProps> = ({
               alignItems: "center",
               gap: 16,
               backgroundColor: "rgba(10, 12, 16, 0.94)",
-              border: "3px solid #D4AF37",
+              border: "3px solid var(--omni-accent, #3B82F6)",
               borderRadius: 10,
               padding: "12px 30px",
               marginBottom: 32,
-              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.95), 0 0 20px rgba(212, 175, 55, 0.3)",
+              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.95), 0 0 20px rgba(var(--omni-accent-rgb, 59, 130, 246), 0.3)",
             }}
           >
             <div
@@ -161,7 +173,7 @@ export const ThumbnailEpisode: React.FC<ThumbnailEpisodeProps> = ({
             />
             <span
               style={{
-                color: "#FFD700",
+                color: "var(--omni-highlight, #FACC15)",
                 fontFamily: "'Montserrat', sans-serif",
                 fontSize: 52,
                 fontWeight: 900,
@@ -277,7 +289,7 @@ export const ThumbnailEpisode: React.FC<ThumbnailEpisodeProps> = ({
             boxShadow: "0 10px 30px rgba(0, 0, 0, 0.95)",
           }}
         >
-          CONFIDENCIAL
+          {stampText}
         </div>
       )}
 

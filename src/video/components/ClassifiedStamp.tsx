@@ -10,7 +10,7 @@ export interface ClassifiedStampProps {
 }
 
 export const ClassifiedStamp: React.FC<ClassifiedStampProps> = ({
-  text = "ARQUIVO DESCLASSIFICADO",
+  text = "",
   color = "#D43F3A", // Vermelho carimbo oficial
   startFrame = 16,
   rotation = -9,

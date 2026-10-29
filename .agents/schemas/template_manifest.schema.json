@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omnipress.dev/schemas/template_manifest.schema.json",
+  "title": "OmniPress Render Template Manifest",
+  "description": "Manifest for a 3D/render template. Declares the parameters a recipe may pass and the outputs the template produces.",
+  "type": "object",
+  "required": ["name", "params"],
+  "additionalProperties": true,
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_]*$" },
+    "description": { "type": "string" },
+    "outputs": {
+      "type": "array",
+      "items": { "enum": ["png", "webm", "mp4", "glb"] }
+    },
+    "capabilities": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "params": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "additionalProperties": true,
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "enum": ["string", "number", "integer", "boolean"] },
+          "required": { "type": "boolean" },
+          "default": {},
+          "enum": { "type": "array" },
+          "min": { "type": "number" },
+          "max": { "type": "number" },
+          "description": { "type": "string" }
+        }
+      }
+    }
+  }
+}

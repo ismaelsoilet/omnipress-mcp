@@ -80,11 +80,23 @@ export interface ActTimeline {
   globalEnd: number;
 }
 
+export interface EpisodeTheme {
+  primary?: string;
+  accent?: string;
+  highlight?: string;
+  background?: string;
+  text?: string;
+  secondaryText?: string;
+  success?: string;
+  danger?: string;
+}
+
 export interface EpisodeConfig {
   id: string;
   title: string;
   channelSlug: string;
   language: SupportedLanguage;
+  theme?: EpisodeTheme;
   backgroundMusicSrc?: string;
   backgroundMusicVolume?: number;
   outroMusicSrc?: string;

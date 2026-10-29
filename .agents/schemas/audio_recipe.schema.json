@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omnipress.dev/schemas/audio_recipe.schema.json",
+  "title": "OmniPress Audio Recipe",
+  "description": "Declarative voiceover mastering / soundtrack mix recipe consumed by UniversalAudioEngine.",
+  "type": "object",
+  "required": ["input", "output"],
+  "additionalProperties": true,
+  "properties": {
+    "$schema": { "type": "string" },
+    "channel_slug": { "type": "string" },
+    "input": { "type": "string" },
+    "output": { "type": "string" },
+    "target_lufs": { "type": "number", "minimum": -16.0, "maximum": -14.0 },
+    "true_peak": { "type": "number", "maximum": -1.2 },
+    "sample_rate": { "type": "integer" },
+    "bitrate": { "type": "string" },
+    "mix_bed": { "type": "string" },
+    "bed_volume": { "type": "number", "minimum": 0, "maximum": 0.2 },
+    "ducking": { "type": "boolean" },
+    "stages": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "declick": { "type": "boolean" },
+        "denoise": { "type": "boolean" },
+        "eq": { "type": "boolean" },
+        "compression": { "type": "boolean" },
+        "loudnorm": { "type": "boolean" }
+      }
+    }
+  }
+}

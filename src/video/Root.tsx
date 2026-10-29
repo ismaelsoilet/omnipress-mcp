@@ -25,12 +25,12 @@ export const Root: React.FC = () => {
         height={1080}
         defaultProps={{
           language: "pt",
-          channelName: "NOME DO CANAL",
-          badgeText: "DESTAQUE // OFICIAL",
-          subText: "HISTÓRIAS & INVESTIGAÇÕES",
-          classifiedCode: "REF // OMNIPRESS-PT",
+          channelName: "CHANNEL NAME",
+          badgeText: "FEATURED // OFFICIAL",
+          subText: "STORIES & INVESTIGATIONS",
+          classifiedCode: "REF // DEMO-PT",
           primaryColor: "#3B82F6",
-          backgroundColor: "#0A0C10",
+          backgroundColor: "#0B1220",
         }}
       />
 
@@ -44,12 +44,12 @@ export const Root: React.FC = () => {
         height={1920}
         defaultProps={{
           language: "pt",
-          channelName: "NOME DO CANAL",
-          badgeText: "DESTAQUE // VERTICAL",
-          subText: "FATOS REAIS • CONTEÚDO OFICIAL",
-          classifiedCode: "REF // OMNIPRESS-SHORTS",
+          channelName: "CHANNEL NAME",
+          badgeText: "FEATURED // VERTICAL",
+          subText: "REAL STORIES • OFFICIAL CONTENT",
+          classifiedCode: "REF // DEMO-SHORTS",
           primaryColor: "#3B82F6",
-          backgroundColor: "#0A0C10",
+          backgroundColor: "#0B1220",
         }}
       />
 
@@ -66,9 +66,9 @@ export const Root: React.FC = () => {
           channelName: "CHANNEL NAME",
           badgeText: "OFFICIAL RELEASE // LVL 1",
           subText: "EXPLORING THE UNKNOWN",
-          classifiedCode: "REF // OMNIPRESS-EN",
+          classifiedCode: "REF // DEMO-EN",
           primaryColor: "#3B82F6",
-          backgroundColor: "#0A0C10",
+          backgroundColor: "#0B1220",
         }}
       />
 
@@ -85,9 +85,9 @@ export const Root: React.FC = () => {
           channelName: "CHANNEL NAME",
           badgeText: "FEATURED STORY",
           subText: "REAL STORIES • GLOBAL ARCHIVES",
-          classifiedCode: "REF // OMNIPRESS-SHORTS-EN",
+          classifiedCode: "REF // DEMO-SHORTS-EN",
           primaryColor: "#3B82F6",
-          backgroundColor: "#0A0C10",
+          backgroundColor: "#0B1220",
         }}
       />
 
@@ -121,11 +121,11 @@ export const Root: React.FC = () => {
           introDurationFrames: 120,
           config: {
             id: "ep-sample-16x9",
-            title: "Título do Episódio Documental",
+            title: "Documentary Episode Title",
             channelSlug: "template-channel",
             language: "pt",
             introProps: {
-              channelName: "NOME DO CANAL",
+              channelName: "CHANNEL NAME",
               primaryColor: "#3B82F6",
             },
             scenes: [],
@@ -147,11 +147,11 @@ export const Root: React.FC = () => {
           introDurationFrames: 120,
           config: {
             id: "ep-sample-9x16",
-            title: "Episódio Vertical",
+            title: "Vertical Short Title",
             channelSlug: "template-channel",
             language: "pt",
             introProps: {
-              channelName: "NOME DO CANAL",
+              channelName: "CHANNEL NAME",
               primaryColor: "#3B82F6",
             },
             scenes: [],
@@ -169,8 +169,8 @@ export const Root: React.FC = () => {
         width={1080}
         height={1920}
         defaultProps={{
-          title: "Título do Short Vertical",
-          badge: "CONTEÚDO OFICIAL // SHORTS",
+          title: "Vertical Short Title",
+          badge: "FEATURED // SHORTS",
           captionsData: sampleShortCaptions,
           actTimelines: [
             {
@@ -192,10 +192,10 @@ export const Root: React.FC = () => {
         width={1920}
         height={1080}
         defaultProps={{
-          titleLine1: "MANCHETE PRINCIPAL",
-          titleLine2: "SEGUNDA LINHA",
-          tagText: "CATEGORIA // INVESTIGAÇÃO",
-          calloutText: "CHAMADA DE IMPACTO!",
+          titleLine1: "MAIN HEADLINE",
+          titleLine2: "SECOND LINE",
+          tagText: "CATEGORY // INVESTIGATION",
+          calloutText: "IMPACT CALLOUT!",
           depthTag: "TAG 1",
           peopleTag: "TAG 2",
           doorTag: "TAG 3",

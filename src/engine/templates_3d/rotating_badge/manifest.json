@@ -1,0 +1,13 @@
+{
+  "$schema": "../../../../.agents/schemas/template_manifest.schema.json",
+  "name": "rotating_badge",
+  "description": "3D coin/badge with optional emblem texture and metallic materials.",
+  "outputs": ["png"],
+  "capabilities": ["blender"],
+  "params": [
+    { "name": "texture", "type": "string", "default": "", "description": "Optional emblem texture." },
+    { "name": "material", "type": "string", "default": "gold", "enum": ["gold", "silver", "bronze", "obsidian"] },
+    { "name": "rotation_y", "type": "number", "default": 25.0 },
+    { "name": "tilt_x", "type": "number", "default": 12.0 }
+  ]
+}

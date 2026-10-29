@@ -1,0 +1,16 @@
+{
+  "$schema": "../../../../../.agents/schemas/3d_recipe.schema.json",
+  "channel_slug": "template-channel",
+  "template": "device_mockup",
+  "format": "png",
+  "resolution": "1080x1080",
+  "engine": "BLENDER_EEVEE_NEXT",
+  "samples": 32,
+  "transparent": true,
+  "texture": "media/raw/source.jpg",
+  "params": {
+    "tilt_x": 8.0,
+    "tilt_y": -10.0
+  },
+  "output_name": "device_mockup.png"
+}

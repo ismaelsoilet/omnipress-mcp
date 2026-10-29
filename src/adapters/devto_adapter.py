@@ -19,19 +19,32 @@ class DevToPublisherAdapter(BasePublisherAdapter):
     DEFAULT_API_URL = "https://dev.to/api/articles"
 
     def __init__(self, api_key: Optional[str] = None, api_url: Optional[str] = None):
-        self.api_key = (api_key or os.getenv("DEVTO_API_KEY", "")).strip()
-        self.api_url = (api_url or os.getenv("DEVTO_API_URL", self.DEFAULT_API_URL)).strip()
+        self.explicit_api_key = (api_key or "").strip()
+        self.explicit_api_url = (api_url or "").strip()
 
     def get_api_key(self, channel_slug: Optional[str] = None) -> str:
         """Resolves Dev.to API key with Rule 04 channel precedence."""
         try:
             from src.core.channel_manager import ChannelManager
+
             key = ChannelManager().get_credential("DEVTO_API_KEY", channel_slug)
             if key:
                 return key
         except Exception:
             pass
-        return getattr(self, "api_key", "")
+        return self.explicit_api_key
+
+    def get_api_url(self, channel_slug: Optional[str] = None) -> str:
+        """Resolves the Dev.to API endpoint (channel credential > explicit > default)."""
+        try:
+            from src.core.channel_manager import ChannelManager
+
+            url = ChannelManager().get_credential("DEVTO_API_URL", channel_slug)
+            if url:
+                return url
+        except Exception:
+            pass
+        return self.explicit_api_url or self.DEFAULT_API_URL
 
     def is_configured(self, channel_slug: Optional[str] = None) -> bool:
         """Returns True if DEVTO_API_KEY is configured globally or for channel."""
@@ -116,7 +129,7 @@ class DevToPublisherAdapter(BasePublisherAdapter):
 
         try:
             res = requests.post(
-                self.api_url,
+                self.get_api_url(channel_slug),
                 json={"article": article_payload},
                 headers=headers,
                 timeout=15,

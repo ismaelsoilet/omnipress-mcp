@@ -27,19 +27,20 @@ class GhostPublisherAdapter(BasePublisherAdapter):
         admin_api_key: Optional[str] = None,
         api_url: Optional[str] = None,
     ):
-        self.admin_api_key = (admin_api_key or os.getenv("GHOST_ADMIN_API_KEY", "")).strip()
-        self.api_url = (api_url or os.getenv("GHOST_API_URL", "")).strip().rstrip("/")
+        self.explicit_admin_api_key = (admin_api_key or "").strip()
+        self.explicit_api_url = (api_url or "").strip().rstrip("/")
 
     def get_credentials(self, channel_slug: Optional[str] = None) -> tuple[str, str]:
         """Resolves (admin_api_key, api_url) with Rule 04 channel precedence."""
         try:
             from src.core.channel_manager import ChannelManager
+
             cm = ChannelManager()
-            key = cm.get_credential("GHOST_ADMIN_API_KEY", channel_slug) or self.admin_api_key
-            url = (cm.get_credential("GHOST_API_URL", channel_slug) or self.api_url).rstrip("/")
+            key = cm.get_credential("GHOST_ADMIN_API_KEY", channel_slug) or self.explicit_admin_api_key
+            url = (cm.get_credential("GHOST_API_URL", channel_slug) or self.explicit_api_url).rstrip("/")
             return key, url
         except Exception:
-            return self.admin_api_key, self.api_url
+            return self.explicit_admin_api_key, self.explicit_api_url
 
     def is_configured(self, channel_slug: Optional[str] = None) -> bool:
         """Returns True if GHOST_ADMIN_API_KEY (with valid id:secret format) and GHOST_API_URL are set."""
@@ -54,7 +55,7 @@ class GhostPublisherAdapter(BasePublisherAdapter):
         Generates a 5-minute Ghost Admin API JWT token signed with HMAC-SHA256.
         The secret part of the Admin API key is hex-encoded.
         """
-        effective_key = admin_api_key or self.admin_api_key
+        effective_key = admin_api_key or self.explicit_admin_api_key
         parts = effective_key.split(":")
         if len(parts) != 2:
             raise ValueError("GHOST_ADMIN_API_KEY must be in '{id}:{secret}' format.")

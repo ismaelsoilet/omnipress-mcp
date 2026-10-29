@@ -1,0 +1,12 @@
+{
+  "$schema": "../../../../.agents/schemas/template_manifest.schema.json",
+  "name": "waving_flag",
+  "description": "Generic waving cloth/flag using a channel-provided texture. No geography is hardcoded in the core.",
+  "outputs": ["png"],
+  "capabilities": ["blender"],
+  "params": [
+    { "name": "texture", "type": "string", "required": true, "description": "Flag/banner texture path." },
+    { "name": "wave_height", "type": "number", "default": 0.18 },
+    { "name": "with_pole", "type": "boolean", "default": true }
+  ]
+}

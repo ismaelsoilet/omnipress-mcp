@@ -1,0 +1,33 @@
+{
+  "$schema": "../../../.agents/schemas/channel.schema.json",
+  "niche": "example",
+  "channelConcepts": [
+    {
+      "name": "Example Channel",
+      "handle": "@example.channel",
+      "tagline": "A neutral, editable concept example.",
+      "ctrAngle": "Curiosity gap built on a documented anomaly.",
+      "visualPalette": ["#0B1220", "#3B82F6", "#F8FAFC"]
+    }
+  ],
+  "contentPillars": [
+    { "pillar": "1. Core Explanations", "description": "Fundamentals and mental models." },
+    { "pillar": "2. Case Studies", "description": "Documented examples and primary sources." },
+    { "pillar": "3. Practical Playbook", "description": "Actionable steps the audience can apply." }
+  ],
+  "viralTopicsBacklog": [
+    {
+      "id": 1,
+      "title": "The most misunderstood rule",
+      "hook_0_3s": "Almost everyone gets this wrong...",
+      "curiosityLoop": "The exception changes the whole picture.",
+      "format": "Shorts / Reels (9:16)"
+    }
+  ],
+  "productionSpecs": {
+    "audioVoice": "Defined in channel.json → video.voice",
+    "audioBgm": "",
+    "visualAiPrompts": "",
+    "recommendedPacing": ""
+  }
+}

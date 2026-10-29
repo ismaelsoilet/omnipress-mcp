@@ -21,6 +21,8 @@ Este diretório contém os padrões e regras operacionais para agentes de IA e d
 | **Diretriz 11 / Regra 14** | Desacoplamento Estrito & Anti-Engenharia Errada | [`14_strict_decoupling_channel_isolation_and_anti_bad_engineering.md`](./14_strict_decoupling_channel_isolation_and_anti_bad_engineering.md) | Invariância total do core em `src/`, cascata declarativa top-down de parâmetros, statelessness e zero gambiarras. |
 | **Diretriz 12 / Regra 15** | Tipografia Titânica e Embalagem de Alto CTR | [`15_high_ctr_thumbnail_typography_and_packaging_standards.md`](./15_high_ctr_thumbnail_typography_and_packaging_standards.md) | As 8 Leis da embalagem: limite de 3-4 palavras, headlines titânicas (160-220px), proibição de fontes < 50px, contorno 11-16px, escudo anti-timestamp do YouTube e teste dos 120px. |
 
+> **Referência executável**: o contrato `src = factory` / `channels = recipes`, a cascata de parâmetros, a camada de providers e a matriz de recursos estão detalhados em [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md) e [`docs/PROVIDERS.md`](../../docs/PROVIDERS.md). As travas automatizadas vivem em `tests/test_architecture_invariants.py`, `tests/test_recipe_schemas.py`, `tests/test_channel_layout_contract.py` e `tests/test_release_invariants.py`.
+
 ---
 
 > [!NOTE]

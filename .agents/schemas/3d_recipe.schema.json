@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omnipress.dev/schemas/3d_recipe.schema.json",
+  "title": "OmniPress 3D Render Recipe",
+  "description": "Declarative 3D asset recipe consumed by Universal3DEngine through the blender provider.",
+  "type": "object",
+  "required": ["template"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "channel_slug": { "type": "string" },
+    "post_slug": { "type": "string" },
+    "provider": { "enum": ["blender"] },
+    "template": { "type": "string", "minLength": 1 },
+    "format": { "enum": ["png", "webm", "mp4", "glb"] },
+    "resolution": { "type": "string", "pattern": "^[0-9]{3,5}x[0-9]{3,5}$" },
+    "aspect_ratio": { "enum": ["16:9", "9:16", "1:1", "4:5", "3:4"] },
+    "fps": { "type": "integer", "minimum": 1 },
+    "duration_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "transparent": { "type": "boolean" },
+    "samples": { "type": "integer", "minimum": 1 },
+    "engine": { "enum": ["BLENDER_EEVEE_NEXT", "CYCLES"] },
+    "color_management": { "type": "string" },
+    "theme": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "primary": { "type": "string" },
+        "accent": { "type": "string" },
+        "background": { "type": "string" }
+      }
+    },
+    "text": { "type": "string" },
+    "font": { "type": "string" },
+    "texture": { "type": "string" },
+    "material": { "type": "string" },
+    "params": { "type": "object", "additionalProperties": true },
+    "output_name": { "type": "string" }
+  }
+}

@@ -28,6 +28,16 @@ PLATFORM_CHAR_LIMITS = {
     "linkedin": 3000,
 }
 
+# Strict media asset limits enforced by upstream social networks & APIs
+PLATFORM_MEDIA_LIMITS = {
+    "linkedin": 9,      # LinkedIn API allows max 9 images per multi-image post
+    "x": 4,             # X / Twitter allows max 4 images per tweet
+    "twitter": 4,
+    "instagram": 10,    # Instagram carousels allow up to 10 images via Buffer
+    "ig": 10,
+    "threads": 10,
+}
+
 PLACEHOLDER_TEST_TEXTS = {
     "teste",
     "test",
@@ -177,6 +187,17 @@ class PublishingShield:
                     False,
                     f"🛡️ Shield Block: Caption exceeds maximum allowed length for {plat.upper()}: {text_len} characters (limit: {limit}). Please shorten text by {excess} character(s) before dispatching.",
                 )
+
+        # Gate 4: Platform Media Asset Count Enforcement
+        if media_urls:
+            media_count = len(media_urls)
+            for plat in normalized_platforms:
+                m_limit = PLATFORM_MEDIA_LIMITS.get(plat)
+                if m_limit and media_count > m_limit:
+                    return (
+                        False,
+                        f"🛡️ Shield Block: Attached media count ({media_count}) exceeds maximum allowed for {plat.upper()} ({m_limit} images max). LinkedIn allows max 9, X allows max 4, Instagram allows max 10.",
+                    )
 
         return True, None
 

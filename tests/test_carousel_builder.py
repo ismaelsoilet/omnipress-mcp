@@ -15,8 +15,8 @@ def test_hex_to_rgb():
     assert hex_to_rgb("#D4AF37") == (212, 175, 55)
     # Test 3-char shorthand
     assert hex_to_rgb("#FFF") == (255, 255, 255)
-    # Test invalid hex fallback (gold default)
-    assert hex_to_rgb("invalid") == (212, 175, 55)
+    # Test invalid hex fallback (neutral engine default, never a channel brand)
+    assert hex_to_rgb("invalid") == (59, 130, 246)
 
 
 def test_wrap_text_by_pixel():

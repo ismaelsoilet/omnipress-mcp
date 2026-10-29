@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omnipress.dev/schemas/post_recipe.schema.json",
+  "title": "OmniPress Post / Article Recipe",
+  "description": "Declarative social post, thread or long-form article recipe consumed by UniversalPublisherEngine.",
+  "type": "object",
+  "additionalProperties": true,
+  "anyOf": [
+    { "required": ["text"] },
+    { "required": ["caption"] },
+    { "required": ["thread"] },
+    { "required": ["thread_items"] }
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "channel_slug": { "type": "string" },
+    "post_slug": { "type": "string" },
+    "platforms": {
+      "type": "array",
+      "items": { "enum": ["instagram", "linkedin", "x", "twitter", "threads", "youtube", "tiktok", "reddit"] }
+    },
+    "mode": { "enum": ["shareNow", "customScheduled", "addToQueue"] },
+    "schedule_time": { "type": "string" },
+    "provider": { "enum": ["buffer", "instagram", "instagram_graph", "meta", "reddit", "webhook", "markdown", "archive", "devto", "ghost"] },
+    "publisher": { "type": "string" },
+    "text": { "type": "string" },
+    "caption": { "type": "string" },
+    "media_urls": { "type": "array", "items": { "type": "string" } },
+    "media": { "type": "array", "items": { "type": "string" } },
+    "cdn_urls": { "type": "array", "items": { "type": "string" } },
+    "thread": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          { "type": "string", "maxLength": 280 },
+          {
+            "type": "object",
+            "required": ["text"],
+            "additionalProperties": true,
+            "properties": { "text": { "type": "string", "maxLength": 280 } }
+          }
+        ]
+      }
+    },
+    "thread_items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          { "type": "string", "maxLength": 280 },
+          {
+            "type": "object",
+            "required": ["text"],
+            "additionalProperties": true,
+            "properties": { "text": { "type": "string", "maxLength": 280 } }
+          }
+        ]
+      }
+    },
+    "title": { "type": "string" },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "category": { "type": "string" },
+    "author": { "type": "string" },
+    "canonical_url": { "type": "string" },
+    "published": { "type": "boolean" }
+  }
+}

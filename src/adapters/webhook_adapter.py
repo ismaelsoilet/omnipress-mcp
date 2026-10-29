@@ -13,11 +13,22 @@ class WebhookPublisherAdapter(BasePublisherAdapter):
     """Dispatches publishing events to a configured webhook endpoint."""
 
     def __init__(self):
-        self.webhook_url = os.getenv("OMNIPRESS_WEBHOOK_URL", "").strip()
-        self.secret = os.getenv("OMNIPRESS_WEBHOOK_SECRET", "").strip()
+        # Credentials are resolved at call time through ChannelManager (Rule 14).
+        pass
 
-    def is_configured(self) -> bool:
-        return bool(self.webhook_url)
+    def get_credentials(self, channel_slug: Optional[str] = None) -> tuple[str, str]:
+        """Resolves (webhook_url, secret) with strict Rule 04 channel precedence."""
+        from src.core.channel_manager import ChannelManager
+
+        cm = ChannelManager()
+        return (
+            cm.get_credential("OMNIPRESS_WEBHOOK_URL", channel_slug),
+            cm.get_credential("OMNIPRESS_WEBHOOK_SECRET", channel_slug),
+        )
+
+    def is_configured(self, channel_slug: Optional[str] = None) -> bool:
+        url, _ = self.get_credentials(channel_slug)
+        return bool(url)
 
     def queue_social_post(
         self,
@@ -25,6 +36,7 @@ class WebhookPublisherAdapter(BasePublisherAdapter):
         platforms: List[str],
         media_urls: Optional[List[str]] = None,
         schedule_time: Optional[str] = None,
+        channel_slug: Optional[str] = None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """
@@ -37,15 +49,23 @@ class WebhookPublisherAdapter(BasePublisherAdapter):
                 "platforms": platforms,
                 "media_urls": media_urls or [],
                 "schedule_time": schedule_time,
+                "channel_slug": channel_slug,
                 "draft": True,
             },
+            channel_slug=channel_slug,
         )
 
-    def dispatch_event(self, event_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def dispatch_event(
+        self,
+        event_type: str,
+        payload: Dict[str, Any],
+        channel_slug: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
         Sends an arbitrary event payload to the configured webhook URL.
         """
-        if not self.webhook_url:
+        webhook_url, secret = self.get_credentials(channel_slug)
+        if not webhook_url:
             return {
                 "success": False,
                 "error": "OMNIPRESS_WEBHOOK_URL is not configured in .env",
@@ -58,17 +78,18 @@ class WebhookPublisherAdapter(BasePublisherAdapter):
         }
 
         body_bytes = json.dumps(data).encode("utf-8")
+        from src import __version__
         headers = {
             "Content-Type": "application/json",
-            "User-Agent": "OmniPress-MCP/0.2.0",
+            "User-Agent": f"OmniPress-MCP/{__version__}",
         }
 
-        if self.secret:
-            signature = hmac.new(self.secret.encode("utf-8"), body_bytes, hashlib.sha256).hexdigest()
+        if secret:
+            signature = hmac.new(secret.encode("utf-8"), body_bytes, hashlib.sha256).hexdigest()
             headers["X-OmniPress-Signature"] = signature
 
         try:
-            response = requests.post(self.webhook_url, data=body_bytes, headers=headers, timeout=15)
+            response = requests.post(webhook_url, data=body_bytes, headers=headers, timeout=15)
             return {
                 "success": response.status_code in (200, 201, 202, 204),
                 "provider": "webhook",

@@ -255,7 +255,36 @@ Renderiza assets 3D fotorrealistas isolados com canal alfa transparente (PNG/Web
 
 ---
 
-### 2.15. Suíte CLI de Diagnóstico e Onboarding (`omnipress`)
+### 2.16. `omnipress_render_thumbnail` (Regra 15)
+Renderiza thumbnail 16:9/9:16 a partir de `thumbnail_recipe.json`. Valida palavras (≤4), tipografia (160–220px), stroke (≥11px), death zone do YouTube e gera previews mobile.
+
+* **Anotações**: `readOnlyHint=False`, `destructiveHint=False`, `idempotentHint=True`, `openWorldHint=False`.
+* **Quando USAR**: capa de YouTube, Shorts, Reels ou TikTok.
+* **Quando NÃO usar**: carrossel (`omnipress_build_carousel`) ou vídeo final (`omnipress_render_video`).
+* **Retorna**: JSON com `output_path`, aprovação Rule 15 e caminho do manifesto.
+
+### 2.17. `omnipress_render_documentary`
+Renderiza cenas documentais autênticas (mídia obrigatória, card protetor da Regra 08) e emite `episode_config.json` para o Remotion.
+
+* **Anotações**: `readOnlyHint=False`, `destructiveHint=False`, `idempotentHint=True`, `openWorldHint=False`.
+* **Quando USAR**: montar cenas de documentário a partir de `documentary_recipe.json`.
+* **Quando NÃO usar**: renderizar o MP4 final (use `omnipress_render_video`).
+
+### 2.18. `omnipress_render_video`
+Renderiza uma composição Remotion a partir de `video_recipe.json` (ou normaliza `intro_recipe.json` legado).
+
+* **Anotações**: `readOnlyHint=False`, `destructiveHint=False`, `idempotentHint=True`, `openWorldHint=False`.
+* **Quando USAR**: vinhetas, episódios e shorts declarativos.
+* **Quando NÃO usar**: slides estáticos de carrossel.
+
+### 2.19. `omnipress_fetch_assets`
+Baixa um asset de acervo público permitido (Wikimedia/LoC/NARA), registrando licença e atribuição.
+
+* **Anotações**: `readOnlyHint=False`, `destructiveHint=False`, `idempotentHint=True`, `openWorldHint=True`.
+* **Quando USAR**: obter imagens históricas reais com rastreabilidade legal.
+* **Quando NÃO usar**: gerar imagens por IA (use `image_recipe.json` + provider `ai_image`/`prompt_export`).
+
+### 2.20. Suíte CLI de Diagnóstico e Onboarding (`omnipress`)
 Para inspeção e configuração interativa fora do contexto de chat do MCP, utilize o comando CLI `omnipress`:
 
 ```bash
@@ -528,6 +557,37 @@ Scripts em `channels/<slug>/scripts/` continuam plenamente suportados e recomend
 Para todas as publicações e carrosséis padrão, utilize exclusivamente as receitas declarativas e os motores universais.
 
 ---
+
+### 7.4. Novos Motores Universais (v0.10.0) — Providers, Thumbnails, Documentário, Vídeo e Assets
+
+A partir da v0.10.0, todo runtime externo passa por uma camada de **providers** (`src/engine/providers/`) e todo entregável tem uma engine declarativa. Consulte [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) e [`docs/PROVIDERS.md`](./PROVIDERS.md).
+
+| Entregável | Comando universal | Recipe | Schema |
+|---|---|---|---|
+| Carrossel | `omnipress carousel --recipe R.json --all` | `carousel_recipe.json` | `carousel_recipe.schema.json` |
+| Thumbnail (Regra 15) | `omnipress thumbnail --recipe R.json [--validate-only] [--preview 120 320]` | `thumbnail_recipe.json` | `thumbnail_recipe.schema.json` |
+| Cenas documentais | `omnipress documentary --recipe R.json` | `documentary_recipe.json` | `documentary_recipe.schema.json` |
+| Vídeo Remotion | `omnipress video --recipe R.json` | `video_recipe.json` / `intro_recipe.json` | `video_recipe.schema.json` |
+| Áudio + trilha | `omnipress master-audio in.m4a -o out.mp3 --mix-bed trilha.mp3 --bed-volume 0.18` | `audio_recipe.json` | `audio_recipe.schema.json` |
+| Legendas | `omnipress align-captions whisper.json -o captions.json --verify` | `caption_recipe.json` | `caption_recipe.schema.json` |
+| Asset público | `omnipress assets --recipe R.json` ou `--prepare SRC -o OUT` | `asset_recipe.json` | `asset_recipe.schema.json` |
+| 3D | `omnipress render-3d --recipe R.json [--validate-only] [--list-templates]` | `3d_recipe.json` | `3d_recipe.schema.json` |
+| Deploy | `omnipress deploy arquivo1 arquivo2 --target-dir public` | — | — |
+| Diagnóstico | `omnipress doctor [--json]` | — | — |
+
+**Tabela do que NUNCA escrever como script de canal:**
+
+| Nunca escreva | Use |
+|---|---|
+| `render_carousel_*.py`, `upload_carousel_*.py`, `schedule_carousel_*.py` | `omnipress carousel --recipe ... --all` |
+| `master_*.py`, `mix_*soundtrack*.py` | `omnipress master-audio --mix-bed ...` |
+| `generate_canonical_*captions*.py`, `dump_*words*.py`, `align_*voiceover*.py` | `omnipress align-captions --verify` |
+| `build_*thumbnail*.py`, `generate_thumbnails_*.py` | `omnipress thumbnail --recipe ...` |
+| `build_*scenes*.py`, `apply_*scenes*.py`, `remedy_*findings.py` | `omnipress documentary --recipe ...` |
+| `download_*historical_assets.py`, `prepare_*_backgrounds.py` | `omnipress assets` / `omnipress carousel` |
+| `upload_to_catbox.py`, `find_tools.py`, `install_ffmpeg_bin.py` | `omnipress doctor` / storage provider |
+
+**Regra de ouro:** template de canal nunca entra em `src/`; binário externo nunca é chamado fora de `src/engine/providers/`; recipe sempre valida contra schema **e** manifesto antes de qualquer subprocesso. Os scripts legados ainda pendentes estão inventariados em [`docs/LEGACY_SCRIPTS.md`](./LEGACY_SCRIPTS.md).
 
 ## 8. Padrão de Presets Visuais & Guia de Estilo (v0.4.0)
 

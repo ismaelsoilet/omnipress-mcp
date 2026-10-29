@@ -15,6 +15,7 @@ export interface OverlayEvent {
     | "flash-cut";
   text?: string;
   subtext?: string;
+  label?: string;
   top?: number;
   color?: string;
   borderColor?: string;
@@ -250,7 +251,7 @@ export const MitoRealidadeOverlays: React.FC<MitoRealidadeOverlaysProps> = ({ ev
                     fontFamily: "'Courier New', Courier, monospace",
                     fontSize: 22,
                     fontWeight: 800,
-                    color: evt.subtextColor || "#D4AF37",
+                    color: evt.subtextColor || "var(--omni-accent, #3B82F6)",
                     letterSpacing: 3,
                     textTransform: "uppercase",
                     marginTop: 8,
@@ -326,7 +327,7 @@ export const MitoRealidadeOverlays: React.FC<MitoRealidadeOverlaysProps> = ({ ev
                 >
                   ?
                 </span>
-                ENIGMA DO ARQUIVO
+                {evt.label || ""}
               </div>
               <div
                 style={{

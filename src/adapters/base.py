@@ -8,7 +8,7 @@ class BasePublisherAdapter(ABC):
     """Abstract base class for all OmniPress content distribution adapters."""
 
     @abstractmethod
-    def is_configured(self) -> bool:
+    def is_configured(self, channel_slug: Optional[str] = None) -> bool:
         """Returns True if the required credentials/settings are present."""
         pass
 

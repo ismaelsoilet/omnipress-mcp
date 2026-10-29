@@ -1,7 +1,12 @@
-"""Privacy and de-identification sanitizer for legal, tax, and technical publishing."""
+"""Privacy and de-identification sanitizer for legal, tax, and technical publishing.
+
+Profiles are selectable per channel (`settings.sanitize_profiles`), defaulting to
+the Brazilian profile for backward compatibility. Credentials and e-mail are
+always masked unless the "none" profile is explicitly requested.
+"""
 
 import re
-from typing import Tuple, List, Dict
+from typing import List, Dict, Optional, Sequence, Tuple
 
 # CNJ Lawsuit Number format (e.g., 0001234-56.2023.8.26.0100)
 CNJ_REGEX = re.compile(r"\b\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}\b")
@@ -44,22 +49,45 @@ PRIVATE_IP_REGEX = re.compile(
 )
 
 
-def inspect_sensitive_data(text: str) -> List[Dict[str, str]]:
+def resolve_profiles(channel_slug: Optional[str] = None) -> List[str]:
+    """Resolves the active sanitization profiles for a channel.
+
+    Priority: channel.json settings.sanitize_profiles -> ["br"] (backward compatible).
+    """
+    if channel_slug:
+        try:
+            from src.core.channel_manager import ChannelManager
+
+            channel = ChannelManager().get_channel(channel_slug)
+            configured = ((channel or {}).get("settings") or {}).get("sanitize_profiles")
+            if configured:
+                return [str(p) for p in configured]
+        except Exception:
+            pass
+    return ["br"]
+
+
+def _normalize_profiles(profiles: Optional[Sequence[str]]) -> List[str]:
+    if not profiles:
+        return ["br"]
+    return [str(p).strip().lower() for p in profiles if str(p).strip()]
+
+
+def inspect_sensitive_data(
+    text: str,
+    profiles: Optional[Sequence[str]] = None,
+) -> List[Dict[str, str]]:
     """
     Scans content for identifying information that may breach legal privacy,
     judicial secrecy (segredo de justiça), LGPD/GDPR regulations, or technical credential safety.
     """
+    active = _normalize_profiles(profiles)
+    if "none" in active:
+        return []
+
     findings = []
 
-    for match in CNJ_REGEX.finditer(text):
-        findings.append({"type": "lawsuit_number", "match": match.group()})
-
-    for match in CPF_REGEX.finditer(text):
-        findings.append({"type": "cpf", "match": match.group()})
-
-    for match in CNPJ_REGEX.finditer(text):
-        findings.append({"type": "cnpj", "match": match.group()})
-
+    # Always-on technical and contact safety
     for match in EMAIL_REGEX.finditer(text):
         findings.append({"type": "email", "match": match.group()})
 
@@ -76,31 +104,54 @@ def inspect_sensitive_data(text: str) -> List[Dict[str, str]]:
     for match in PRIVATE_IP_REGEX.finditer(text):
         findings.append({"type": "private_ip", "match": match.group()})
 
-    for match in PHONE_REGEX.finditer(text):
-        findings.append({"type": "phone", "match": match.group().strip()})
+    # Locale-specific profiles
+    if "br" in active:
+        for match in CNJ_REGEX.finditer(text):
+            findings.append({"type": "lawsuit_number", "match": match.group()})
+        for match in CPF_REGEX.finditer(text):
+            findings.append({"type": "cpf", "match": match.group()})
+        for match in CNPJ_REGEX.finditer(text):
+            findings.append({"type": "cnpj", "match": match.group()})
+        for match in PHONE_REGEX.finditer(text):
+            findings.append({"type": "phone", "match": match.group().strip()})
+    elif "generic_pii" in active:
+        for match in PHONE_REGEX.finditer(text):
+            findings.append({"type": "phone", "match": match.group().strip()})
 
     return findings
 
 
-def sanitize_text(text: str) -> Tuple[str, List[Dict[str, str]]]:
+def sanitize_text(
+    text: str,
+    profiles: Optional[Sequence[str]] = None,
+) -> Tuple[str, List[Dict[str, str]]]:
     """
     Masks identifying information with generic anonymized tokens.
     Returns the sanitized string and a log of replaced items.
     """
-    findings = inspect_sensitive_data(text)
+    active = _normalize_profiles(profiles)
+    if "none" in active:
+        return text, []
+
+    findings = inspect_sensitive_data(text, active)
     sanitized = text
 
-    # Credentials & secrets sanitized first
+    # Credentials & secrets sanitized first (always on)
     sanitized = BEARER_REGEX.sub("[BEARER PROTEGIDO]", sanitized)
     sanitized = JWT_REGEX.sub("[JWT PROTEGIDO]", sanitized)
     sanitized = API_KEY_REGEX.sub("[CHAVE PROTEGIDA]", sanitized)
     sanitized = PRIVATE_IP_REGEX.sub("[IP PRIVADO PROTEGIDO]", sanitized)
 
-    # Legal & identifying data
-    sanitized = CNJ_REGEX.sub("[PROCESSO ANÔNIMO]", sanitized)
-    sanitized = CPF_REGEX.sub("[CPF PROTEGIDO]", sanitized)
-    sanitized = CNPJ_REGEX.sub("[CNPJ PROTEGIDO]", sanitized)
+    # Contact data
     sanitized = EMAIL_REGEX.sub("[EMAIL PROTEGIDO]", sanitized)
-    sanitized = PHONE_REGEX.sub("[TELEFONE PROTEGIDO]", sanitized)
+
+    # Legal & locale-specific identifying data
+    if "br" in active:
+        sanitized = CNJ_REGEX.sub("[PROCESSO ANÔNIMO]", sanitized)
+        sanitized = CPF_REGEX.sub("[CPF PROTEGIDO]", sanitized)
+        sanitized = CNPJ_REGEX.sub("[CNPJ PROTEGIDO]", sanitized)
+        sanitized = PHONE_REGEX.sub("[TELEFONE PROTEGIDO]", sanitized)
+    elif "generic_pii" in active:
+        sanitized = PHONE_REGEX.sub("[TELEFONE PROTEGIDO]", sanitized)
 
     return sanitized, findings

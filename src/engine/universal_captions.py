@@ -129,6 +129,77 @@ class UniversalCaptionsEngine:
 
         return chunks
 
+    @staticmethod
+    def verify_timeline(
+        payload: Dict[str, Any],
+        min_gap: float = 0.08,
+        max_gap: float = 1.6,
+        max_chunk: float = 1.6,
+    ) -> Dict[str, Any]:
+        """Lints caption chunks and word timings before rendering.
+
+        Returns errors (blocking), warnings (retention risks) and stats.
+        """
+        words = payload.get("words") or []
+        chunks = payload.get("chunks") or []
+        errors: List[str] = []
+        warnings: List[str] = []
+        gaps: List[float] = []
+
+        for idx, word in enumerate(words):
+            start = float(word.get("start", 0.0))
+            end = float(word.get("end", 0.0))
+            if end < start - 1e-6:
+                errors.append(f"word {idx} has negative duration ({start} -> {end})")
+            if idx and start < float(words[idx - 1].get("end", 0.0)) - 0.001:
+                errors.append(f"word {idx} overlaps the previous word")
+
+        for idx, chunk in enumerate(chunks):
+            start = float(chunk.get("start", 0.0))
+            end = float(chunk.get("end", 0.0))
+            duration = end - start
+            if not str(chunk.get("text", "")).strip():
+                errors.append(f"chunk {idx + 1} is empty")
+            if duration <= 0:
+                errors.append(f"chunk {idx + 1} has non-positive duration ({duration})")
+            elif duration > max_chunk + 1e-6:
+                errors.append(
+                    f"chunk {idx + 1} lasts {duration:.3f}s (max {max_chunk:.2f}s)"
+                )
+            if idx:
+                gap = start - float(chunks[idx - 1].get("end", 0.0))
+                gaps.append(gap)
+                if gap < -0.001:
+                    errors.append(f"chunk {idx + 1} overlaps the previous chunk")
+                elif gap < min_gap:
+                    warnings.append(
+                        f"chunk {idx + 1} gap is {gap:.3f}s (< {min_gap:.2f}s); may cause flicker"
+                    )
+                elif gap > max_gap:
+                    warnings.append(
+                        f"chunk {idx + 1} gap is {gap:.3f}s (> {max_gap:.2f}s); captions disappear"
+                    )
+
+        total_duration = float(words[-1]["end"]) if words else 0.0
+        avg_chunk = (
+            sum(float(c.get("end", 0.0)) - float(c.get("start", 0.0)) for c in chunks) / len(chunks)
+            if chunks
+            else 0.0
+        )
+        return {
+            "success": not errors,
+            "errors": errors,
+            "warnings": warnings,
+            "stats": {
+                "words": len(words),
+                "chunks": len(chunks),
+                "duration_seconds": round(total_duration, 3),
+                "average_chunk_seconds": round(avg_chunk, 3),
+                "min_gap_seconds": round(min(gaps), 3) if gaps else None,
+                "max_gap_seconds": round(max(gaps), 3) if gaps else None,
+            },
+        }
+
     def process_and_export(
         self,
         input_whisper: Union[str, Path, Dict[str, Any]],
@@ -136,6 +207,10 @@ class UniversalCaptionsEngine:
         words_per_chunk: int = 3,
         uppercase: bool = True,
         act_id: str = "short_01",
+        verify: bool = False,
+        min_gap: float = 0.08,
+        max_gap: float = 1.6,
+        max_chunk: float = 1.6,
     ) -> Dict[str, Any]:
         """Loads Whisper input, chunks words, and exports Remotion-ready caption JSON.
         
@@ -173,7 +248,7 @@ class UniversalCaptionsEngine:
         }
 
         out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
-        return {
+        result = {
             "success": True,
             "output_file": str(out_path),
             "act_id": act_id,
@@ -181,3 +256,10 @@ class UniversalCaptionsEngine:
             "total_chunks": len(chunks),
             "duration": total_duration,
         }
+        if verify:
+            verification = self.verify_timeline(
+                payload, min_gap=min_gap, max_gap=max_gap, max_chunk=max_chunk
+            )
+            result["verification"] = verification
+            result["verification_success"] = verification["success"]
+        return result

@@ -1,0 +1,35 @@
+{
+  "$schema": "../../../../../.agents/schemas/documentary_recipe.schema.json",
+  "channel_slug": "template-channel",
+  "episode_slug": "example-episode",
+  "title": "Example Episode",
+  "language": "en",
+  "aspect_ratio": "16:9",
+  "mode": "render",
+  "theme": {
+    "primary": "#3B82F6",
+    "accent": "#3B82F6",
+    "background": "#0B1220",
+    "text": "#FFFFFF"
+  },
+  "scenes": [
+    {
+      "id": "scene_01",
+      "type": "archive_photo",
+      "media": "documentario/midias/example.jpg",
+      "duration_seconds": 6,
+      "headline": "Example scene headline",
+      "subheadline": "Example supporting line",
+      "badge": "ARCHIVE",
+      "camera": "slow_zoom_in",
+      "transition": "cut"
+    }
+  ],
+  "audio": {
+    "soundtrack": "",
+    "soundtrack_volume": 0.16
+  },
+  "outputs": {
+    "episode_config": "episode_config.generated.json"
+  }
+}

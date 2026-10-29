@@ -3,7 +3,7 @@
   "info": {
     "title": "OmniPress Publishing Engine API",
     "description": "Agentic multi-channel publishing API for long-form articles, LinkedIn, X (Twitter), Threads, and Reddit with built-in LGPD & judicial de-identification privacy scanning.",
-    "version": "0.9.0"
+    "version": "0.10.0"
   },
   "servers": [
     {
@@ -55,7 +55,10 @@
                     "default": true
                   }
                 },
-                "required": ["title", "contentMarkdown"]
+                "required": [
+                  "title",
+                  "contentMarkdown"
+                ]
               }
             }
           }
@@ -68,8 +71,12 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "message": { "type": "string" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -122,7 +129,9 @@
                     "default": true
                   }
                 },
-                "required": ["text"]
+                "required": [
+                  "text"
+                ]
               }
             }
           }
@@ -135,8 +144,12 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "message": { "type": "string" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -162,7 +175,9 @@
                     "description": "Text to analyze"
                   }
                 },
-                "required": ["text"]
+                "required": [
+                  "text"
+                ]
               }
             }
           }
@@ -175,18 +190,26 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "clean": { "type": "boolean" },
+                    "clean": {
+                      "type": "boolean"
+                    },
                     "findings": {
                       "type": "array",
                       "items": {
                         "type": "object",
                         "properties": {
-                          "type": { "type": "string" },
-                          "match": { "type": "string" }
+                          "type": {
+                            "type": "string"
+                          },
+                          "match": {
+                            "type": "string"
+                          }
                         }
                       }
                     },
-                    "message": { "type": "string" }
+                    "message": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -228,7 +251,9 @@
                         "type": "object"
                       }
                     },
-                    "message": { "type": "string" }
+                    "message": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -270,7 +295,9 @@
                         "type": "object"
                       }
                     },
-                    "message": { "type": "string" }
+                    "message": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -291,10 +318,22 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "niche": { "type": "string", "default": "historia" },
-                  "tone": { "type": "string", "default": "mystery" },
-                  "targetAudience": { "type": "string", "default": "geral" },
-                  "language": { "type": "string", "default": "pt-BR" }
+                  "niche": {
+                    "type": "string",
+                    "default": "historia"
+                  },
+                  "tone": {
+                    "type": "string",
+                    "default": "mystery"
+                  },
+                  "targetAudience": {
+                    "type": "string",
+                    "default": "geral"
+                  },
+                  "language": {
+                    "type": "string",
+                    "default": "pt-BR"
+                  }
                 }
               }
             }
@@ -308,8 +347,12 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "strategy": { "type": "object" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "strategy": {
+                      "type": "object"
+                    }
                   }
                 }
               }
@@ -330,11 +373,20 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "text": { "type": "string" },
-                  "voice": { "type": "string", "default": "pt-BR-AntonioNeural" },
-                  "outputFilename": { "type": "string" }
+                  "text": {
+                    "type": "string"
+                  },
+                  "voice": {
+                    "type": "string",
+                    "default": "pt-BR-AntonioNeural"
+                  },
+                  "outputFilename": {
+                    "type": "string"
+                  }
                 },
-                "required": ["text"]
+                "required": [
+                  "text"
+                ]
               }
             }
           }
@@ -347,9 +399,15 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "audio_path": { "type": "string" },
-                    "audio_size_bytes": { "type": "integer" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "audio_path": {
+                      "type": "string"
+                    },
+                    "audio_size_bytes": {
+                      "type": "integer"
+                    }
                   }
                 }
               }
@@ -370,12 +428,33 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "text": { "type": "string" },
-                  "audioPath": { "type": "string" },
-                  "imagePaths": { "type": "array", "items": { "type": "string" } },
-                  "outputFilename": { "type": "string" },
-                  "aspectRatio": { "type": "string", "enum": ["9:16", "16:9"], "default": "9:16" },
-                  "voice": { "type": "string", "default": "pt-BR-AntonioNeural" }
+                  "text": {
+                    "type": "string"
+                  },
+                  "audioPath": {
+                    "type": "string"
+                  },
+                  "imagePaths": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "outputFilename": {
+                    "type": "string"
+                  },
+                  "aspectRatio": {
+                    "type": "string",
+                    "enum": [
+                      "9:16",
+                      "16:9"
+                    ],
+                    "default": "9:16"
+                  },
+                  "voice": {
+                    "type": "string",
+                    "default": "pt-BR-AntonioNeural"
+                  }
                 }
               }
             }
@@ -389,10 +468,18 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "video_path": { "type": "string" },
-                    "audio_path": { "type": "string" },
-                    "ffmpeg_available": { "type": "boolean" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "video_path": {
+                      "type": "string"
+                    },
+                    "audio_path": {
+                      "type": "string"
+                    },
+                    "ffmpeg_available": {
+                      "type": "boolean"
+                    }
                   }
                 }
               }

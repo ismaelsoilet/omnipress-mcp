@@ -11,7 +11,7 @@ export interface KineticCaptionProps {
 /**
  * KineticCaption — Legendas Dinâmicas de Alta Retenção (Estilo Documentário Viral).
  * Acompanha o andamento da fala do narrador em tempo real:
- * - Palavra ativa: Brilha em ouro (#FFD700) com fundo suave e escala ampliada.
+ * - Palavra ativa: Brilha em ouro (var(--omni-highlight, #FACC15)) com fundo suave e escala ampliada.
  * - Palavras anteriores: Branco nítido (#FFFFFF).
  * - Próximas palavras: Dimmer translúcido (estimula a continuar assistindo até o final da frase).
  */
@@ -56,14 +56,14 @@ export const KineticCaption: React.FC<KineticCaptionProps> = ({
             key={i}
             style={{
               color: isActive
-                ? "#FFD700"
+                ? "var(--omni-highlight, #FACC15)"
                 : isPast
                 ? "#FFFFFF"
                 : "rgba(225, 230, 235, 0.42)",
               fontWeight: isActive ? 900 : isPast ? 600 : 400,
               fontSize: isActive ? fontSize * 1.08 : fontSize,
-              backgroundColor: isActive ? "rgba(212, 175, 55, 0.25)" : "transparent",
-              borderBottom: isActive ? "2px solid #FFD700" : "2px solid transparent",
+              backgroundColor: isActive ? "rgba(var(--omni-accent-rgb, 59, 130, 246), 0.25)" : "transparent",
+              borderBottom: isActive ? "2px solid var(--omni-highlight, #FACC15)" : "2px solid transparent",
               borderRadius: 4,
               padding: "0 4px",
               letterSpacing: isActive ? "0.5px" : "normal",

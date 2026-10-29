@@ -1,14 +1,11 @@
 {
   "mcpServers": {
     "omnipress": {
-      "command": "python",
+      "command": ".venv/bin/python",
       "args": ["src/server.py"],
       "env": {
         "ARTICLES_DIR": "./articles"
       }
-    },
-    "buffer": {
-      "serverUrl": "https://mcp.buffer.com/mcp"
     }
   }
 }

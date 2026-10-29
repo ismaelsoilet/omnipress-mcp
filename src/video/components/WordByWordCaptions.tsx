@@ -15,21 +15,12 @@ export interface WordByWordCaptionsProps {
   };
 }
 
-// Termos universais de ênfase psicológica (estilo Hormozi/Shorts)
-const DEFAULT_RED_WORDS = new Set([
-  "erro", "perigo", "alerta", "falha", "risco", "cuidado", "problema",
-  "nunca", "jamais", "falso", "mentira", "morte", "bloqueio", "perda"
-]);
+// Channel-provided emphasis vocabulary. The core ships no language-specific words.
+const DEFAULT_RED_WORDS = new Set<string>([]);
 
-const DEFAULT_GREEN_WORDS = new Set([
-  "sucesso", "resultado", "verdade", "realidade", "oficial", "lucro",
-  "crescimento", "solução", "ganho", "aprovado", "garantia", "prática"
-]);
+const DEFAULT_GREEN_WORDS = new Set<string>([]);
 
-const DEFAULT_GOLD_WORDS = new Set([
-  "segredo", "exclusivo", "estratégia", "método", "chave", "essencial",
-  "impacto", "autoridade", "lei", "código", "dinheiro", "futuro"
-]);
+const DEFAULT_GOLD_WORDS = new Set<string>([]);
 
 /**
  * WordByWordCaptions — Motor de Legendas de Ultra-Retenção (Palavra por Palavra)

@@ -86,9 +86,9 @@ export const SynchronizedCaptions: React.FC<SynchronizedCaptionsProps> = ({
         <div
           style={{
             backgroundColor: "rgba(8, 10, 14, 0.92)",
-            border: "1.2px solid rgba(212, 175, 55, 0.40)",
+            border: "1.2px solid rgba(var(--omni-accent-rgb, 59, 130, 246), 0.40)",
             boxShadow:
-              "0 8px 24px rgba(0, 0, 0, 0.85), 0 0 16px rgba(212, 175, 55, 0.12)",
+              "0 8px 24px rgba(0, 0, 0, 0.85), 0 0 16px rgba(var(--omni-accent-rgb, 59, 130, 246), 0.12)",
             borderRadius: isVertical ? 14 : 12,
             padding: isVertical ? "12px 20px" : "10px 26px",
             display: "flex",
@@ -113,15 +113,15 @@ export const SynchronizedCaptions: React.FC<SynchronizedCaptionsProps> = ({
                   fontSize: isVertical ? 32 : 27,
                   fontWeight: isActive ? 900 : isPast ? 700 : 500,
                   color: isActive
-                    ? "#FFD700"
+                    ? "var(--omni-highlight, #FACC15)"
                     : isPast
                     ? "#FFFFFF"
                     : "rgba(225, 230, 238, 0.65)",
                   backgroundColor: isActive
-                    ? "rgba(212, 175, 55, 0.28)"
+                    ? "rgba(var(--omni-accent-rgb, 59, 130, 246), 0.28)"
                     : "transparent",
                   borderBottom: isActive
-                    ? "2.5px solid #FFD700"
+                    ? "2.5px solid var(--omni-highlight, #FACC15)"
                     : "2.5px solid transparent",
                   borderRadius: 4,
                   padding: "1px 5px",
@@ -186,9 +186,9 @@ export const SynchronizedCaptions: React.FC<SynchronizedCaptionsProps> = ({
         style={{
           backgroundColor: "rgba(8, 10, 14, 0.90)",
           backdropFilter: "blur(12px)",
-          border: "1.2px solid rgba(212, 175, 55, 0.40)",
+          border: "1.2px solid rgba(var(--omni-accent-rgb, 59, 130, 246), 0.40)",
           boxShadow:
-            "0 8px 24px rgba(0, 0, 0, 0.85), 0 0 16px rgba(212, 175, 55, 0.12)",
+            "0 8px 24px rgba(0, 0, 0, 0.85), 0 0 16px rgba(var(--omni-accent-rgb, 59, 130, 246), 0.12)",
           borderRadius: isVertical ? 14 : 12,
           padding: isVertical ? "12px 20px" : "10px 26px",
           display: "flex",
@@ -212,15 +212,15 @@ export const SynchronizedCaptions: React.FC<SynchronizedCaptionsProps> = ({
                 fontSize: isVertical ? 32 : 27,
                 fontWeight: isActive ? 900 : isPast ? 700 : 500,
                 color: isActive
-                  ? "#FFD700"
+                  ? "var(--omni-highlight, #FACC15)"
                   : isPast
                   ? "#FFFFFF"
                   : "rgba(225, 230, 238, 0.65)",
                 backgroundColor: isActive
-                  ? "rgba(212, 175, 55, 0.28)"
+                  ? "rgba(var(--omni-accent-rgb, 59, 130, 246), 0.28)"
                   : "transparent",
                 borderBottom: isActive
-                  ? "2.5px solid #FFD700"
+                  ? "2.5px solid var(--omni-highlight, #FACC15)"
                   : "2.5px solid transparent",
                 borderRadius: 4,
                 padding: "1px 5px",

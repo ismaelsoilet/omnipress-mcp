@@ -13,24 +13,35 @@ class RedditPublisherAdapter(BasePublisherAdapter):
     SUBMIT_URL = "https://oauth.reddit.com/api/submit"
 
     def __init__(self):
-        self.client_id = os.getenv("REDDIT_CLIENT_ID", "").strip()
-        self.client_secret = os.getenv("REDDIT_CLIENT_SECRET", "").strip()
-        self.username = os.getenv("REDDIT_USERNAME", "").strip()
-        self.password = os.getenv("REDDIT_PASSWORD", "").strip()
-        self.default_subreddit = os.getenv("REDDIT_DEFAULT_SUBREDDIT", "SideProject").strip()
+        # Credentials are resolved at call time through ChannelManager (Rule 14).
+        pass
 
     def get_credentials(self, channel_slug: Optional[str] = None) -> tuple[str, str, str, str]:
         """Resolves Reddit credentials with Rule 04 channel precedence."""
+        from src.core.channel_manager import ChannelManager
+
+        cm = ChannelManager()
+        return (
+            cm.get_credential("REDDIT_CLIENT_ID", channel_slug),
+            cm.get_credential("REDDIT_CLIENT_SECRET", channel_slug),
+            cm.get_credential("REDDIT_USERNAME", channel_slug),
+            cm.get_credential("REDDIT_PASSWORD", channel_slug),
+        )
+
+    def get_default_subreddit(self, channel_slug: Optional[str] = None) -> str:
+        """Resolves the default subreddit from channel.json, then channel/global env."""
         try:
             from src.core.channel_manager import ChannelManager
+
             cm = ChannelManager()
-            cid = cm.get_credential("REDDIT_CLIENT_ID", channel_slug) or self.client_id
-            csec = cm.get_credential("REDDIT_CLIENT_SECRET", channel_slug) or self.client_secret
-            uname = cm.get_credential("REDDIT_USERNAME", channel_slug) or self.username
-            pwd = cm.get_credential("REDDIT_PASSWORD", channel_slug) or self.password
-            return cid, csec, uname, pwd
+            channel = cm.get_channel(channel_slug) if channel_slug else cm.get_active_channel()
+            social = (channel or {}).get("social", {}) or {}
+            configured = (social.get("reddit") or {}).get("default_subreddit")
+            if configured and str(configured).strip():
+                return str(configured).strip()
+            return cm.get_credential("REDDIT_DEFAULT_SUBREDDIT", channel_slug)
         except Exception:
-            return self.client_id, self.client_secret, self.username, self.password
+            return ""
 
     def is_configured(self, channel_slug: Optional[str] = None) -> bool:
         cid, csec, uname, pwd = self.get_credentials(channel_slug)
@@ -78,11 +89,19 @@ class RedditPublisherAdapter(BasePublisherAdapter):
             }
 
         # Determine target subreddit
-        target_sub = self.default_subreddit
+        target_sub = self.get_default_subreddit(channel_slug)
         for p in platforms:
             if p.lower().startswith("reddit:"):
                 target_sub = p.split(":", 1)[1].strip()
                 break
+
+        if not target_sub:
+            return {
+                "success": False,
+                "provider": "reddit",
+                "error": "No target subreddit configured. Set social.reddit.default_subreddit in channel.json, "
+                "REDDIT_DEFAULT_SUBREDDIT in channels/<slug>/.env, or pass 'reddit:<subreddit>' as a platform.",
+            }
 
         # Extract title if not explicitly provided
         post_title = title

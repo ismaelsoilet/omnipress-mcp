@@ -12,10 +12,39 @@ class YouTubeStagingAdapter:
     """Stages video metadata, scripts, and media files for YouTube and YouTube Shorts."""
 
     def __init__(self, base_dir: Optional[str] = None):
-        self.base_dir = Path(
-            base_dir or os.getenv("MEDIA_STAGING_DIR", "./media/staging")
-        ).resolve()
-        self.youtube_webhook_url = os.getenv("YOUTUBE_WEBHOOK_URL", "").strip()
+        self.base_dir_arg = Path(base_dir).resolve() if base_dir else None
+
+    @property
+    def base_dir(self) -> Path:
+        """Resolves the global staging root at call time (never a constructor snapshot)."""
+        target = self.base_dir_arg or Path(os.getenv("MEDIA_STAGING_DIR", "./media/staging")).resolve()
+        target.mkdir(parents=True, exist_ok=True)
+        return target
+
+    def get_credentials(self, channel_slug: Optional[str] = None) -> str:
+        """Resolves YOUTUBE_WEBHOOK_URL with strict Rule 04 channel precedence."""
+        from src.core.channel_manager import ChannelManager
+
+        return ChannelManager().get_credential("YOUTUBE_WEBHOOK_URL", channel_slug)
+
+    def is_configured(self, channel_slug: Optional[str] = None) -> bool:
+        return bool(self.get_credentials(channel_slug))
+
+    def _resolve_staging_dir(self, channel_slug: Optional[str] = None) -> Path:
+        """Resolves target staging directory, respecting channel isolation."""
+        if self.base_dir_arg:
+            return self.base_dir
+
+        try:
+            from src.core.channel_manager import ChannelManager
+
+            cm = ChannelManager()
+            slug = channel_slug or cm.get_active_channel_slug()
+            c_dir = cm.get_channel_dir(slug) / "media" / "staging"
+            c_dir.mkdir(parents=True, exist_ok=True)
+            return c_dir
+        except Exception:
+            return self.base_dir
 
     def stage_video(
         self,
@@ -28,9 +57,10 @@ class YouTubeStagingAdapter:
         media_urls: Optional[List[str]] = None,
         thumbnail_url: Optional[str] = None,
         schedule_time: Optional[str] = None,
+        channel_slug: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Creates staging metadata JSON and prepares dispatch record."""
-        clean_title = (title or "Vídeo Sem Título").strip()
+        clean_title = (title or "Untitled").strip()
         if is_short and "#shorts" not in clean_title.lower():
             clean_title = f"{clean_title} #Shorts"
         if len(clean_title) > 100:
@@ -48,7 +78,8 @@ class YouTubeStagingAdapter:
         date_str = now.strftime("%Y-%m-%d")
         slug = slugify(clean_title) or f"yt-{int(now.timestamp())}"
 
-        folder = self.base_dir / "youtube" / now.strftime("%Y") / now.strftime("%m")
+        base_staging = self._resolve_staging_dir(channel_slug)
+        folder = base_staging / "youtube" / now.strftime("%Y") / now.strftime("%m")
         folder.mkdir(parents=True, exist_ok=True)
 
         manifest = {

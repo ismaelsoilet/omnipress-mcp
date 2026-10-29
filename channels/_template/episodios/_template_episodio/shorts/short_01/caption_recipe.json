@@ -1,0 +1,15 @@
+{
+  "$schema": "../../../../../../.agents/schemas/caption_recipe.schema.json",
+  "channel_slug": "template-channel",
+  "input": "episodios/example-episode/shorts/short_01/whisper_raw.json",
+  "output": "episodios/example-episode/shorts/short_01/captions.json",
+  "words_per_chunk": 3,
+  "max_duration_sec": 1.6,
+  "uppercase": true,
+  "act_id": "short_01",
+  "verify": {
+    "min_gap": 0.08,
+    "max_gap": 1.6,
+    "max_chunk": 1.6
+  }
+}

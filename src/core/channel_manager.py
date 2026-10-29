@@ -79,14 +79,23 @@ class ChannelManager:
                 cached_sig, cached_data = self._channel_cache[clean_slug]
                 if cached_sig == file_sig:
                     return dict(cached_data)
-
-            with open(config_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                data["path"] = str(target_dir)
-                self._channel_cache[clean_slug] = (file_sig, data)
-                return dict(data)
         except Exception:
             return None
+
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            return None
+
+        # Schema violations are architectural errors: never silently ignored.
+        from src.core.schema_validator import validate as validate_schema
+
+        validate_schema("channel", data, source=str(config_file))
+
+        data["path"] = str(target_dir)
+        self._channel_cache[clean_slug] = (file_sig, data)
+        return dict(data)
 
     def get_active_channel_slug(self) -> str:
         """Determines the active channel based on environment, default, or fallback."""
@@ -115,7 +124,7 @@ class ChannelManager:
             "branding": {
                 "handle": f"@{slug}",
                 "badge_text": "OMNIPRESS",
-                "theme_colors": {"primary": "#D4AF37", "background": "#0A0C10", "text": "#FFFFFF"},
+                "theme_colors": {"primary": "#3B82F6", "background": "#0B1220", "text": "#FFFFFF"},
                 "typography": {
                     "bold_font": "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
                     "regular_font": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
@@ -123,6 +132,8 @@ class ChannelManager:
             },
             "video": {
                 "aspect_ratio": "16:9",
+                "voice": "",
+                "language": "",
                 "soundtrack_volume": 0.16,
             },
             "path": str(self.channels_dir / slug)
@@ -161,7 +172,7 @@ class ChannelManager:
         """
         Resolves credentials with strict Rule 04 precedence:
         1. channels/<slug>/.env (e.g. BUFFER_API_KEY)
-        2. Channel-prefixed process environment variable (e.g. ISMAEL_SOILET_BUFFER_API_KEY)
+        2. Channel-prefixed process environment variable (e.g. <SLUG>_BUFFER_API_KEY)
         3. Global process environment variable (e.g. BUFFER_API_KEY)
         4. Default value
         """
@@ -207,7 +218,7 @@ class ChannelManager:
         handle: str,
         category: str = "general",
         description: str = "",
-        primary_color: str = "#D4AF37",
+        primary_color: str = "#3B82F6",
         buffer_channel_id: str = "",
         default_hashtags: Optional[List[str]] = None,
         archetype: str = "personal_brand",
@@ -247,6 +258,7 @@ class ChannelManager:
             "archetype": archetype,
             "description": description or f"Canal de conteúdo {name}.",
             "category": category,
+            "language": "",
             "features": {
                 "articles": True,
                 "carousels": True,
@@ -258,7 +270,7 @@ class ChannelManager:
                 "badge_text": name.upper(),
                 "theme_colors": {
                     "primary": primary_color,
-                    "background": "#0A0C10",
+                    "background": "#0B1220",
                     "text": "#FFFFFF",
                     "secondary_text": "#E1E6EB"
                 },
@@ -271,7 +283,7 @@ class ChannelManager:
                 "default_preset": "tweet_card" if archetype == "personal_brand" else "classic_card",
                 "palette": {
                     "primary": primary_color,
-                    "background": "#FFFFFF" if archetype == "personal_brand" else "#0A0C10",
+                    "background": "#FFFFFF" if archetype == "personal_brand" else "#0B1220",
                     "card_background": "#F8FAFC" if archetype == "personal_brand" else "#080A0E",
                     "text": "#0F172A" if archetype == "personal_brand" else "#FFFFFF",
                     "secondary_text": "#64748B" if archetype == "personal_brand" else "#E1E6EB",
@@ -297,6 +309,58 @@ class ChannelManager:
                     "bullet_style": "square",
                     "watermark_text": name.upper(),
                     "enable_shadow": True,
+                },
+                "layout_parameters": {
+                    "margin_ratio": 0.075,
+                    "start_y_ratio": 0.05,
+                    "headline_scale": 0.05,
+                    "body_scale": 0.034,
+                    "footer_scale": 0.022,
+                    "badge_scale": 0.024,
+                    "step_scale": 0.038,
+                    "line_height_head": 1.3,
+                    "line_height_body": 1.4,
+                    "border_radius": 16,
+                    "card_bg_alpha": 215,
+                    "card_pad_x_ratio": 0.035,
+                    "card_pad_y_ratio": 0.02,
+                    "stroke_width": 2,
+                    "avatar_size_ratio": 0.09,
+                    "show_verified_badge": True,
+                    "gradient_start_ratio": 0.46,
+                    "enable_text_card": True,
+                    "top_bias": 0.20,
+                    "contrast_boost": 1.15,
+                    "color_boost": 1.0,
+                },
+                "presets": {
+                    "classic_card": {
+                        "layout_parameters": {
+                            "margin_ratio": 0.065,
+                            "headline_scale": 0.046,
+                            "line_height_head": 1.25,
+                            "card_bg_alpha": 215,
+                        }
+                    },
+                    "tweet_card": {
+                        "layout_parameters": {
+                            "margin_ratio": 0.075,
+                            "headline_scale": 0.054,
+                            "line_height_head": 1.25,
+                        }
+                    },
+                    "minimal_dark": {
+                        "layout_parameters": {
+                            "margin_ratio": 0.08,
+                            "headline_scale": 0.046,
+                        }
+                    },
+                    "split_editorial": {
+                        "layout_parameters": {
+                            "split_ratio": 0.44,
+                            "margin_ratio": 0.08,
+                        }
+                    },
                 },
             },
             "social": {
@@ -326,17 +390,47 @@ class ChannelManager:
             },
             "video": {
                 "enabled": is_media,
+                "voice": "",
+                "language": "",
                 "aspect_ratio": "16:9",
                 "soundtrack_volume": 0.16,
                 "fps": 30,
+                "caption_highlight_words": [],
+            },
+            "render": {
+                "theme": {
+                    "primary": primary_color,
+                    "accent": primary_color,
+                    "background": "#0B1220",
+                },
+                "providers": {},
+                "blender": {
+                    "enabled": False,
+                    "binary_env": "BLENDER_PATH",
+                    "engine": "BLENDER_EEVEE_NEXT",
+                    "samples": 32,
+                    "factory_startup": True,
+                    "transparent_default": True,
+                    "color_management": "",
+                    "resolution_by_ratio": {
+                        "16:9": "1920x1080",
+                        "9:16": "1080x1920",
+                        "1:1": "1080x1080",
+                    },
+                    "template_allowlist": [],
+                },
             },
             "settings": {
                 "auto_sanitize": True,
+                "sanitize_profiles": ["br"],
                 "default_aspect_ratio": "4:5" if archetype == "personal_brand" else "3:4"
             }
         }
 
         config_path = channel_dir / "channel.json"
+        from src.core.schema_validator import validate as validate_schema
+
+        validate_schema("channel", config, source=f"scaffold:{clean_slug}")
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
 

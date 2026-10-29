@@ -140,6 +140,35 @@ Geração declarativa de ativos 3D fotorrealistas isolados com canal alfa transp
 
 ---
 
+### 9. Arquitetura de Fábrica Universal — Providers, Receitas e Schemas (v0.10.0)
+
+`src/` é a **fábrica**: engines e providers universais que não conhecem nenhum canal. `channels/<slug>/` é **dado**: receitas, assets e templates do canal. Consulte [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) e [`docs/PROVIDERS.md`](docs/PROVIDERS.md).
+
+| Camada | Responsabilidade |
+|---|---|
+| `src/core/` | Descoberta de canal, credenciais, cache, validação de schema, registry de capabilities |
+| `src/engine/` | `universal_carousel`, `universal_publisher`, `universal_audio`, `universal_captions`, `universal_thumbnail`, `universal_documentary`, `universal_video`, `universal_assets`, `universal_3d`, `universal_deploy` |
+| `src/engine/providers/` | Única porta para runtimes externos: Blender, Remotion, FFmpeg, Edge-TTS, Whisper, IA de imagem, prompt export, acervos |
+| `src/adapters/` | Provedores de publicação (Buffer, Instagram, Dev.to, Ghost, Reddit, Webhook, Markdown) |
+| `src/video/` | Composições Remotion com tema 100% via props (`theme.ts`) |
+
+Toda receita é validada contra `.agents/schemas/*.schema.json` antes de qualquer execução:
+
+```bash
+omnipress carousel    --recipe channels/<slug>/episodios/<ep>/carrossel/carousel_recipe.json --all
+omnipress thumbnail   --recipe channels/<slug>/media/thumbnails/<post>/thumbnail_recipe.json --preview 120 320
+omnipress documentary --recipe channels/<slug>/episodios/<ep>/documentario/documentary_recipe.json
+omnipress video       --recipe channels/<slug>/recursos_globais/vinhetas/intro_recipe.json
+omnipress master-audio voice.mp3 -o master.mp3 --mix-bed soundtrack.mp3 --bed-volume 0.18
+omnipress align-captions whisper.json -o captions.json --verify
+omnipress assets      --recipe channels/<slug>/media/raw/assets/asset_recipe.json
+omnipress render-3d   --recipe channels/<slug>/media/visuals/3d/3d_recipe.json --validate-only
+omnipress deploy      public/episode.mp4 --target-dir public
+omnipress doctor --json
+```
+
+Adicionar um canal ou um template 3D exige **zero Python**: apenas JSON e arquivos do canal. Adicionar um runtime externo exige um provider e uma entrada de capability.
+
 ## 🚀 Guia Passo a Passo de Uso (Hands-on)
 
 Abaixo está o roteiro prático para configurar, conectar e operar o OmniPress do zero ao seu primeiro post publicado.

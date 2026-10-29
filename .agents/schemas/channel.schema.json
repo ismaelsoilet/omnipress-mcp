@@ -1,0 +1,186 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omnipress.dev/schemas/channel.schema.json",
+  "title": "OmniPress Channel Configuration",
+  "description": "Canonical contract for channels/<slug>/channel.json. No credentials are stored here; secrets live in channels/<slug>/.env.",
+  "type": "object",
+  "required": ["slug", "name"],
+  "additionalProperties": true,
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "type": "string" },
+    "slug": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "name": { "type": "string", "minLength": 1 },
+    "archetype": { "enum": ["personal_brand", "media_channel", "media_house", "hybrid"] },
+    "description": { "type": "string" },
+    "category": { "type": "string" },
+    "language": { "type": "string" },
+    "features": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "articles": { "type": "boolean" },
+        "carousels": { "type": "boolean" },
+        "social_posts": { "type": "boolean" },
+        "video": { "type": "boolean" }
+      }
+    },
+    "branding": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "handle": { "type": "string" },
+        "badge_text": { "type": "string" },
+        "theme_colors": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "primary": { "type": "string" },
+            "background": { "type": "string" },
+            "text": { "type": "string" },
+            "secondary_text": { "type": "string" }
+          }
+        },
+        "typography": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "bold_font": { "type": "string" },
+            "regular_font": { "type": "string" }
+          }
+        }
+      }
+    },
+    "visual_identity": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "default_preset": {
+          "enum": ["classic_card", "tweet_card", "minimal_dark", "split_editorial"]
+        },
+        "palette": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "primary": { "type": "string" },
+            "background": { "type": "string" },
+            "card_background": { "type": "string" },
+            "text": { "type": "string" },
+            "secondary_text": { "type": "string" },
+            "accent": { "type": "string" },
+            "border": { "type": "string" }
+          }
+        },
+        "typography": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "font_family": { "enum": ["sans", "serif", "mono"] },
+            "bold_font": { "type": "string" },
+            "regular_font": { "type": "string" },
+            "serif_bold_font": { "type": "string" },
+            "serif_regular_font": { "type": "string" },
+            "mono_font": { "type": "string" }
+          }
+        },
+        "author": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "name": { "type": "string" },
+            "handle": { "type": "string" },
+            "title": { "type": "string" },
+            "avatar_path": { "type": "string" },
+            "verified": { "type": "boolean" }
+          }
+        },
+        "elements": { "type": "object", "additionalProperties": true },
+        "layout_parameters": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "margin_ratio": { "type": "number", "minimum": 0, "maximum": 0.5 },
+            "start_y_ratio": { "type": "number", "minimum": 0, "maximum": 1 },
+            "split_ratio": { "type": "number", "minimum": 0.1, "maximum": 0.9 },
+            "headline_scale": { "type": "number", "exclusiveMinimum": 0 },
+            "body_scale": { "type": "number", "exclusiveMinimum": 0 },
+            "step_scale": { "type": "number", "exclusiveMinimum": 0 },
+            "badge_scale": { "type": "number", "exclusiveMinimum": 0 },
+            "footer_scale": { "type": "number", "exclusiveMinimum": 0 },
+            "line_height_head": { "type": "number", "exclusiveMinimum": 0 },
+            "line_height_body": { "type": "number", "exclusiveMinimum": 0 },
+            "card_bg_alpha": { "type": "integer", "minimum": 0, "maximum": 255 },
+            "card_alpha": { "type": "integer", "minimum": 0, "maximum": 255 },
+            "card_pad_x_ratio": { "type": "number", "minimum": 0 },
+            "card_pad_y_ratio": { "type": "number", "minimum": 0 },
+            "stroke_width": { "type": "integer", "minimum": 0 },
+            "border_radius": { "type": "integer", "minimum": 0 },
+            "avatar_size_ratio": { "type": "number", "minimum": 0 },
+            "show_verified_badge": { "type": "boolean" },
+            "gradient_start_ratio": { "type": "number", "minimum": 0, "maximum": 1 },
+            "enable_text_card": { "type": "boolean" },
+            "top_bias": { "type": "number", "minimum": 0, "maximum": 1 },
+            "contrast_boost": { "type": "number", "exclusiveMinimum": 0 },
+            "color_boost": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        "presets": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "semantic_tags": { "type": "object", "additionalProperties": { "type": "string" } },
+        "semantic_categories": { "type": "object", "additionalProperties": true }
+      }
+    },
+    "social": { "type": "object", "additionalProperties": true },
+    "video": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "voice": { "type": "string" },
+        "language": { "type": "string" },
+        "aspect_ratio": { "enum": ["16:9", "9:16", "1:1", "4:5", "3:4"] },
+        "soundtrack_volume": { "type": "number", "minimum": 0, "maximum": 0.2 },
+        "fps": { "type": "integer", "minimum": 1 },
+        "caption_highlight_words": { "type": "array", "items": { "type": "string" } },
+        "blender_templates": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "render": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "theme": { "type": "object", "additionalProperties": true },
+        "providers": { "type": "object", "additionalProperties": true },
+        "blender": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "binary_env": { "type": "string" },
+            "engine": { "enum": ["BLENDER_EEVEE_NEXT", "CYCLES"] },
+            "samples": { "type": "integer", "minimum": 1 },
+            "factory_startup": { "type": "boolean" },
+            "transparent_default": { "type": "boolean" },
+            "color_management": { "type": "string" },
+            "resolution_by_ratio": { "type": "object", "additionalProperties": { "type": "string" } },
+            "template_allowlist": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "auto_sanitize": { "type": "boolean" },
+        "sanitize_profiles": { "type": "array", "items": { "enum": ["br", "intl", "generic_pii"] } },
+        "default_aspect_ratio": { "enum": ["16:9", "9:16", "1:1", "4:5", "3:4"] }
+      }
+    }
+  }
+}

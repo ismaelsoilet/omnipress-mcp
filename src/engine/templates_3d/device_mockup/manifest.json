@@ -1,0 +1,13 @@
+{
+  "$schema": "../../../../.agents/schemas/template_manifest.schema.json",
+  "name": "device_mockup",
+  "description": "Photorealistic smartphone mockup with a UV-mapped screen texture.",
+  "outputs": ["png"],
+  "capabilities": ["blender"],
+  "params": [
+    { "name": "texture", "type": "string", "required": true, "description": "Screen image path." },
+    { "name": "tilt_x", "type": "number", "default": 8.0, "min": -90, "max": 90 },
+    { "name": "tilt_y", "type": "number", "default": -10.0, "min": -90, "max": 90 },
+    { "name": "chassis_color", "type": "string", "default": "0.08,0.09,0.11" }
+  ]
+}

@@ -140,6 +140,35 @@ Declarative photorealistic 3D asset generation powered by headless Blender 4.2+ 
 
 ---
 
+### 9. Universal Factory Architecture — Providers, Recipes & Schemas (v0.10.0)
+
+`src/` is a **factory**: universal engines and providers that know nothing about a specific channel. `channels/<slug>/` is **data**: recipes, assets and channel templates. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/PROVIDERS.md`](docs/PROVIDERS.md).
+
+| Layer | Responsibility |
+|---|---|
+| `src/core/` | Channel discovery, credentials, cache, schema validation, capability registry |
+| `src/engine/` | `universal_carousel`, `universal_publisher`, `universal_audio`, `universal_captions`, `universal_thumbnail`, `universal_documentary`, `universal_video`, `universal_assets`, `universal_3d`, `universal_deploy` |
+| `src/engine/providers/` | The only door to external runtimes: Blender, Remotion, FFmpeg, Edge-TTS, Whisper, AI image, prompt export, stock assets |
+| `src/adapters/` | Publishing providers (Buffer, Instagram, Dev.to, Ghost, Reddit, Webhook, Markdown) |
+| `src/video/` | Remotion compositions with a fully prop-driven theme (`theme.ts`) |
+
+Declarative recipes are validated against `.agents/schemas/*.schema.json` before any work:
+
+```bash
+omnipress carousel    --recipe channels/<slug>/episodios/<ep>/carrossel/carousel_recipe.json --all
+omnipress thumbnail   --recipe channels/<slug>/media/thumbnails/<post>/thumbnail_recipe.json --preview 120 320
+omnipress documentary --recipe channels/<slug>/episodios/<ep>/documentario/documentary_recipe.json
+omnipress video       --recipe channels/<slug>/recursos_globais/vinhetas/intro_recipe.json
+omnipress master-audio voice.mp3 -o master.mp3 --mix-bed soundtrack.mp3 --bed-volume 0.18
+omnipress align-captions whisper.json -o captions.json --verify
+omnipress assets      --recipe channels/<slug>/media/raw/assets/asset_recipe.json
+omnipress render-3d   --recipe channels/<slug>/media/visuals/3d/3d_recipe.json --validate-only
+omnipress deploy      public/episode.mp4 --target-dir public
+omnipress doctor --json
+```
+
+Adding a channel or a 3D template requires **zero Python**: only JSON and channel files. Adding a new external runtime requires one provider and one capability entry.
+
 ## 🚀 Step-by-Step Hands-On Guide
 
 Here is the complete walkthrough to install, configure, and use OmniPress from scratch to your first published piece.

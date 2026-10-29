@@ -24,6 +24,11 @@ A estrutura suporta de forma modular tanto o fluxo leve de **Campanhas Sociais**
 channels/<channel-slug>/
 ├── channel.json                     # Metadados, arquétipo, branding, cores, redes sociais e módulos ativos
 ├── README.md                        # Manifesto editorial, diretrizes de tom e checklist do canal
+├── niches/                          # Packs declarativos de brainstorm e roteiro (conteúdo é do canal)
+│   ├── _example.json                # Conceitos, pilares e backlog de tópicos
+│   └── script_pack.json             # Templates de roteiro/cenas/metadados
+├── blender_templates/               # Templates 3D exclusivos do canal (marca, geografia, selos)
+│   └── <nome>/{template.py, manifest.json}
 │
 ├── campanhas/                       # [ARQUÉTIPO: PERSONAL_BRAND / SOCIAL-FIRST]
 │   └── <nome_da_campanha>/          # Workspace de postagens cotidianas, insights e lançamentos
@@ -52,6 +57,15 @@ channels/<channel-slug>/
 │       ├── midias/                  # Acervo compartilhado do episódio (fotos reais, documentos originais)
 │       └── posts/                   # Copys para YouTube (com capítulos e fontes), Shorts e redes
 │
+├── media/                           # Acervo e saídas universais do canal
+│   ├── raw/                         # Imagens/fontes brutas
+│   ├── carousels/                   # Saída do universal_carousel
+│   ├── thumbnails/                  # Saída do universal_thumbnail + thumbnail_recipe.json
+│   ├── visuals/                     # Cenas documentais e assets 3D (3d_recipe.json)
+│   ├── voiceover/                   # Locução bruta e masterizada (audio_recipe.json)
+│   ├── soundtrack/                  # Trilhas sonoras licenciadas
+│   └── output/                      # Vídeos finais renderizados
+│
 ├── recursos_globais/                # Ativos compartilhados e utilitários da marca
 │   ├── branding/                    # Banner e avatar oficial do canal
 │   ├── vinhetas/                    # Vinhetas oficiais 16:9 e 9:16 (quando canal de vídeo)
@@ -74,6 +88,9 @@ O motor do OmniPress já possui geradores universais e independentes para todas 
 | **2. Carrosséis Visuais** | `UniversalCarouselEngine`, `CarouselBuilder` (Pillow) | JPG 3:4 (`1080x1440`) ou 4:5 (`1080x1350`) com cards de contraste (Regra 08) | `campanhas/*/carousel_recipe.json` ou `episodios/*/carrossel/` |
 | **3. Micro-Posts & Threads** | `UniversalPublisherEngine`, `BufferPublisherAdapter`, `PublishingShield` | Textos validados para LinkedIn (3.000 chars), X (280 chars), IG (2.196 chars) | `campanhas/*/posts/` ou `episodios/*/posts/` |
 | **4. Vídeos Programáticos** | Remotion (`DocumentaryEpisode-16x9`, `DocumentaryShort-9x16`), EBU R128 (-14 LUFS) | MP4 16:9 (1920x1080) e 9:16 (1080x1920) | `episodios/*/documentario/` e `episodios/*/shorts/` |
+| **5. Thumbnails de Alto CTR** | `UniversalThumbnailEngine`, `rule15_validator` | JPG 16:9 (1920x1080) ou 9:16 (1080x1920) + previews 120/320px | `media/thumbnails/<post>/thumbnail_recipe.json` |
+| **6. Cenas Documentais** | `UniversalDocumentaryEngine` | JPG 16:9/9:16 + `episode_config.json` para Remotion | `episodios/*/documentario/documentary_recipe.json` |
+| **7. Assets 3D** | `Universal3DEngine`, provider Blender, templates/manifestos | PNG/WebM/MP4/GLB com alpha | `media/visuals/<post>/3d_recipe.json` |
 
 ---
 

@@ -94,7 +94,7 @@ export const HeraldicSurgery: React.FC<HeraldicSurgeryProps> = ({
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: "#06080C",
+        backgroundColor: "var(--omni-background, #0B1220)",
         overflow: "hidden",
       }}
     >
@@ -199,8 +199,8 @@ export const HeraldicSurgery: React.FC<HeraldicSurgeryProps> = ({
           alignItems: "center",
           gap: 10,
           backgroundColor: "rgba(8, 10, 14, 0.90)",
-          border: `1.2px solid ${isAfterSurgery ? "rgba(0, 180, 95, 0.6)" : "rgba(212, 175, 55, 0.6)"}`,
-          borderLeft: `5px solid ${isAfterSurgery ? "#00B45F" : "#D4AF37"}`,
+          border: `1.2px solid ${isAfterSurgery ? "rgba(var(--omni-success-rgb, 16, 185, 129), 0.6)" : "rgba(var(--omni-accent-rgb, 59, 130, 246), 0.6)"}`,
+          borderLeft: `5px solid ${isAfterSurgery ? "var(--omni-success, #10B981)" : "var(--omni-accent, #3B82F6)"}`,
           borderRadius: 8,
           padding: isVertical ? "10px 22px" : "8px 18px",
           boxShadow: "0 6px 20px rgba(0, 0, 0, 0.8)",
