@@ -16,6 +16,7 @@ from src.core.schema_validator import validate as validate_schema
 from src.utils.sanitizer import resolve_profiles, sanitize_text
 
 logger = logging.getLogger("omnipress.universal_publisher")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 PLATFORM_LIMITS = {
     "instagram": 2196,
@@ -239,6 +240,29 @@ class UniversalPublisherEngine:
         mode = recipe.get("mode") or recipe.get("publish", {}).get("mode")
         provider = recipe.get("provider") or recipe.get("publisher") or recipe.get("publish", {}).get("provider")
 
+        document_url = recipe.get("document_url") or recipe.get("publish", {}).get("document_url")
+        document_title = recipe.get("document_title") or recipe.get("publish", {}).get("document_title")
+        document_thumbnail_url = recipe.get("document_thumbnail_url") or recipe.get("publish", {}).get("document_thumbnail_url")
+        document_path = recipe.get("document_path") or recipe.get("publish", {}).get("document_path")
+
+        if document_path and not document_url:
+            from src.utils.storage import get_default_storage_provider, CatboxStorageProvider
+            doc_file = Path(document_path)
+            if not doc_file.is_absolute():
+                doc_file = PROJECT_ROOT / doc_file
+            if doc_file.exists():
+                storage = get_default_storage_provider(channel_slug)
+                if isinstance(storage, CatboxStorageProvider):
+                    logger.warning(
+                        "Catbox storage provider is active. Buffer's document crawler may reject "
+                        "Catbox URLs due to Content-Length headers. For automated LinkedIn PDF carousels, "
+                        "configure S3_BUCKET_NAME/R2_BUCKET_NAME or OMNIPRESS_PUBLIC_URL."
+                    )
+                try:
+                    document_url = storage.upload_file(doc_file)
+                except Exception as e:
+                    logger.warning("Failed to auto-upload document_path '%s': %s", document_path, e)
+
         return self.publish_social_post(
             channel_slug=channel_slug,
             text=text,
@@ -250,4 +274,8 @@ class UniversalPublisherEngine:
             dry_run=dry_run,
             thread=thread,
             provider=provider,
+            document_url=document_url,
+            document_title=document_title,
+            document_thumbnail_url=document_thumbnail_url,
+            document_path=document_path,
         )

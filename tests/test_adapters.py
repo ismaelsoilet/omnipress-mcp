@@ -60,6 +60,43 @@ def test_buffer_adapter_queue_post(monkeypatch):
         assert call_payload["variables"]["input"]["dueAt"] == "2026-10-15T15:00:00Z"
 
 
+def test_buffer_adapter_queue_linkedin_document(monkeypatch):
+    monkeypatch.setenv("BUFFER_API_KEY", "test_key_123")
+    monkeypatch.setenv("BUFFER_LINKEDIN_PROFILE_ID", "prof_linkedin_99")
+    adapter = BufferPublisherAdapter()
+
+    with patch("requests.post") as mock_post:
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "data": {
+                "createPost": {
+                    "post": {"id": "post_doc_1", "status": "scheduled"}
+                }
+            }
+        }
+        mock_post.return_value = mock_resp
+
+        res = adapter.queue_social_post(
+            text="LinkedIn Document Carousel Post",
+            platforms=["linkedin"],
+            document_url="https://storage.example.com/dossie.pdf",
+            document_title="Dossiê Tributário",
+            document_thumbnail_url="https://storage.example.com/thumb.jpg",
+            schedule_time="2026-10-15T15:00:00Z",
+            allow_test=True,
+            force_duplicate=True,
+        )
+        assert res["success"] is True
+        call_payload = mock_post.call_args[1]["json"]
+        assets = call_payload["variables"]["input"]["assets"]
+        assert len(assets) == 1
+        assert "document" in assets[0]
+        assert assets[0]["document"]["url"] == "https://storage.example.com/dossie.pdf"
+        assert assets[0]["document"]["title"] == "Dossiê Tributário"
+        assert assets[0]["document"]["thumbnailUrl"] == "https://storage.example.com/thumb.jpg"
+
+
 def test_buffer_adapter_publish_now_by_default(monkeypatch):
     monkeypatch.setenv("BUFFER_API_KEY", "test_key_123")
     monkeypatch.setenv("BUFFER_LINKEDIN_PROFILE_ID", "prof_linkedin_99")
@@ -282,6 +319,7 @@ def test_reddit_adapter(monkeypatch):
     monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret456")
     monkeypatch.setenv("REDDIT_USERNAME", "omni_bot")
     monkeypatch.setenv("REDDIT_PASSWORD", "pass789")
+    monkeypatch.setenv("REDDIT_DEFAULT_SUBREDDIT", "SideProject")
     adapter = RedditPublisherAdapter()
     assert adapter.is_configured() is True
 

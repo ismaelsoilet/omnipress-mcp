@@ -333,8 +333,20 @@ class BufferPublisherAdapter(BasePublisherAdapter):
             elif service == "instagram":
                 service_limit = 10
 
+            doc_url = kwargs.get("document_url")
+            doc_title = kwargs.get("document_title") or "Documento"
+            doc_thumb = kwargs.get("document_thumbnail_url") or (media_urls[0] if media_urls else "")
+
             target_assets = []
-            if media_urls:
+            if service == "linkedin" and doc_url:
+                target_assets.append({
+                    "document": {
+                        "url": doc_url,
+                        "title": doc_title,
+                        "thumbnailUrl": doc_thumb or doc_url,
+                    }
+                })
+            elif media_urls:
                 for url in media_urls[:service_limit]:
                     target_assets.append({"image": {"url": url}})
 

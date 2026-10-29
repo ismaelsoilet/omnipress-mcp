@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] — 2026-10-29
+
+### Added
+- **Suporte Nativo a Documentos no Buffer (LinkedIn PDF Carousels)**:
+  - `src/adapters/buffer_adapter.py`: adicionado suporte a `DocumentAssetInput` (`document_url`, `document_title`, `document_thumbnail_url`) na mutação GraphQL do Buffer para publicação nativa de documentos no LinkedIn.
+  - `src/engine/universal_publisher.py`: extração e encaminhamento automático de `document_path`, `document_url`, `document_title` e `document_thumbnail_url` no `execute_recipe()`.
+  - Suporte a hosting com headers HTTP completos e Content-Length via GitHub CDN / CDN pública para evitar rejeição do scraper do Buffer.
+
+### Fixed
+- **Publicação de Carrossel PDF Ignorado no LinkedIn**:
+  - Corrigido gap no `execute_recipe()` onde arquivos PDF especificados em `document_path` não eram repassados para `publish_social_post()`.
+  - Corrigido bypass de anti-duplicação e compatibilidade com o validador de similaridade do Buffer.
+
 ## [0.10.0] — 2026-10-29
 
 ### Added

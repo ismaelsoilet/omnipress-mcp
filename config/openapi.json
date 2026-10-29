@@ -3,7 +3,7 @@
   "info": {
     "title": "OmniPress Publishing Engine API",
     "description": "Agentic multi-channel publishing API for long-form articles, LinkedIn, X (Twitter), Threads, and Reddit with built-in LGPD & judicial de-identification privacy scanning.",
-    "version": "0.10.0"
+    "version": "0.10.1"
   },
   "servers": [
     {

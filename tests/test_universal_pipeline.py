@@ -395,6 +395,29 @@ def test_publisher_execute_recipe_from_file(tmp_path, temp_workspace):
     assert res["channel_slug"] == temp_workspace["channel_slug"]
 
 
+def test_publisher_execute_recipe_with_document(tmp_path, temp_workspace):
+    """Verifies executing a post recipe with document_path and document_title."""
+    engine = UniversalPublisherEngine(channel_manager=temp_workspace["cm"])
+
+    dummy_pdf = tmp_path / "test_doc.pdf"
+    dummy_pdf.write_bytes(b"%PDF-1.4 mock pdf data")
+
+    recipe_data = {
+        "channel_slug": temp_workspace["channel_slug"],
+        "text": "Post with PDF document carousel.",
+        "platforms": ["linkedin"],
+        "document_path": str(dummy_pdf),
+        "document_title": "Relatório Anual",
+    }
+    recipe_file = tmp_path / "doc_recipe.json"
+    recipe_file.write_text(json.dumps(recipe_data), encoding="utf-8")
+
+    res = engine.execute_recipe(recipe_file, dry_run=True)
+    assert res["success"] is True
+    assert res["dry_run"] is True
+    assert res["channel_slug"] == temp_workspace["channel_slug"]
+
+
 # =========================================================================
 # 5. CLI & Standalone Script Entrypoint Tests
 # =========================================================================
