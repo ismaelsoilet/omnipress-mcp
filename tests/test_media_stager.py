@@ -113,3 +113,29 @@ def test_remote_and_relative_paths_are_left_untouched(tmp_path: Path):
     )
     assert normalized == props
     assert replacements == []
+
+
+def test_relative_source_mapping_rewrites_props(tmp_path: Path):
+    _make_media(tmp_path)
+    manifest = {
+        "files": [
+            {
+                "source": "channels/test-channel/media/raw/a.jpg",
+                "target": "scenes/01.jpg",
+            }
+        ]
+    }
+    stager = MediaStager(tmp_path)
+    report = stager.ensure(manifest, "channels/test-channel/public")
+    normalized, replacements = stager.normalize_props(
+        {"src": "channels/test-channel/media/raw/a.jpg"},
+        "channels/test-channel/public",
+        mapping=report["mapping"],
+    )
+    assert normalized["src"] == "scenes/01.jpg"
+    assert replacements == [
+        {
+            "from": "channels/test-channel/media/raw/a.jpg",
+            "to": "scenes/01.jpg",
+        }
+    ]

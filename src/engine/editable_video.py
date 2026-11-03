@@ -402,6 +402,36 @@ class EditableVideoEngine:
         )
         return f"<SceneKenBurns {' '.join(props)} />", unknown
 
+    @staticmethod
+    def _pack_track_blocks(
+        items: List[Tuple[int, int, str]], base_name: str
+    ) -> str:
+        lanes: List[List[Tuple[int, int, str]]] = []
+        for item in items:
+            placed = False
+            for lane in lanes:
+                if all(
+                    item[1] <= other[0] or item[0] >= other[1]
+                    for other in lane
+                ):
+                    lane.append(item)
+                    placed = True
+                    break
+            if not placed:
+                lanes.append([item])
+
+        blocks: List[str] = []
+        for lane_index, lane in enumerate(lanes):
+            track_name = (
+                base_name if lane_index == 0 else f"{base_name} {lane_index + 1}"
+            )
+            blocks.append(
+                f'      <Track name="{track_name}">\n'
+                + "\n".join(node for _, _, node in lane)
+                + "\n      </Track>"
+            )
+        return "\n".join(blocks)
+
     def _build_tsx(
         self,
         config: Dict[str, Any],
@@ -419,8 +449,8 @@ class EditableVideoEngine:
         intro_props = config.get("introProps") or {}
         cursor = 0.0
         scene_timeline: List[Tuple[int, int, str]] = []
-        scene_audio_nodes: List[str] = []
-        sfx_nodes: List[str] = []
+        scene_audio_timeline: List[Tuple[int, int, str]] = []
+        sfx_timeline: List[Tuple[int, int, str]] = []
 
         for index, scene in enumerate(scenes, start=1):
             start_seconds = scene.get("startInSeconds")
@@ -453,42 +483,23 @@ class EditableVideoEngine:
 
             scene_vo = targets.get(f"scene-vo:{index}")
             if scene_vo:
-                scene_audio_nodes.append(
-                    f"""        <Sequence name="VO de cena {index:02d}" from={{{start_frame}}} durationInFrames={{{scene_frames}}}>
+                node = f"""        <Sequence name="VO de cena {index:02d}" from={{{start_frame}}} durationInFrames={{{scene_frames}}}>
           <Audio src={{staticFile({_js(scene_vo)})}} volume={{1.0}} />
         </Sequence>"""
+                scene_audio_timeline.append(
+                    (start_frame, start_frame + scene_frames, node)
                 )
             scene_sfx = targets.get(f"sfx:{index}")
             if scene_sfx:
-                sfx_nodes.append(
-                    f"""        <Sequence name="SFX de cena {index:02d}" from={{{start_frame}}} durationInFrames={{{min(scene_frames, 120)}}}>
+                sfx_frames = min(scene_frames, 120)
+                node = f"""        <Sequence name="SFX de cena {index:02d}" from={{{start_frame}}} durationInFrames={{{sfx_frames}}}>
           <Audio src={{staticFile({_js(scene_sfx)})}} volume={{{float(scene.get("sfxVolume") or 0.35)}}} />
         </Sequence>"""
+                sfx_timeline.append(
+                    (start_frame, start_frame + sfx_frames, node)
                 )
 
-        scene_lanes: List[List[Tuple[int, int, str]]] = []
-        for item in scene_timeline:
-            placed = False
-            for lane in scene_lanes:
-                if all(
-                    item[1] <= other[0] or item[0] >= other[1]
-                    for other in lane
-                ):
-                    lane.append(item)
-                    placed = True
-                    break
-            if not placed:
-                scene_lanes.append([item])
-
-        scene_track_blocks: List[str] = []
-        for lane_index, lane in enumerate(scene_lanes):
-            track_name = "Cenas" if lane_index == 0 else f"Cenas {lane_index + 1}"
-            scene_track_blocks.append(
-                f'      <Track name="{track_name}">\n'
-                + "\n".join(node for _, _, node in lane)
-                + "\n      </Track>"
-            )
-        scene_tracks_block = "\n".join(scene_track_blocks)
+        scene_tracks_block = self._pack_track_blocks(scene_timeline, "Cenas")
 
         voiceovers: List[Dict[str, Any]] = []
         for index, voiceover in enumerate(config.get("voiceovers") or [], start=1):
@@ -557,21 +568,15 @@ class EditableVideoEngine:
       </Track>
 """
 
-        scene_audio_block = ""
-        if scene_audio_nodes:
-            scene_audio_block = (
-                '      <Track name="Áudio de Cena">\n'
-                + "\n".join(scene_audio_nodes)
-                + "\n      </Track>\n"
-            )
+        scene_audio_block = self._pack_track_blocks(
+            scene_audio_timeline, "Áudio de Cena"
+        )
+        if scene_audio_block:
+            scene_audio_block += "\n"
 
-        sfx_block = ""
-        if sfx_nodes:
-            sfx_block = (
-                '      <Track name="SFX de Cena">\n'
-                + "\n".join(sfx_nodes)
-                + "\n      </Track>\n"
-            )
+        sfx_block = self._pack_track_blocks(sfx_timeline, "SFX de Cena")
+        if sfx_block:
+            sfx_block += "\n"
 
         background_music = targets.get("music", "")
         outro_music = targets.get("outro-music", "")
@@ -597,9 +602,9 @@ export const Episode: React.FC = () => {{
   return (
     <EpisodeShell
       theme={{theme}}
-      backgroundMusicSrc={_js(background_music)}
+      {_js_prop("backgroundMusicSrc", background_music)}
       backgroundMusicVolume={{{music_volume}}}
-      outroMusicSrc={_js(outro_music)}
+      {_js_prop("outroMusicSrc", outro_music)}
       outroMusicStartSec={{{outro_start}}}
       voiceovers={{{json.dumps(voiceovers, ensure_ascii=False)}}}
       captions={{captions}}
@@ -649,21 +654,24 @@ registerRoot(
         }
         if acts:
             timelines: List[Dict[str, Any]] = []
+            cursor = 0.0
             for act_id, act in acts.items():
-                start = float(act.get("start") or 0)
+                start = float(act.get("start") or cursor)
                 duration = float(act.get("duration") or 0)
                 if duration <= 0 and act.get("chunks"):
                     duration = max(
                         float(chunk.get("end") or 0)
                         for chunk in act["chunks"]
                     )
+                global_end = start + duration
                 timelines.append(
                     {
                         "id": str(act_id),
                         "globalStart": start,
-                        "globalEnd": start + duration,
+                        "globalEnd": global_end,
                     }
                 )
+                cursor = max(cursor, global_end)
             return acts, timelines, "Record<string, ActData>"
 
         if isinstance(captions.get("chunks"), list):

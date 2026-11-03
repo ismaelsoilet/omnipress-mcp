@@ -33,7 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **`staticFile()` com caminhos absolutos**: mídia de canal agora passa por staging e `--public-dir`; caminhos absolutos legados são normalizados automaticamente.
 - **TSX gerado com aspas/newlines**: atributos da vinheta agora usam expressões JSX (`prop={"..."}`) e escapam corretamente aspas, barras e quebras de linha.
-- **Legendas do `align-captions`**: payloads act-keyed e flat são normalizados; `id`/`duration` são aceitos por `CaptionChunk`; `actTimelines` é derivado automaticamente quando ausente.
+- **Legendas do `align-captions`**: payloads act-keyed e flat são normalizados; `id`/`duration` são aceitos por `CaptionChunk`; `actTimelines` é derivado automaticamente quando ausente, com inícios cumulativos para múltiplos atos.
+- **Payload flat de legendas**: `SynchronizedCaptions` agora lê `{metadata, words, chunks}` no template sem exigir chave de ato.
+- **`episode_config.json` portátil**: `mediaSrc`, trilha, locução e SFX são gravados relativos à raiz do projeto; o provider normaliza via manifesto.
+- **Áudio/SFX de cenas sobrepostas**: lane packing também se aplica às tracks `Áudio de Cena` e `SFX de Cena`.
+- **Atributos de música**: `backgroundMusicSrc` e `outroMusicSrc` usam expressão JSX segura para nomes com aspas/barras.
 - **Re-render após edição de duração**: recipes editáveis não fixam mais `duration_frames`; o provider ignora `--frames` quando `editable=true`.
 - **`media.json` portátil**: fontes são gravadas relativas à raiz do projeto, permitindo reconstruir o staging em outro clone/máquina.
 - **SFX documental**: `sfx` relativo agora é resolvido para caminho absoluto no `episode_config`, evitando 404 no render template.

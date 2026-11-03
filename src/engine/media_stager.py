@@ -165,6 +165,12 @@ class MediaStager:
                 shutil.copy2(source, destination)
                 copied = True
             mapping[str(source)] = relative
+            try:
+                relative_source = source.relative_to(self.project_root).as_posix()
+            except ValueError:
+                relative_source = None
+            if relative_source:
+                mapping[relative_source] = relative
             staged.append(
                 {
                     "source": str(source),
@@ -237,6 +243,10 @@ class MediaStager:
 
             candidate = Path(value)
             if not candidate.is_absolute():
+                relative = known.get(candidate.as_posix())
+                if relative is not None:
+                    replacements.append({"from": value, "to": relative})
+                    return relative
                 return value
             resolved = candidate.resolve()
             if not resolved.is_file():

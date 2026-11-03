@@ -297,3 +297,62 @@ def test_language_and_camera_are_normalized_for_typescript(tmp_path: Path):
     tsx = (Path(result["episode_dir"]) / "Episode.tsx").read_text(encoding="utf-8")
     assert 'language={"pt"}' in tsx
     assert 'direction={"zoom-in"}' in tsx
+
+
+def test_overlapping_scene_audio_is_lane_packed(tmp_path: Path):
+    make_channel(tmp_path)
+    config = make_episode_config()
+    config["scenes"][0]["voiceoverAudioSrc"] = "media/raw/vo.wav"
+    config["scenes"][1]["voiceoverAudioSrc"] = "media/raw/vo.wav"
+    config["scenes"][1]["startInSeconds"] = 2
+    result = EditableVideoEngine(project_root=tmp_path).scaffold(config)
+    tsx = (Path(result["episode_dir"]) / "Episode.tsx").read_text(encoding="utf-8")
+    assert 'Track name="Áudio de Cena 2"' in tsx
+
+
+def test_music_attribute_escaping_uses_jsx_expression(tmp_path: Path):
+    channel = make_channel(tmp_path)
+    quote_file = channel / "media/raw/bed.wav\""
+    quote_file.write_bytes(b"fake-quote-bed")
+    config = make_episode_config()
+    config["backgroundMusicSrc"] = 'media/raw/bed.wav"'
+    result = EditableVideoEngine(project_root=tmp_path).scaffold(config)
+    tsx = (Path(result["episode_dir"]) / "Episode.tsx").read_text(encoding="utf-8")
+    assert r'backgroundMusicSrc={"music/bed.wav\""}' in tsx
+
+
+def test_multi_act_captions_derive_cumulative_timelines(tmp_path: Path):
+    make_channel(tmp_path)
+    config = make_episode_config()
+    config["captions"] = {
+        "act_01": {
+            "name": "act_01",
+            "duration": 1.0,
+            "words": [{"word": "UM", "start": 0.0, "end": 1.0}],
+            "chunks": [
+                {
+                    "text": "UM",
+                    "start": 0.0,
+                    "end": 1.0,
+                    "words": [{"word": "UM", "start": 0.0, "end": 1.0}],
+                }
+            ],
+        },
+        "act_02": {
+            "name": "act_02",
+            "duration": 1.0,
+            "words": [{"word": "DOIS", "start": 0.0, "end": 1.0}],
+            "chunks": [
+                {
+                    "text": "DOIS",
+                    "start": 0.0,
+                    "end": 1.0,
+                    "words": [{"word": "DOIS", "start": 0.0, "end": 1.0}],
+                }
+            ],
+        },
+    }
+    result = EditableVideoEngine(project_root=tmp_path).scaffold(config)
+    tsx = (Path(result["episode_dir"]) / "Episode.tsx").read_text(encoding="utf-8")
+    assert '"id": "act_01", "globalStart": 0.0, "globalEnd": 1.0' in tsx
+    assert '"id": "act_02", "globalStart": 1.0, "globalEnd": 2.0' in tsx

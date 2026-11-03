@@ -301,7 +301,7 @@ class UniversalDocumentaryEngine:
             if sfx_raw:
                 sfx_path = self.resolve_media(sfx_raw, target_slug, recipe_dir)
                 if sfx_path.is_file():
-                    sfx_src = str(sfx_path)
+                    sfx_src = self._portable_source(sfx_path)
                 else:
                     warnings.append(
                         f"Scene {scene_id}: SFX not found: {sfx_raw}"
@@ -311,7 +311,7 @@ class UniversalDocumentaryEngine:
                     "id": scene_id,
                     "type": _SCENE_TYPE_MAP.get(str(scene.get("type")), "ken-burns"),
                     "sourceType": scene.get("type"),
-                    "mediaSrc": scene_media,
+                    "mediaSrc": self._portable_source(Path(scene_media)),
                     "durationInSeconds": duration,
                     "startInSeconds": start,
                     "headline": scene.get("headline", ""),
@@ -351,6 +351,10 @@ class UniversalDocumentaryEngine:
         # Scene cards are the exact assets consumed by Remotion.
         for index, item in enumerate(rendered, start=1):
             media_path = Path(str(item["mediaSrc"]))
+            if not media_path.is_absolute():
+                media_path = (
+                    Path(self.channel_manager.root_dir) / media_path
+                ).resolve()
             if media_path.is_file():
                 media_entries.append(
                     {
@@ -370,7 +374,7 @@ class UniversalDocumentaryEngine:
                         "target": f"music/bed{soundtrack_path.suffix.lower() or '.mp3'}",
                     }
                 )
-                soundtrack = str(soundtrack_path)
+                soundtrack = self._portable_source(soundtrack_path)
             else:
                 warnings.append(f"Soundtrack not found: {soundtrack}")
 
@@ -393,7 +397,7 @@ class UniversalDocumentaryEngine:
                         {
                             **raw_voiceover,
                             "id": raw_voiceover.get("id") or "vo_01",
-                            "src": str(voiceover_path),
+                            "src": self._portable_source(voiceover_path),
                         }
                     )
                 else:
@@ -412,7 +416,7 @@ class UniversalDocumentaryEngine:
                 voiceovers.append(
                     {
                         "id": "vo_01",
-                        "src": str(voiceover_path),
+                        "src": self._portable_source(voiceover_path),
                         "startInSeconds": 0,
                         "durationInSeconds": cursor,
                     }
@@ -425,7 +429,11 @@ class UniversalDocumentaryEngine:
             sfx = str(scene.get("sfxSrc") or "").strip()
             if not sfx:
                 continue
-            sfx_path = self.resolve_media(sfx, target_slug, recipe_dir)
+            sfx_path = Path(sfx)
+            if not sfx_path.is_absolute():
+                sfx_path = (
+                    Path(self.channel_manager.root_dir) / sfx_path
+                ).resolve()
             if sfx_path.is_file():
                 media_entries.append(
                     {

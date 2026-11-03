@@ -68,8 +68,9 @@ def test_documentary_manifest_is_portable_and_sfx_is_resolved(tmp_path: Path):
         (episode_dir / "episode_config.json").read_text(encoding="utf-8")
     )
     sfx_src = episode_config["scenes"][0]["sfxSrc"]
-    assert Path(sfx_src).is_absolute()
-    assert Path(sfx_src).is_file()
+    assert not Path(sfx_src).is_absolute()
+    assert sfx_src.startswith("channels/test-channel/")
+    assert episode_config["backgroundMusicSrc"].startswith("channels/test-channel/")
     assert result["warnings"] == []
 
 

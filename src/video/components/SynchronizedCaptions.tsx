@@ -44,9 +44,16 @@ export const SynchronizedCaptions: React.FC<SynchronizedCaptionsProps> = ({
     return null;
   }
 
-  // CASO 1: captionsData é um array direto de chunks (formato padrão do Whisper)
-  if (Array.isArray(captionsData)) {
-    const activeChunk = captionsData.find((chunk) => {
+  // CASO 1: array direto de chunks ou payload flat {metadata, words, chunks}
+  const flatChunks: CaptionChunkItem[] | null = Array.isArray(captionsData)
+    ? captionsData
+    : captionsData &&
+        Array.isArray((captionsData as { chunks?: unknown }).chunks)
+      ? ((captionsData as { chunks?: unknown }).chunks as CaptionChunkItem[])
+      : null;
+
+  if (flatChunks) {
+    const activeChunk = flatChunks.find((chunk) => {
       const start = chunk.startInSeconds ?? chunk.start ?? 0;
       const duration =
         chunk.durationInSeconds ??
@@ -150,13 +157,18 @@ export const SynchronizedCaptions: React.FC<SynchronizedCaptionsProps> = ({
   const effectiveActTimelines =
     actTimelines && actTimelines.length > 0
       ? actTimelines
-      : actEntries.map(([id, act]) => ({
-          id,
-          globalStart: 0,
-          globalEnd:
-            act.duration ||
-            Math.max(...act.chunks.map((chunk) => chunk.end), 0),
-        }));
+      : (() => {
+          let cursor = 0;
+          return actEntries.map(([id, act]) => {
+            const actStart = (act as ActData & { start?: number }).start ?? cursor;
+            const duration =
+              act.duration ||
+              Math.max(...act.chunks.map((chunk) => chunk.end), 0);
+            const globalEnd = actStart + duration;
+            cursor = Math.max(cursor, globalEnd);
+            return { id, globalStart: actStart, globalEnd };
+          });
+        })();
 
   if (effectiveActTimelines.length === 0) {
     return null;
