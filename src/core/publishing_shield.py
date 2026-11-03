@@ -26,6 +26,8 @@ PLATFORM_CHAR_LIMITS = {
     "twitter": 280,
     "threads": 500,
     "linkedin": 3000,
+    "facebook": 63206,
+    "fb": 63206,
 }
 
 # Strict media asset limits enforced by upstream social networks & APIs
@@ -36,6 +38,8 @@ PLATFORM_MEDIA_LIMITS = {
     "instagram": 10,    # Instagram carousels allow up to 10 images via Buffer
     "ig": 10,
     "threads": 10,
+    "facebook": 10,
+    "fb": 10,
 }
 
 PLACEHOLDER_TEST_TEXTS = {

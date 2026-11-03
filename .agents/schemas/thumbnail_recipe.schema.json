@@ -10,7 +10,7 @@
     "$schema": { "type": "string" },
     "channel_slug": { "type": "string" },
     "post_slug": { "type": "string" },
-    "aspect_ratio": { "enum": ["16:9", "9:16"] },
+    "aspect_ratio": { "enum": ["16:9", "9:16", "1:1"] },
     "word_count": { "type": "integer", "minimum": 1, "maximum": 4 },
     "headline": {
       "type": "string",
@@ -38,8 +38,8 @@
       "additionalProperties": true,
       "properties": {
         "font_path": { "type": "string" },
-        "headline_font_size": { "type": "integer", "minimum": 160, "maximum": 220 },
-        "badge_font_size": { "type": "integer", "minimum": 50 },
+        "headline_font_size": { "type": "integer", "minimum": 100, "maximum": 220 },
+        "badge_font_size": { "type": "integer", "minimum": 24 },
         "stroke_width": { "type": "integer", "minimum": 11, "maximum": 16 }
       }
     },

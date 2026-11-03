@@ -243,8 +243,10 @@ Key integrations:
 3. **Multi-Network Social Syndication (Buffer - LinkedIn, X, Threads, Instagram)**:
    - Obtain your Personal API Key at: [publish.buffer.com/settings/api](https://publish.buffer.com/settings/api).
    - Set `BUFFER_API_KEY` and profile IDs (`BUFFER_LINKEDIN_PROFILE_ID`, `BUFFER_X_PROFILE_ID`, etc.).
-4. **Direct Meta Instagram Graph API**:
-   - Set `INSTAGRAM_ACCESS_TOKEN` and `INSTAGRAM_ACCOUNT_ID` for direct Instagram publishing.
+4. **Direct Meta Unified Suite (Instagram Reels & Carousels, Facebook Pages, Threads API)**:
+   - Set `INSTAGRAM_ACCESS_TOKEN` and `INSTAGRAM_ACCOUNT_ID` for direct Instagram publishing (Images, Carousels, and async Reels with automated first-comment).
+   - Set `FACEBOOK_PAGE_ID` and `FACEBOOK_ACCESS_TOKEN` for direct Facebook Page feed, photo, and video publishing.
+   - Set `THREADS_USER_ID` and `THREADS_ACCESS_TOKEN` for direct Threads API publishing.
 5. **Reddit (Direct Subreddit Submissions)**:
    - Set `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USERNAME`, and `REDDIT_PASSWORD`.
 6. **Webhooks (n8n / Make / Slack / Telegram)**:

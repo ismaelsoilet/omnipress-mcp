@@ -294,3 +294,41 @@ class TestAdapterShieldIntegration:
         assert res["provider"] == "publishing_shield"
         assert "Placeholder/test text" in res["error"]
         mock_post.assert_not_called()
+
+    @patch("requests.post")
+    def test_universal_publisher_executes_health_check_gate(self, mock_post, monkeypatch, temp_ledger):
+        """Verifies Rule 09 Gate 6: Mandatory post-publication health check."""
+        from src.engine.universal_publisher import UniversalPublisherEngine
+        from unittest.mock import MagicMock
+
+        engine = UniversalPublisherEngine()
+        mock_adapter = MagicMock()
+        mock_adapter.is_configured.return_value = True
+        mock_adapter.queue_social_post.return_value = {
+            "success": True,
+            "posts": [
+                {"post_id": "test_post_123", "service": "linkedin", "status": "scheduled", "dueAt": "2026-10-30T12:15:00Z"}
+            ],
+            "provider": "buffer_graphql",
+        }
+        mock_adapter.get_post_status.return_value = {
+            "success": True,
+            "status": "scheduled",
+            "dueAt": "2026-10-30T12:15:00Z",
+        }
+
+        with patch("src.adapters.buffer_adapter.BufferPublisherAdapter", return_value=mock_adapter):
+            res = engine.publish_social_post(
+                channel_slug="default",
+                text="Publicação oficial de teste para o health check gate da regra 09",
+                platforms=["linkedin"],
+                schedule_time="2026-10-30T12:15:00Z",
+                mode="customScheduled",
+            )
+
+        assert res["success"] is True
+        assert "health_check" in res
+        assert res["health_check"]["verified"] is True
+        assert len(res["health_check"]["results"]) == 1
+        assert res["health_check"]["results"][0]["status"] == "scheduled"
+        mock_adapter.get_post_status.assert_called_once_with("test_post_123", channel_slug="default")

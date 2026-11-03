@@ -249,6 +249,21 @@ belt app run falai/flux-dev-lora --input '{
 | Same style every video | Viewer fatigue | Vary within brand guidelines |
 | Misleading thumbnail | Kills trust, hurts retention | Match the actual content |
 
+## YouTube Community Cards vs. Video Thumbnails
+
+When designing visual cards for the **YouTube Community Tab** (Aba Comunidade):
+- **Role**: High-conversion teaser poster, not a reading slide. The full story, dates, and engagement question belong in the **post text copy** that you write into YouTube Studio.
+- **Aspect Ratio**: 16:9 (1920x1080) master resolution.
+- **Photomontage Standard**: Blend background and foreground subjects using **50px+ Gaussian blurred radial masks** to eliminate harsh horizontal or vertical cut lines.
+- **Typography Scale**: Titanic 3-line layout using `Anton-Regular`:
+  - Line 1 (150px-160px, White `#FFFFFF`)
+  - Line 2 (180px-190px, White `#FFFFFF`)
+  - Line 3 (210px-220px, Alert Yellow `#FFE500`)
+  - Heavy black safety stroke (`stroke_width=14px`) and deep drop shadow.
+- **Chiaroscuro Shield**: Left 55% covered with a dark vignette (`rgba(4,6,10,0.98)`) isolating typography.
+- **Authority Seals**: Max 1-2 tactical pills (`CASO REAL • 1943`, `ARQUIVO DESCLASSIFICADO // MI5`).
+- **No Micro-Text**: Never place explanatory paragraphs or tiny debate boxes on the canvas.
+
 ## Related Skills
 
 ```bash

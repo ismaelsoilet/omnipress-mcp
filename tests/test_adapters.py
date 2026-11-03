@@ -272,16 +272,17 @@ def test_buffer_adapter_thread_no_linkedin_contamination(monkeypatch):
         assert li_payload["text"] == "Texto completo para LinkedIn com múltiplos parágrafos."
         assert "metadata" not in li_payload or "twitter" not in li_payload.get("metadata", {})
 
-        # 2. X payload verification: MUST have first tweet as text, and thread metadata with remaining tweets
+        # 2. X payload verification: Buffer GraphQL requires the ENTIRE thread (including root tweet 0) in metadata.twitter.thread
         x_payload = payloads["prof_x_99"]
         assert x_payload["text"] == thread_tweets[0]
         assert "metadata" in x_payload
         assert "twitter" in x_payload["metadata"]
         assert "thread" in x_payload["metadata"]["twitter"]
         thread_items = x_payload["metadata"]["twitter"]["thread"]
-        assert len(thread_items) == 2
-        assert thread_items[0]["text"] == thread_tweets[1]
-        assert thread_items[1]["text"] == thread_tweets[2]
+        assert len(thread_items) == 3
+        assert thread_items[0]["text"] == thread_tweets[0]
+        assert thread_items[1]["text"] == thread_tweets[1]
+        assert thread_items[2]["text"] == thread_tweets[2]
 
 
 # -------------------------------------------------------------
@@ -432,6 +433,141 @@ def test_instagram_channel_scoped_credentials(monkeypatch):
         token, acct = adapter.get_credentials(channel_slug="my-channel")
         assert token == "channel_ig_token_123"
         assert acct == "channel_ig_acct_456"
+
+
+def test_instagram_adapter_publish_single_image(monkeypatch):
+    """Verify single image publishing via Meta Graph API."""
+    monkeypatch.setenv("INSTAGRAM_ACCESS_TOKEN", "token_insta_single")
+    monkeypatch.setenv("INSTAGRAM_ACCOUNT_ID", "acc_insta_single")
+    adapter = InstagramGraphAdapter()
+
+    with patch("requests.post") as mock_post:
+        resp_cont = MagicMock(status_code=200)
+        resp_cont.json.return_value = {"id": "single_img_cont_1"}
+
+        resp_pub = MagicMock(status_code=200)
+        resp_pub.json.return_value = {"id": "single_img_pub_1"}
+
+        mock_post.side_effect = [resp_cont, resp_pub]
+
+        res = adapter.queue_social_post(
+            text="Legenda de imagem única no Instagram",
+            platforms=["instagram"],
+            media_urls=["https://example.com/single.jpg"]
+        )
+        assert res["success"] is True
+        assert res["post_id"] == "single_img_pub_1"
+        assert res["media_type"] == "IMAGE"
+
+
+def test_instagram_adapter_publish_reels_video(monkeypatch):
+    """Verify Reels / Video publishing with async container polling."""
+    monkeypatch.setenv("INSTAGRAM_ACCESS_TOKEN", "token_insta_reels")
+    monkeypatch.setenv("INSTAGRAM_ACCOUNT_ID", "acc_insta_reels")
+    adapter = InstagramGraphAdapter()
+
+    with patch("requests.post") as mock_post, patch("requests.get") as mock_get:
+        # Container creation
+        resp_cont = MagicMock(status_code=200)
+        resp_cont.json.return_value = {"id": "reels_cont_999"}
+
+        # Publish container
+        resp_pub = MagicMock(status_code=200)
+        resp_pub.json.return_value = {"id": "reels_published_888"}
+
+        mock_post.side_effect = [resp_cont, resp_pub]
+
+        # Status polling returns FINISHED
+        resp_status = MagicMock(status_code=200)
+        resp_status.json.return_value = {"status_code": "FINISHED", "id": "reels_cont_999"}
+        mock_get.return_value = resp_status
+
+        res = adapter.queue_social_post(
+            text="Vídeo Reels Publicado com Sucesso!",
+            platforms=["instagram"],
+            media_urls=["https://example.com/reels_video.mp4"],
+            media_type="reels",
+        )
+        assert res["success"] is True
+        assert res["post_id"] == "reels_published_888"
+        assert res["media_type"] == "REELS"
+
+
+def test_instagram_adapter_with_first_comment(monkeypatch):
+    """Verify automated first comment (e.g. hashtags) injection."""
+    monkeypatch.setenv("INSTAGRAM_ACCESS_TOKEN", "token_insta_comm")
+    monkeypatch.setenv("INSTAGRAM_ACCOUNT_ID", "acc_insta_comm")
+    adapter = InstagramGraphAdapter()
+
+    with patch("requests.post") as mock_post:
+        resp_cont = MagicMock(status_code=200)
+        resp_cont.json.return_value = {"id": "cont_comm_1"}
+
+        resp_pub = MagicMock(status_code=200)
+        resp_pub.json.return_value = {"id": "pub_comm_1"}
+
+        resp_comment = MagicMock(status_code=200)
+        resp_comment.json.return_value = {"id": "comment_id_123"}
+
+        mock_post.side_effect = [resp_cont, resp_pub, resp_comment]
+
+        res = adapter.queue_social_post(
+            text="Post com primeiro comentário automático",
+            platforms=["instagram"],
+            media_urls=["https://example.com/photo.jpg"],
+            first_comment="#marketing #omnipress #ia",
+        )
+        assert res["success"] is True
+        assert res["first_comment_status"] is True
+        assert res["comment_id"] == "comment_id_123"
+
+
+def test_meta_adapter_facebook_page_photo(monkeypatch):
+    """Verify Facebook Page photo publishing via MetaPublisherAdapter."""
+    from src.adapters.meta_adapter import MetaPublisherAdapter
+    monkeypatch.setenv("FACEBOOK_PAGE_ID", "fb_page_123")
+    monkeypatch.setenv("FACEBOOK_ACCESS_TOKEN", "fb_token_456")
+    adapter = MetaPublisherAdapter()
+    assert adapter.is_configured(platform="facebook") is True
+
+    with patch("requests.post") as mock_post:
+        resp_fb = MagicMock(status_code=200)
+        resp_fb.json.return_value = {"id": "fb_photo_post_789"}
+        mock_post.return_value = resp_fb
+
+        res = adapter.publish_facebook_page(
+            text="Foto na página do Facebook",
+            media_urls=["https://example.com/fb_photo.jpg"],
+        )
+        assert res["success"] is True
+        assert res["post_id"] == "fb_photo_post_789"
+        assert res["provider"] == "facebook_graph_api"
+
+
+def test_meta_adapter_threads_post(monkeypatch):
+    """Verify Threads publishing via MetaPublisherAdapter."""
+    from src.adapters.meta_adapter import MetaPublisherAdapter
+    monkeypatch.setenv("THREADS_USER_ID", "th_user_111")
+    monkeypatch.setenv("THREADS_ACCESS_TOKEN", "th_token_222")
+    adapter = MetaPublisherAdapter()
+    assert adapter.is_configured(platform="threads") is True
+
+    with patch("requests.post") as mock_post:
+        resp_cont = MagicMock(status_code=200)
+        resp_cont.json.return_value = {"id": "th_cont_1"}
+
+        resp_pub = MagicMock(status_code=200)
+        resp_pub.json.return_value = {"id": "th_pub_1"}
+
+        mock_post.side_effect = [resp_cont, resp_pub]
+
+        res = adapter.publish_threads(
+            text="Post oficial no Threads via Meta Suite!",
+            media_urls=["https://example.com/th_img.jpg"],
+        )
+        assert res["success"] is True
+        assert res["post_id"] == "th_pub_1"
+        assert res["provider"] == "threads_api"
 
 
 def test_reddit_channel_scoped_credentials(monkeypatch):

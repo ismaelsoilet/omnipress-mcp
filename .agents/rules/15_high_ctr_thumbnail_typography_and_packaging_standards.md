@@ -162,3 +162,28 @@ A miniatura e o título trabalham como um diálogo em duas partes (efeito gangor
 - [ ] **Regra dos 3 Elementos**: Há no máximo 3 elementos focais no quadro (Sujeito + Tipografia Titânica + Selo)?
 - [ ] **Teste dos 120px**: A miniatura foi gerada em preview de 120px e é legível de imediato em tela de celular?
 - [ ] **Zero Redundância**: O texto da thumbnail complementa o título do YouTube sem repeti-lo?
+
+---
+
+## 5. Padrão Especial para Imagens da Aba Comunidade do YouTube (YouTube Community Cards)
+
+Nas publicações da **Aba Comunidade do YouTube**, imagens servem como cartazes teaser / pôsteres investigativos de alta conversão. Jamais devem ser tratadas como slides de apresentação ou infográficos cheios de parágrafos.
+
+### Diretrizes de Produção do Community Card (16:9 / 1920x1080):
+1. **Pôster Cinematográfico, Não Bula de Texto**:
+   - Todo o enredo, contexto histórico, perguntas e debates pertencem **ao texto do post da Comunidade** (campo de texto do YouTube Studio), NUNCA dentro da imagem.
+   - A imagem contém apenas o gancho titânico visual que interrompe a rolagem do feed.
+2. **Montagem Suave Sem Emendas (Zero Cut Seams)**:
+   - Se múltiplos elementos forem combinados (ex.: submarino ao fundo e maleta no primeiro plano), a transição DEVE ser feita por máscara elíptica/radial com desfoque gaussiano suave (**40px a 60px** de blur).
+   - É estritamente proibido colar fotos cortadas com linhas horizontais ou verticais secas visíveis.
+3. **Escala Titânica de 3 Linhas**:
+   - Linha 1 (Contexto de Abertura): 150px a 160px em `Anton` (Branco `#FFFFFF`).
+   - Linha 2 (Verbo/Ação): 180px a 190px em `Anton` (Branco `#FFFFFF`).
+   - Linha 3 (Palavra de Choque / Nome Histórico): 210px a 220px em `Anton` (Amarelo Alerta `#FFE500`).
+   - Contorno escuro pesado de proteção (`stroke_width >= 14`) e drop shadow profundo (`0 10px 24px rgba(0,0,0,0.95)`).
+4. **Isolamento Chiaroscuro de 55%**:
+   - Gradiente escuro de alta densidade (`rgba(4, 6, 10, 0.98)`) nos primeiros 55% da tela, preservando a imagem fotográfica nítida nos 45% restantes.
+5. **Apenas 2 Metadados Complementares**:
+   - Topo: Selo de Autoridade (`CASO REAL • 1943` ou `ARQUIVO DESCLASSIFICADO`).
+   - Base do texto: Tagline única do caso (`OPERAÇÃO MINCEMEAT` ou selo `CONFIDENCIAL // MI5`).
+   - **Tamanho mínimo absoluto de qualquer caractere na tela: 36px a 46px**.

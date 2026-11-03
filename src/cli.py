@@ -530,10 +530,284 @@ def cmd_publish(args: argparse.Namespace) -> int:
         else:
             print("🎉 Publication dispatched and recorded to PublishingShield ledger:")
         print(json.dumps(res, indent=2, ensure_ascii=False))
+        health = res.get("health_check", {})
+        if health.get("results"):
+            print("\n🔍 Mandatory Post-Publication Health Check (Rule 09 Gate 6):")
+            for h in health.get("results", []):
+                srv = (h.get("service") or "channel").upper()
+                pid = h.get("id")
+                st = h.get("status", "unknown")
+                due = h.get("dueAt") or "immediate"
+                ok = "✅ VERIFIED" if h.get("verified") and st in ("scheduled", "sent") else "❌ UNVERIFIED"
+                print(f"  • [{srv}] ID: {pid} | Status: {st} | Due: {due} -> {ok}")
         return 0
     else:
         print(f"❌ Publication failed: {res.get('error')}")
         return 1
+
+
+def cmd_verify_posts(args: argparse.Namespace) -> int:
+    """Rule 09 Gate 6: Verifies live execution status of scheduled posts."""
+    from src.engine.universal_publisher import UniversalPublisherEngine
+    cm = ChannelManager()
+    engine = UniversalPublisherEngine(channel_manager=cm)
+    channel_slug = args.channel or cm.get_active_channel().get("slug", "default")
+
+    print("============================================================")
+    print("     OmniPress Post Execution Health Check (Rule 09 Gate 6) ")
+    print("============================================================")
+
+    if not args.post:
+        print("❌ Error: --post <slug> is required.")
+        return 1
+
+    res = engine.verify_post_execution(post_slug=args.post, channel_slug=channel_slug)
+    if not res.get("success") and "summary" not in res:
+        print(f"❌ Error: {res.get('error')}")
+        return 1
+
+    summary = res.get("summary", {})
+    print(f"  Channel : {channel_slug}")
+    print(f"  Post    : {args.post}")
+    print(f"  Summary : Sent: {summary.get('sent', 0)} | Scheduled: {summary.get('scheduled', 0)} | Errors: {summary.get('error', 0)}")
+    print("\nAudit Results:")
+    for r in res.get("results", []):
+        st = r.get("execution_state")
+        pid = r.get("post_id")
+        plat = r.get("platform", "unknown").upper()
+        due = r.get("due_at", "N/A")
+        live = r.get("status")
+        if st == "SUCCESS_SENT":
+            badge = "🟢 SENT (LIVE)"
+        elif st == "PARTIAL_TRUNCATED":
+            badge = "⚠️ TRUNCATED (INCOMPLETE THREAD)"
+        elif st == "PENDING_SCHEDULED":
+            badge = "⏳ SCHEDULED (PENDING)"
+        elif st == "IN_TRANSIT":
+            badge = "🟡 IN TRANSIT (QUEUED)"
+        else:
+            badge = "🔴 FAILED / ERROR"
+        link = r.get("external_link")
+        link_str = f" | Link: {link}" if link else ""
+        warn = r.get("warning")
+        warn_str = f"\n    ↳ ⚠️ {warn}" if warn else ""
+        print(f"  • [{plat}] {badge} | ID: {pid} | Buffer Status: {live} | Due: {due}{link_str}{warn_str}")
+
+    return 0 if summary.get("error", 0) == 0 else 1
+
+
+def cmd_meta_auth(args: argparse.Namespace) -> int:
+    """Interactive Sign-In & Asset Manager for Meta (Instagram & Facebook Pages)."""
+    import sys
+    from src.core.channel_manager import ChannelManager
+    from src.core.meta_asset_manager import MetaAssetManager
+
+    print("============================================================")
+    print("      OmniPress — Meta Sign-In & Asset Manager Wizard       ")
+    print("============================================================")
+
+    cm = ChannelManager()
+    mam = MetaAssetManager()
+
+    # 1. Target Channel resolution
+    channel_slug = getattr(args, "channel", None)
+    if not channel_slug:
+        channels = cm.list_channels()
+        if not sys.stdin.isatty():
+            if channels:
+                channel_slug = channels[0]["slug"]
+            else:
+                print("❌ Non-interactive environment: --channel is required.")
+                return 1
+        else:
+            print("\nSelect target channel for Meta credentials:")
+            for idx, ch in enumerate(channels, 1):
+                print(f"  [{idx}] {ch.get('name', ch['slug'])} (slug: {ch['slug']})")
+            print(f"  [N] Create a new channel workspace")
+
+            choice = input(f"\nChoice [1-{len(channels)} or N]: ").strip()
+            if choice.upper() == "N":
+                new_slug = input("Enter new channel slug (e.g. meu-canal): ").strip()
+                if not new_slug:
+                    print("❌ Aborted: channel slug is required.")
+                    return 1
+                new_name = input("Enter channel display name: ").strip() or new_slug
+                new_handle = input("Enter social handle (@handle): ").strip() or f"@{new_slug}"
+                cm.create_channel(slug=new_slug, name=new_name, handle=new_handle)
+                channel_slug = new_slug
+                print(f"✅ Created channel workspace '{channel_slug}'")
+            elif choice.isdigit() and 1 <= int(choice) <= len(channels):
+                channel_slug = channels[int(choice) - 1]["slug"]
+            elif channels:
+                channel_slug = channels[0]["slug"]
+            else:
+                channel_slug = "default"
+
+    print(f"\nTarget Channel: '{channel_slug}' (will update channels/{channel_slug}/.env)")
+
+    # 2. Meta Token resolution
+    token = getattr(args, "token", None)
+    if not token:
+        existing_token = cm.get_credential("INSTAGRAM_ACCESS_TOKEN", channel_slug)
+        if not sys.stdin.isatty():
+            token = existing_token
+            if not token:
+                print("❌ Non-interactive environment: --token is required.")
+                return 1
+        else:
+            login_mode = getattr(args, "login", False)
+            if not login_mode:
+                print("\nSelect authentication method:")
+                print("  [1] Browser Login (Open Facebook authorization URL in browser)")
+                print("  [2] Paste Existing Token (Meta User Token, System User Token, or Graph API Explorer)")
+                method_pick = input("Method [1 or 2, default 2]: ").strip()
+                if method_pick == "1":
+                    login_mode = True
+
+            if login_mode:
+                app_id = cm.get_credential("META_APP_ID", channel_slug) or os.getenv("META_APP_ID", "").strip()
+                app_secret = cm.get_credential("META_APP_SECRET", channel_slug) or os.getenv("META_APP_SECRET", "").strip()
+
+                if not (app_id and app_secret):
+                    print("\nTo generate a Facebook login link, provide your Meta App ID and App Secret (from developers.facebook.com):")
+                    app_id = input("  Meta App ID: ").strip() or app_id
+                    app_secret = input("  Meta App Secret: ").strip() or app_secret
+
+                if app_id and app_secret:
+                    redirect_uri = "http://localhost:8088/callback"
+                    oauth_url = mam.get_oauth_login_url(app_id=app_id, redirect_uri=redirect_uri)
+                    print("\n🔗 Open the following link in your browser to authorize your Facebook Pages & Instagram accounts:")
+                    print(f"👉 {oauth_url}\n")
+                    try:
+                        import webbrowser
+                        webbrowser.open(oauth_url)
+                    except Exception:
+                        pass
+
+                    print("⏳ Waiting for authorization on local callback server (http://localhost:8088/callback)...")
+                    cb_res = mam.listen_for_oauth_callback(port=8088, timeout_seconds=180)
+                    if not cb_res.get("success"):
+                        print(f"❌ Browser authorization failed or timed out: {cb_res.get('error')}")
+                        return 1
+
+                    print("🔄 Exchanging authorization code for Long-Lived Token (60 days)...")
+                    exchange_res = mam.exchange_code_for_token(cb_res["code"], app_id, app_secret, redirect_uri)
+                    if not exchange_res.get("success"):
+                        print(f"❌ Failed token exchange: {exchange_res.get('error')}")
+                        return 1
+
+                    token = exchange_res["access_token"]
+                    print("✅ Successfully captured Long-Lived User Access Token!")
+                else:
+                    print("\n💡 Tip: You can also generate an instant token in 30 seconds via the official Meta Graph API Explorer:")
+                    print("👉 https://developers.facebook.com/tools/explorer/\n")
+
+            if not token:
+                prompt_txt = "Enter Meta User or System User Access Token"
+                if existing_token:
+                    mask = existing_token[:6] + "..." + existing_token[-4:]
+                    prompt_txt += f" [{mask}]"
+                prompt_txt += ": "
+                token = input(prompt_txt).strip() or existing_token
+
+    if not token:
+        print("❌ Error: Meta Access Token is required.")
+        return 1
+
+    # 3. Inspect Token
+    print("\n🔍 Validating token with Meta Graph API...")
+    inspect_res = mam.inspect_token(token)
+    if not inspect_res.get("valid"):
+        print(f"❌ Token validation failed: {inspect_res.get('error')}")
+        return 1
+
+    print(f"✅ Authenticated as: {inspect_res.get('user_name')} (ID: {inspect_res.get('user_id')})")
+
+    # 4. Fetch Assets
+    query = getattr(args, "query", None)
+    print(f"\n📦 Fetching accessible Facebook Pages and linked Instagram Business accounts...")
+    assets_res = mam.fetch_assets(token, query=query, limit_per_page=100, max_pages=10)
+    if not assets_res.get("success"):
+        print(f"❌ Error fetching assets: {assets_res.get('error')}")
+        return 1
+
+    assets = assets_res.get("assets", [])
+    print(f"Found {assets_res.get('total_matching')} asset(s) matching (total scanned: {assets_res.get('total_fetched')}).")
+
+    if not assets:
+        print("⚠️ No Facebook Pages found for this token. Ensure your token has `pages_show_list`, `pages_read_engagement`, `instagram_basic` permissions.")
+        return 1
+
+    # 5. List Only Mode
+    if getattr(args, "list_only", False):
+        print("\nAvailable Assets:")
+        for idx, a in enumerate(assets, 1):
+            ig_str = f"➔ IG: @{a['instagram']['username']} (ID: {a['instagram']['id']})" if a['instagram'] else "(No Instagram linked)"
+            print(f"  [{idx}] Page: {a['page_name']} (FB ID: {a['page_id']}) {ig_str}")
+        return 0
+
+    # 6. Page selection
+    page_id = getattr(args, "page_id", None)
+    selected_asset = None
+    if page_id:
+        for a in assets:
+            if str(a["page_id"]) == str(page_id):
+                selected_asset = a
+                break
+        if not selected_asset:
+            print(f"⚠️ Page ID {page_id} not found in fetched assets, attempting direct binding...")
+            selected_asset = {"page_id": page_id, "page_name": f"Page {page_id}", "page_access_token": None}
+
+    while not selected_asset:
+        if not sys.stdin.isatty():
+            selected_asset = assets[0]
+            break
+
+        print("\nSelect the asset to bind:")
+        for idx, a in enumerate(assets[:20], 1):
+            ig_str = f"➔ IG: @{a['instagram']['username']} (ID: {a['instagram']['id']})" if a['instagram'] else "(No IG linked)"
+            print(f"  [{idx}] {a['page_name']} (FB ID: {a['page_id']}) {ig_str}")
+
+        if len(assets) > 20 or assets_res.get("total_fetched") > 20:
+            print("  [S] Search / Filter assets by keyword")
+
+        pick = input(f"\nSelect asset [1-{min(len(assets), 20)}]: ").strip()
+        if pick.upper() == "S":
+            sub_q = input("Enter search keyword: ").strip()
+            sub_res = mam.fetch_assets(token, query=sub_q)
+            assets = sub_res.get("assets", [])
+            print(f"Found {len(assets)} result(s) for '{sub_q}'")
+            continue
+        elif pick.isdigit() and 1 <= int(pick) <= len(assets):
+            selected_asset = assets[int(pick) - 1]
+        else:
+            selected_asset = assets[0]
+
+    # 7. Bind asset to channel .env
+    print(f"\n🔗 Binding asset '{selected_asset['page_name']}' to channel '{channel_slug}'...")
+    bind_res = mam.bind_asset_to_channel(
+        channel_slug=channel_slug,
+        user_token=token,
+        page_id=selected_asset["page_id"],
+        page_access_token=selected_asset.get("page_access_token"),
+    )
+
+    if not bind_res.get("success"):
+        print(f"❌ Failed binding asset: {bind_res.get('error')}")
+        return 1
+
+    print("\n============================================================")
+    print(f"✅ Meta Assets successfully bound to channel '{channel_slug}'!")
+    print("============================================================")
+    print(f"  📁 File Updated : {bind_res['env_path']}")
+    print(f"  📘 Facebook Page: {bind_res['facebook']['page_name']} (ID: {bind_res['facebook']['page_id']})")
+    if bind_res["instagram"]["connected"]:
+        print(f"  📷 Instagram    : @{bind_res['instagram']['username']} (ID: {bind_res['instagram']['account_id']})")
+    else:
+        print("  📷 Instagram    : None linked to this Page")
+    print("============================================================")
+    print("🚀 Channel is now configured for direct Meta Graph API publishing!")
+    return 0
 
 
 def cmd_render_3d(args: argparse.Namespace) -> int:
@@ -735,7 +1009,7 @@ def main(argv: Optional[list] = None) -> int:
         prog="omnipress",
         description="OmniPress CLI - Universal Agentic Publishing Protocol & Management Suite",
     )
-    parser.add_argument("--version", action="version", version="OmniPress MCP 0.10.1")
+    parser.add_argument("--version", action="version", version="OmniPress MCP 0.11.0")
 
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
 
@@ -819,6 +1093,11 @@ def main(argv: Optional[list] = None) -> int:
     publish_p.add_argument("--dry-run", action="store_true", help="Dry run validation without dispatch")
     publish_p.add_argument("--force-duplicate", action="store_true", help="Bypass PublishingShield duplicate check")
 
+    # verify-posts (Health Check Gate 6)
+    verify_p = subparsers.add_parser("verify-posts", help="Audit and verify live status of scheduled posts (Rule 09 Gate 6)")
+    verify_p.add_argument("--post", "-p", required=True, help="Post slug to verify")
+    verify_p.add_argument("--channel", "-c", help="Target channel slug")
+
     # render-3d (Universal 3D Engine)
     render_3d_p = subparsers.add_parser("render-3d", help="Render 3D visual assets via Blender headless (Rule 12)")
     render_3d_p.add_argument("--recipe", "-r", help="Path to 3D recipe JSON file")
@@ -867,6 +1146,15 @@ def main(argv: Optional[list] = None) -> int:
     deploy_p.add_argument("--target-dir", default="public", help="Destination directory (default: public)")
     deploy_p.add_argument("--manifest-name", default="deploy_manifest.json")
 
+    # meta-auth (Meta Sign-In & Asset Manager)
+    meta_p = subparsers.add_parser("meta-auth", help="Interactive sign-in & asset manager for Meta (Instagram & Facebook Pages)")
+    meta_p.add_argument("-c", "--channel", help="Target channel slug (optional; interactive selection if omitted)")
+    meta_p.add_argument("-t", "--token", help="Meta User or System User Access Token")
+    meta_p.add_argument("-q", "--query", help="Filter/search assets by Page name or Instagram handle")
+    meta_p.add_argument("--page-id", help="Directly bind specific Page ID without interactive picker")
+    meta_p.add_argument("--login", action="store_true", help="Launch browser OAuth login flow via local callback server")
+    meta_p.add_argument("--list-only", action="store_true", help="List discoverable assets without binding to .env")
+
     # build-carousel (legacy alias)
     build_p = subparsers.add_parser("build-carousel", help="Render portrait carousel slides (legacy)")
     build_p.add_argument("--channel", required=True, help="Target channel slug")
@@ -898,6 +1186,8 @@ def main(argv: Optional[list] = None) -> int:
         return cmd_align_captions(args)
     elif args.command == "publish":
         return cmd_publish(args)
+    elif args.command == "verify-posts":
+        return cmd_verify_posts(args)
     elif args.command == "render-3d":
         return cmd_render_3d(args)
     elif args.command == "thumbnail":
@@ -910,6 +1200,8 @@ def main(argv: Optional[list] = None) -> int:
         return cmd_assets(args)
     elif args.command == "deploy":
         return cmd_deploy(args)
+    elif args.command == "meta-auth":
+        return cmd_meta_auth(args)
     elif args.command == "build-carousel":
         return cmd_build_carousel(args)
     else:

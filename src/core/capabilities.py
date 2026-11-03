@@ -117,6 +117,14 @@ def resolve_ffmpeg_binary(channel_slug: Optional[str] = None) -> Optional[str]:
     local = PROJECT_ROOT / "bin" / "ffmpeg"
     if local.is_file() and os.access(local, os.X_OK):
         return str(local)
+    for candidate in (
+        Path.home() / ".local" / "bin" / "ffmpeg",
+        Path("/usr/local/bin/ffmpeg"),
+        Path("/usr/bin/ffmpeg"),
+        Path("/snap/bin/ffmpeg"),
+    ):
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return str(candidate)
     return shutil.which("ffmpeg")
 
 

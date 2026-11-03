@@ -66,7 +66,7 @@ if hasattr(mcp, "custom_route"):
             return JSONResponse({
                 "status": "healthy",
                 "service": "omnipress-mcp",
-                "version": "0.10.1",
+                "version": "0.11.0",
             })
     except (ImportError, Exception):
         pass
@@ -219,6 +219,20 @@ MCP_TOOL_ANNOTATIONS = {
         "destructiveHint": False,
         "idempotentHint": True,
         "openWorldHint": True,
+    },
+    "omnipress_meta_auth_inspect": {
+        "title": "Inspect Meta Token & List Assets",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True,
+    },
+    "omnipress_meta_auth_bind": {
+        "title": "Bind Meta Assets to Channel",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
     },
 }
 
@@ -430,11 +444,37 @@ def omnipress_queue_post(
         else:
             results_summary.append(f"⚠️ Webhook notice: {res.get('error')}")
 
-    # 4. Fallback if no provider configured
+    # 4. Try Direct Meta Suite for Facebook Page or Threads
+    if any(p.lower() in ("facebook", "fb") for p in target_platforms) and instagram_adapter.is_configured(channel_slug=channel_slug, platform="facebook"):
+        fb_res = instagram_adapter.publish_facebook_page(
+            text=processed_text,
+            media_urls=media_urls,
+            channel_slug=channel_slug,
+            title=title,
+        )
+        if fb_res.get("success"):
+            results_summary.append(f"✅ Published directly to Facebook Page via Meta Graph API: Post ID {fb_res.get('post_id')} ({fb_res.get('permalink')})")
+        else:
+            results_summary.append(f"⚠️ Facebook Graph API notice: {fb_res.get('error')}")
+
+    if any(p.lower() == "threads" for p in target_platforms) and instagram_adapter.is_configured(channel_slug=channel_slug, platform="threads"):
+        th_res = instagram_adapter.publish_threads(
+            text=processed_text,
+            media_urls=media_urls,
+            channel_slug=channel_slug,
+        )
+        if th_res.get("success"):
+            results_summary.append(f"✅ Published directly to Threads via Meta Threads API: Post ID {th_res.get('post_id')} ({th_res.get('permalink')})")
+        else:
+            results_summary.append(f"⚠️ Threads API notice: {th_res.get('error')}")
+
+    # 5. Fallback if no provider configured
     has_provider = (
         buffer_adapter.is_configured(channel_slug=channel_slug)
         or reddit_adapter.is_configured(channel_slug=channel_slug)
         or webhook_adapter.is_configured(channel_slug=channel_slug)
+        or (any(p.lower() in ("facebook", "fb") for p in target_platforms) and instagram_adapter.is_configured(channel_slug=channel_slug, platform="facebook"))
+        or (any(p.lower() == "threads" for p in target_platforms) and instagram_adapter.is_configured(channel_slug=channel_slug, platform="threads"))
     )
     if not has_provider:
         results_summary.append(
@@ -846,6 +886,67 @@ def omnipress_queue_media_post(
         else:
             results.append(f"🐦 X (Twitter) Content Formatted:\n```text\n{processed_caption}\n```")
 
+    # Facebook Pages
+    if "facebook" in normalized or "fb" in normalized or "all" in normalized:
+        if instagram_adapter.is_configured(channel_slug=channel_slug, platform="facebook"):
+            res = instagram_adapter.publish_facebook_page(
+                text=processed_caption,
+                media_urls=media_urls,
+                channel_slug=channel_slug,
+                title=title,
+            )
+            if res.get("success"):
+                results.append(f"✅ Published directly to Facebook Page via Meta Graph API: Post ID {res.get('post_id')} ({res.get('permalink')})")
+            else:
+                results.append(f"⚠️ Facebook Graph API notice: {res.get('error')}")
+        elif buffer_adapter.is_configured(channel_slug=channel_slug):
+            res = buffer_adapter.queue_social_post(
+                text=processed_caption,
+                platforms=["facebook"],
+                media_urls=media_urls,
+                schedule_time=schedule_time,
+                channel_slug=channel_slug,
+                mode=mode,
+                allow_test=allow_test,
+                force_duplicate=force_duplicate,
+            )
+            if res.get("success"):
+                results.append(f"✅ Queued to Facebook via Buffer: {res.get('message', 'Draft queued')}")
+            else:
+                results.append(f"⚠️ Buffer Facebook notice: {res.get('error')}")
+        else:
+            results.append(f"📘 Facebook Content Formatted:\n```text\n{processed_caption}\n```")
+
+    # Threads
+    if "threads" in normalized or "all" in normalized:
+        if instagram_adapter.is_configured(channel_slug=channel_slug, platform="threads"):
+            res = instagram_adapter.publish_threads(
+                text=processed_caption,
+                media_urls=media_urls,
+                channel_slug=channel_slug,
+            )
+            if res.get("success"):
+                results.append(f"✅ Published directly to Threads via Meta Threads API: Post ID {res.get('post_id')} ({res.get('permalink')})")
+            else:
+                results.append(f"⚠️ Threads API notice: {res.get('error')}")
+        elif buffer_adapter.is_configured(channel_slug=channel_slug):
+            res = buffer_adapter.queue_social_post(
+                text=processed_caption,
+                platforms=["threads"],
+                media_urls=media_urls,
+                schedule_time=schedule_time,
+                channel_slug=channel_slug,
+                mode=mode,
+                allow_test=allow_test,
+                force_duplicate=force_duplicate,
+            )
+            if res.get("success"):
+                results.append(f"✅ Queued to Threads via Buffer: {res.get('message', 'Draft queued')}")
+            else:
+                results.append(f"⚠️ Buffer Threads notice: {res.get('error')}")
+        else:
+            results.append(f"🧵 Threads Content Formatted:\n```text\n{processed_caption}\n```")
+
     if sanitization_notes:
         results.append("\n" + "\n".join(sanitization_notes))
 
@@ -1199,6 +1300,76 @@ def omnipress_fetch_assets(
         return json.dumps(result, indent=2, ensure_ascii=False)
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)}, indent=2, ensure_ascii=False)
+
+
+@mcp.tool(annotations=get_tool_annotations("omnipress_meta_auth_inspect"))
+def omnipress_meta_auth_inspect(
+    token: str,
+    query: Optional[str] = None,
+    limit: int = 50,
+) -> str:
+    """Validates a Meta access token and lists accessible Facebook Pages and Instagram accounts.
+    Supports substring filtering for accounts managing hundreds or thousands of assets.
+
+    Use when:
+    - Inspecting a Meta access token and discovering available Pages and Instagram Business accounts.
+    - Searching for specific Pages or handles across large asset catalogs.
+
+    Do NOT use when:
+    - Publishing social content (use omnipress_queue_post or omnipress_queue_media_post).
+
+    Returns:
+    - JSON string summarizing token identity, total assets, matching assets, and pagination cursor.
+    """
+    from src.core.meta_asset_manager import MetaAssetManager
+
+    mam = MetaAssetManager()
+    inspect_info = mam.inspect_token(token)
+    if not inspect_info.get("valid"):
+        return json.dumps({
+            "success": False,
+            "error": inspect_info.get("error", "Invalid Meta token"),
+            "details": inspect_info,
+        }, indent=2, ensure_ascii=False)
+
+    assets_res = mam.fetch_assets(token, query=query, limit_per_page=limit, max_pages=10)
+    assets_res["token_identity"] = {
+        "user_id": inspect_info.get("user_id"),
+        "user_name": inspect_info.get("user_name"),
+    }
+    return json.dumps(assets_res, indent=2, ensure_ascii=False)
+
+
+@mcp.tool(annotations=get_tool_annotations("omnipress_meta_auth_bind"))
+def omnipress_meta_auth_bind(
+    channel_slug: str,
+    token: str,
+    page_id: str,
+    instagram_account_id: Optional[str] = None,
+) -> str:
+    """Binds Facebook Page and Instagram credentials to an OmniPress channel workspace.
+    Atomically persists credentials to channels/<slug>/.env and executes live verification.
+
+    Use when:
+    - Associating Meta assets (Facebook Page, Instagram Business) with an OmniPress channel.
+    - Setting up or switching Meta publication destinations for a brand.
+
+    Do NOT use when:
+    - Querying read-only channel information (use omnipress_get_channel instead).
+
+    Returns:
+    - JSON string summarizing updated .env path, bound Facebook Page, and connected Instagram account.
+    """
+    from src.core.meta_asset_manager import MetaAssetManager
+
+    mam = MetaAssetManager()
+    res = mam.bind_asset_to_channel(
+        channel_slug=channel_slug,
+        user_token=token,
+        page_id=page_id,
+        instagram_account_id=instagram_account_id,
+    )
+    return json.dumps(res, indent=2, ensure_ascii=False)
 
 
 def main():

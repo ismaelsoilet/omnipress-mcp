@@ -149,10 +149,10 @@ class UniversalPublisherEngine:
         provider_name = target_provider
         if target_provider == "buffer":
             adapter = BufferPublisherAdapter()
-        elif target_provider in ("instagram", "instagram_graph", "meta"):
-            from src.adapters.instagram_adapter import InstagramGraphAdapter
-            adapter = InstagramGraphAdapter()
-            provider_name = "instagram_graph"
+        elif target_provider in ("instagram", "instagram_graph", "meta", "facebook", "threads"):
+            from src.adapters.meta_adapter import MetaPublisherAdapter
+            adapter = MetaPublisherAdapter()
+            provider_name = "meta_graph"
         elif target_provider == "reddit":
             from src.adapters.reddit_adapter import RedditPublisherAdapter
             adapter = RedditPublisherAdapter()
@@ -192,7 +192,40 @@ class UniversalPublisherEngine:
             **passed_kwargs,
         )
 
-        # 4. Record to ledger on success
+        # 4. Mandatory Post-Publication Health Check Gate (Rule 09 Gate 6)
+        if res.get("success") and hasattr(adapter, "get_post_status"):
+            posts = res.get("posts") or []
+            verification_results = []
+            all_verified = True
+            for post_item in posts:
+                p_id = post_item.get("post_id") or post_item.get("id")
+                if p_id:
+                    status_info = adapter.get_post_status(p_id, channel_slug=channel_slug)
+                    if status_info.get("success"):
+                        post_item["verified_status"] = status_info.get("status")
+                        post_item["verified_dueAt"] = status_info.get("dueAt")
+                        verification_results.append({
+                            "id": p_id,
+                            "service": post_item.get("service"),
+                            "status": status_info.get("status"),
+                            "dueAt": status_info.get("dueAt"),
+                            "verified": True,
+                        })
+                    else:
+                        all_verified = False
+                        post_item["verification_error"] = status_info.get("error")
+                        verification_results.append({
+                            "id": p_id,
+                            "service": post_item.get("service"),
+                            "error": status_info.get("error"),
+                            "verified": False,
+                        })
+            res["health_check"] = {
+                "verified": all_verified,
+                "results": verification_results,
+            }
+
+        # 5. Record to ledger on success
         if res.get("success"):
             PublishingShield.record_published(
                 channel_id=channel_slug,
@@ -279,3 +312,152 @@ class UniversalPublisherEngine:
             document_thumbnail_url=document_thumbnail_url,
             document_path=document_path,
         )
+
+    def verify_post_execution(
+        self,
+        post_slug: str,
+        channel_slug: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Rule 09 Gate 6: Audits and verifies the live execution status of scheduled posts.
+        Inspects scheduling_log.json, queries Buffer/social API, and reports whether posts
+        are pending, successfully sent, or encountered delivery errors.
+        """
+        from datetime import datetime, timezone
+        from src.adapters.buffer_adapter import BufferPublisherAdapter
+
+        eff_channel = channel_slug or self.channel_manager.get_active_channel().get("slug", "default")
+        post_dir = PROJECT_ROOT / "channels" / eff_channel / "posts" / post_slug
+
+        candidates = [
+            post_dir / "posts" / "scheduling_log.json",
+            post_dir / "scheduling_log.json",
+        ]
+        log_file = None
+        for cand in candidates:
+            if cand.exists():
+                log_file = cand
+                break
+
+        if not log_file:
+            return {
+                "success": False,
+                "error": f"scheduling_log.json not found for post '{post_slug}' in channel '{eff_channel}'.",
+                "post_slug": post_slug,
+                "channel_slug": eff_channel,
+            }
+
+        try:
+            with open(log_file, "r", encoding="utf-8") as fp:
+                log_data = json.load(fp)
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to parse scheduling_log.json: {e}",
+            }
+
+        posts = log_data.get("posts", [])
+        if not posts:
+            return {
+                "success": False,
+                "error": "No posts found in scheduling_log.json.",
+            }
+
+        adapter = BufferPublisherAdapter()
+        now_utc = datetime.now(timezone.utc)
+        results = []
+        counts = {"sent": 0, "scheduled": 0, "error": 0, "unknown": 0}
+
+        for p in posts:
+            pid = p.get("post_id") or p.get("id")
+            platform = p.get("platform") or p.get("service") or "unknown"
+            due_at_str = p.get("due_at_utc") or p.get("dueAt")
+
+            if not pid:
+                continue
+
+            status_res = adapter.get_post_status(pid, channel_slug=eff_channel)
+            live_status = status_res.get("status", "unknown")
+            is_error = not status_res.get("success") or live_status == "error"
+
+            due_dt = None
+            if due_at_str:
+                try:
+                    clean_due = due_at_str.replace("Z", "+00:00")
+                    due_dt = datetime.fromisoformat(clean_due)
+                except Exception:
+                    pass
+
+            expected_tweets = p.get("tweet_count")
+            actual_threads = status_res.get("thread_count")
+            thread_mismatch = None
+            if expected_tweets and actual_threads is not None and actual_threads < expected_tweets:
+                thread_mismatch = f"Thread incomplete: expected {expected_tweets} tweets, but Buffer sent {actual_threads} tweets."
+
+            if live_status == "sent":
+                if thread_mismatch:
+                    execution_state = "PARTIAL_TRUNCATED"
+                    counts["error"] += 1
+                else:
+                    execution_state = "SUCCESS_SENT"
+                    counts["sent"] += 1
+            elif is_error:
+                execution_state = "FAILED_ERROR"
+                counts["error"] += 1
+            elif live_status == "scheduled":
+                if due_dt and now_utc > due_dt:
+                    execution_state = "IN_TRANSIT"
+                    counts["scheduled"] += 1
+                else:
+                    execution_state = "PENDING_SCHEDULED"
+                    counts["scheduled"] += 1
+            else:
+                execution_state = "UNKNOWN"
+                counts["unknown"] += 1
+
+            p["current_status"] = live_status
+            p["execution_state"] = execution_state
+            p["last_verified_at"] = now_utc.isoformat()
+            if status_res.get("sentAt"):
+                p["sent_at"] = status_res.get("sentAt")
+            if status_res.get("externalLink"):
+                p["external_link"] = status_res.get("externalLink")
+            if status_res.get("thread_count") is not None:
+                p["actual_thread_count"] = status_res.get("thread_count")
+            if thread_mismatch:
+                p["integrity_warning"] = thread_mismatch
+            if status_res.get("error_message") or status_res.get("error"):
+                p["live_error"] = status_res.get("error_message") or status_res.get("error")
+
+            results.append({
+                "post_id": pid,
+                "platform": platform,
+                "status": live_status,
+                "execution_state": execution_state,
+                "due_at": due_at_str,
+                "sent_at": status_res.get("sentAt"),
+                "external_link": status_res.get("externalLink"),
+                "thread_count": actual_threads,
+                "expected_thread_count": expected_tweets,
+                "warning": thread_mismatch,
+                "verified": status_res.get("success", False) and not thread_mismatch,
+            })
+
+        log_data["last_audit_at"] = now_utc.isoformat()
+        log_data["audit_summary"] = counts
+
+        try:
+            with open(log_file, "w", encoding="utf-8") as fp:
+                json.dump(log_data, fp, indent=2, ensure_ascii=False)
+        except Exception as e:
+            logger.warning("Could not write back to %s: %s", log_file, e)
+
+        all_ok = counts["error"] == 0
+        return {
+            "success": all_ok,
+            "post_slug": post_slug,
+            "channel_slug": eff_channel,
+            "log_file": str(log_file),
+            "summary": counts,
+            "results": results,
+        }

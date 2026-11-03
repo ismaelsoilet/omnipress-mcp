@@ -31,10 +31,19 @@ class CatboxStorageProvider(BaseStorageProvider):
 
     API_URL = "https://catbox.moe/user/api.php"
 
+    def __init__(self):
+        self._catbox_paused = False
+
     def upload_file(self, file_path: Path, remote_name: Optional[str] = None) -> str:
         file_path = Path(file_path)
         if not file_path.exists():
             raise FileNotFoundError(f"Media file not found: {file_path}")
+
+        filename = remote_name or file_path.name
+
+        # If Catbox has previously failed in this process, skip directly to Litterbox
+        if self._catbox_paused:
+            return self._upload_litterbox(file_path, filename)
 
         boundary = "----OmniPressStorageBoundary"
         data = bytearray()
@@ -61,20 +70,61 @@ class CatboxStorageProvider(BaseStorageProvider):
             },
         )
 
+        # Try primary Catbox with 3 attempts; fallback to Litterbox on HTTP 412 (paused upstream)
         last_error = None
         for attempt in range(1, 4):
             try:
-                with urllib.request.urlopen(req, timeout=45) as resp:
+                with urllib.request.urlopen(req, timeout=10) as resp:
                     url = resp.read().decode("utf-8").strip()
                     if url.startswith("http://") or url.startswith("https://"):
                         return url
                     raise RuntimeError(f"Storage upload returned invalid response: {url[:100]}")
-            except Exception as e:
-                last_error = e
-                if attempt < 3:
-                    time.sleep(attempt * 1.5)
+            except urllib.error.HTTPError as http_err:
+                if http_err.code == 412:
+                    self._catbox_paused = True
+                    return self._upload_litterbox(file_path, filename)
+                last_error = http_err
+                if attempt == 3:
+                    raise RuntimeError(f"Catbox upload failed after 3 attempts: {last_error}")
+                time.sleep(0.5)
+            except Exception as catbox_err:
+                last_error = catbox_err
+                if attempt == 3:
+                    raise RuntimeError(f"Catbox upload failed after 3 attempts: {last_error}")
+                time.sleep(0.5)
 
-        raise RuntimeError(f"Catbox upload failed after 3 attempts: {last_error}")
+    def _upload_litterbox(self, file_path: Path, filename: str) -> str:
+        boundary = "----OmniPressLitterboxBoundary"
+        data = bytearray()
+        data.extend(f"--{boundary}\r\n".encode())
+        data.extend(b'Content-Disposition: form-data; name="reqtype"\r\n\r\n')
+        data.extend(b"fileupload\r\n")
+        data.extend(f"--{boundary}\r\n".encode())
+        data.extend(b'Content-Disposition: form-data; name="time"\r\n\r\n')
+        data.extend(b"72h\r\n")
+
+        import mimetypes
+        content_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+        data.extend(f"--{boundary}\r\n".encode())
+        data.extend(f'Content-Disposition: form-data; name="fileToUpload"; filename="{filename}"\r\n'.encode())
+        data.extend(f"Content-Type: {content_type}\r\n\r\n".encode())
+        data.extend(file_path.read_bytes())
+        data.extend(b"\r\n")
+        data.extend(f"--{boundary}--\r\n".encode())
+
+        req = urllib.request.Request(
+            "https://litterbox.catbox.moe/resources/internals/api.php",
+            data=bytes(data),
+            headers={
+                "Content-Type": f"multipart/form-data; boundary={boundary}",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=45) as resp:
+            url = resp.read().decode("utf-8").strip()
+            if url.startswith("http://") or url.startswith("https://"):
+                return url
+            raise RuntimeError(f"Litterbox upload returned invalid response: {url[:100]}")
 
 
 class LocalStaticStorageProvider(BaseStorageProvider):
