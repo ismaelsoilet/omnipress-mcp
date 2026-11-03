@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.11.0] — 2026-11-03
+## [0.12.0] — 2026-11-03
 
 ### Added
 - **Novo Fluxo de Edição Interativa do Remotion (4.0.540)**:
@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Testes**: `test_media_stager.py`, `test_editable_video_scaffold.py`, `test_remotion_provider_entrypoint.py`, fixture TypeScript de episódio editável e validação do workspace `video/`.
 
 ### Changed
+- **Integração com `origin/main` (0.11.0)**: incorpora o Meta Unified Publishing Suite (Instagram Reels, Facebook Pages e Threads), o Active Health Check Gate e os comandos/ferramentas `meta-auth`, sem conflito com o fluxo de vídeo.
 - **Remotion 4.0.535 → 4.0.540**: todos os pacotes `remotion`/`@remotion/*` alinhados; skills oficiais atualizadas.
 - `DocumentaryEpisode` e `DocumentaryShort` agora usam cenas interativas, tracks nomeadas e `resolveMediaSrc()`.
 - `Root.tsx` extraído para `CoreCompositions` + `Root`, com tipagem explícita e `defaultProps` inline.
@@ -51,6 +52,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`RemotionProvider` PROJECT_ROOT**: corrigido de `src/` para a raiz do repositório.
 - **Overlap de tracks**: locução, SFX, trilha e música de encerramento foram separados em tracks próprias.
 - **Guard de edição manual**: scaffold recusa sobrescrever TSX editado sem `--force` e cria backup no overwrite forçado.
+## [0.11.0] — 2026-10-30
+
+### Added
+- **Meta Unified Publishing Suite (Instagram Reels, Facebook Pages & Threads API)**:
+  - `src/adapters/meta_adapter.py`: novo adaptador direto `MetaPublisherAdapter` (com aliases `MetaGraphAdapter` e `InstagramGraphAdapter`) integrado à Meta Graph API v19.0+ e Threads API oficial (`graph.threads.net`).
+  - **Suporte a Vídeos e Reels no Instagram**: contêiner `media_type: "REELS"`, `video_url` e polling assíncrono do status do contêiner (`GET /{container_id}?fields=status_code`) até `FINISHED` antes da publicação.
+  - **Automação de Primeiro Comentário (*First Comment*)**: disparo opcional de `POST /{post_id}/comments` para inserção automática de hashtags sem poluir a legenda principal.
+  - **Publicação Direta em Páginas do Facebook**: suporte a posts de texto/link (`POST /{page_id}/feed`), fotos (`POST /{page_id}/photos`) e vídeos (`POST /{page_id}/videos`) sem intermediários.
+  - **Publicação Oficial no Threads**: suporte a posts de texto, imagens e vídeos direto no Threads via `graph.threads.net/v1.0/{threads_user_id}`.
+  - `src/adapters/instagram_adapter.py`: reexportação retrocompatível para garantir continuidade e interoperabilidade com todos os fluxos legados.
+  - `src/server.py`: ferramentas MCP `omnipress_queue_media_post` e `omnipress_queue_post` atualizadas para despachar diretamente para Facebook Pages e Threads via Meta Suite quando configurados.
+  - `src/core/capabilities.py`: busca de binário `ffmpeg` expandida para incluir `~/.local/bin/ffmpeg`.
+  - `src/core/publishing_shield.py`: inclusão de limites oficiais de caracteres (`63206`) e mídias (`10`) para `facebook` e `fb`.
+- **Meta Sign-In & Asset Discovery Manager (Contas com Centenas/Milhares de Ativos)**:
+  - `src/core/meta_asset_manager.py`: motor de inspeção de tokens Meta, paginação por cursor (`/me/accounts`), busca textual/filtragem em tempo real e vinculação atômica em `channels/<slug>/.env`.
+  - `src/cli.py`: comando interativo `omnipress meta-auth` com seleção de canais existentes, criação dinâmica de novos canais, busca e paginação de ativos e verificação de saúde ao vivo.
+  - `src/server.py`: ferramentas MCP `omnipress_meta_auth_inspect` e `omnipress_meta_auth_bind` para permitir que agentes de IA e clientes MCP descubram ativos da Meta e configurem canais programaticamente.
+
+## [0.10.2] — 2026-10-30
+
+### Added
+- **Portão Mandatório de Verificação Ativa Pós-Publicação (Regra 09 Gate 6 - Health Check)**:
+  - `src/adapters/buffer_adapter.py`: adicionado método `get_post_status(post_id, channel_slug)` via consulta GraphQL `GetPost($input: PostInput!)` para checagem ao vivo de status (`scheduled`, `sent`, `error`) e confirmação do timestamp `dueAt`.
+  - `src/engine/universal_publisher.py`: validação pós-disparo obrigatória integrada ao `publish_social_post()` e `execute_recipe()`. Interroga ativamente cada post ID gerado e registra `health_check.verified` e `health_check.results`.
+  - `src/cli.py`: comando `omnipress verify-posts --post <slug> --channel <channel>` para auditar o status pós-disparo e checagem de integridade contra suposições silenciosas de envio.
+  - `src/engine/universal_publisher.py`: adicionado método `verify_post_execution(post_slug, channel_slug)` que lê o `scheduling_log.json`, cruza os timestamps com o horário atual UTC e atualiza o estado de execução (`SUCCESS_SENT`, `PENDING_SCHEDULED`, `IN_TRANSIT`, `FAILED_ERROR`).
+  - `.agents/rules/09_single_publication_and_anti_duplicate_policy.md` e `AGENTS.md`: formalização normativa do Portão 6 (Health Check Gate) em inglês e português, proibindo suposição silenciosa de sucesso e exigindo persistência auditável em `scheduling_log.json`.
 
 ## [0.10.1] — 2026-10-29
 

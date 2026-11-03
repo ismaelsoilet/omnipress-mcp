@@ -535,6 +535,25 @@ A API oficial do Instagram exige URLs públicas HTTPS acessíveis pela Meta. O O
 
 ---
 
+## 4.1. Meta Unified Publishing Suite (`src/adapters/meta_adapter.py`)
+
+O adaptador `MetaPublisherAdapter` (acessível também como `MetaGraphAdapter` e `InstagramGraphAdapter`) fornece integração nativa com a Meta Graph API v19.0+ e Threads API oficial (`graph.threads.net`), eliminando a necessidade de intermediários como Buffer para o ecossistema Meta:
+
+* **Instagram Professional (Feed, Carrosséis e Reels)**:
+  * Publicação de imagem única e carrosséis de até 10 lâminas (`POST /{account_id}/media` -> `media_publish`).
+  * **Reels de Vídeo Assíncrono**: Inicializa contêiner com `media_type: "REELS"` e faz polling do status (`fields=status_code`) até `FINISHED` antes do disparo final.
+  * **Primeiro Comentário (*First Comment*)**: Dispara automaticamente `POST /{post_id}/comments` com hashtags ou chamada de discussão sem poluir a legenda.
+* **Páginas do Facebook**:
+  * Publica atualizações de feed (`POST /{page_id}/feed`), fotos (`POST /{page_id}/photos`) e vídeos (`POST /{page_id}/videos`) com suporte a títulos e links.
+* **Threads API Oficial**:
+  * Publicação direta de texto, imagens e vídeos em `graph.threads.net/v1.0/{threads_user_id}`.
+* **Credenciais**:
+  * `INSTAGRAM_ACCESS_TOKEN` / `INSTAGRAM_ACCOUNT_ID`
+  * `FACEBOOK_PAGE_ID` / `FACEBOOK_ACCESS_TOKEN` (ou reusa o token Meta)
+  * `THREADS_USER_ID` / `THREADS_ACCESS_TOKEN` (ou reusa o token Meta)
+
+---
+
 ## 5. Matriz de Tratamento de Erros e Recuperação para Agentes
 
 | Cenário de Erro | Causa Provável | Ação Recomendada para o Agente |
@@ -543,6 +562,7 @@ A API oficial do Instagram exige URLs públicas HTTPS acessíveis pela Meta. O O
 | Shield bloqueia com `Placeholder/test text` | Texto contém `"teste"` ou é muito curto para envio imediato ao vivo. | O agente deve usar conteúdo editorial real ou passar `allow_test=True` se for teste de integração controlado. |
 | Shield bloqueia com `exceeds maximum allowed length` | Legenda do Instagram ultrapassou 2.196 caracteres ou tweet ultrapassou 280 caracteres. | Enxugar o texto pelo número exato de caracteres informado pelo Shield antes de disparar. |
 | Shield bloqueia com `Rule 09 Exactly-Once` | Criativo idêntico já foi disparado para este canal nas últimas 24 horas. | Não reenviar duplicata. Se o usuário requisitar expressamente um repost, usar `force_duplicate=True`. |
+| Falha no Health Check Pós-Publicação (Gate 6) | Buffer aceitou a requisição inicial, mas rejeitou downstream (ex: timeout de download de documento, erro de encoding de mídia). | O agente NUNCA deve presumir sucesso silencioso. Consultar `get_post_status(post_id)`, purgar o rascunho órfão com `delete_post` e alertar o usuário com a causa raiz. |
 | Instagram retorna `requires at least one media` | Tentativa de postar apenas texto no Instagram sem passar `media_urls`. | Gerar o carrossel primeiro via `omnipress_build_carousel`, obter as URLs e repassar para `media_urls`. |
 | PII detectado no texto | Presença de CNJ, CPF, CNPJ ou e-mail pessoal. | O agente deve manter `sanitize=True` (comportamento padrão) para que os dados sejam automaticamente mascarados antes da persistência. |
 | Imagem de fundo não encontrada para carrossel | O caminho em `bg_image_path` não existe no disco. | Verificar o caminho com antecedência ou gerar uma imagem base limpa antes de chamar a renderização. |

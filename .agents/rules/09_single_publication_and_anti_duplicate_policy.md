@@ -38,6 +38,18 @@ To enforce Rule 09 programmatically at runtime, OmniPress implements [`Publishin
    - Instagram posts dispatched via Buffer automatically receive required `metadata.instagram.type = "post"` and `shouldShareToFeed = true`.
    - Obsolete scheduled posts are purged using native GraphQL `delete_post` to guarantee clean queue states.
 
+### 5. Mandatory Post-Publication Health Check & Status Verification Gate (Gate 6)
+- **Zero Silent Assumptions**: Agents and automated pipelines must NEVER assume that dispatching a post or schedule request succeeded merely because an HTTP request returned or an ID was generated.
+- **Mandatory Live Verification**: Immediately following any creation or scheduling action (`shareNow`, `customScheduled`, `addToQueue`), the engine or agent MUST query the platform/adapter's live status verification endpoint (e.g., `BufferPublisherAdapter.get_post_status(post_id)`).
+- **Status Validation Criteria**:
+  1. For immediate publishing (`shareNow`): verify that `status` is `"sent"` or transitioning to live delivery without downstream rejection.
+  2. For scheduled publishing (`customScheduled`): verify that `status` is strictly `"scheduled"` and `dueAt` matches the target timestamp (ISO 8601 UTC).
+  3. If the query returns `status: "error"`, `failed`, or raises a downstream API error (e.g., document crawler failure, media encoding timeout, or spam block):
+     - Log the incident immediately with full root-cause details.
+     - Never silently swallow or mask the failure.
+     - Execute the cleanup protocol (purge failed draft with `delete_post` if left in a broken state).
+- **Persistent Scheduling Audit Log**: Save the post ID, platform, verified status, scheduled `dueAt`, and execution timestamp into the campaign's `scheduling_log.json` and report the verified result to the user.
+
 ---
 
 ## 🇧🇷 Diretrizes em Português
@@ -81,4 +93,16 @@ Para assegurar o cumprimento programático da Regra 09 em tempo de execução, o
 5. **Portão 5 (Metadados Nativos e Exclusão Limpa de Rascunhos)**:
    - Injeção obrigatória de `metadata.instagram.type = "post"` e `shouldShareToFeed = true` nos envios de carrossel.
    - Purgamento atômico de rascunhos obsoletos via mutação GraphQL `delete_post`.
+
+### 5. Portão de Verificação Ativa Pós-Publicação (Health Check Gate)
+- **Proibição de Suposição Silenciosa**: Agentes e motores do OmniPress NUNCA devem supor que uma publicação ou agendamento deu certo apenas porque a chamada inicial de API retornou um ID.
+- **Verificação Ativa Obrigatória**: Imediatamente após a criação de qualquer post ou agendamento (`shareNow`, `customScheduled`, `addToQueue`), o motor ou agente DEVE consultar o status real da publicação via `get_post_status(post_id)` no adaptador correspondente.
+- **Critérios de Validação de Status**:
+  1. Para publicações imediatas (`shareNow`): confirmar se o status retornado é `"sent"` ou está em trânsito sem rejeição downstream.
+  2. Para agendamentos (`customScheduled`): confirmar se o status é estritamente `"scheduled"` e se o horário registrado em `dueAt` coincide exatamente com a data/hora programada (em UTC).
+  3. Em caso de status de erro (`error`, `failed` ou advertência da rede social como bloqueio de spam ou falha no download de PDF):
+     - Interromper o fluxo e registrar a causa raiz detalhada no log.
+     - Nunca mascarar o erro ou fingir que o agendamento foi concluído.
+     - Se o item ficou na fila como rascunho corrompido, executar a exclusão limpa via `delete_post`.
+- **Registro Auditável de Agendamento**: Registrar formalmente o ID, plataforma, status verificado, horário de disparo (`dueAt`) e carimbo de data/hora no arquivo `scheduling_log.json` da publicação e no `README.md` do post.
 

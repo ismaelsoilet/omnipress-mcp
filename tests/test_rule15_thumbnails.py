@@ -117,3 +117,32 @@ def test_thumbnail_validate_only_does_not_render(tmp_path: Path):
     result = engine.render_recipe(recipe, validate_only=True)
     assert result["status"] == "valid"
     assert not (tmp_path / "channels" / "qa-thumb" / "media" / "thumbnails").exists()
+
+
+def test_thumbnail_square_1_1_rendering(tmp_path: Path):
+    cm = ChannelManager(root_dir=tmp_path)
+    cm.create_channel("qa-square", "QA Square", "@qasquare")
+    media = tmp_path / "channels" / "qa-square" / "media" / "raw" / "source.jpg"
+    media.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGB", (1080, 1080), (30, 40, 60)).save(media)
+
+    engine = UniversalThumbnailEngine(cm)
+    recipe = _valid_recipe(media)
+    recipe.update({
+        "channel_slug": "qa-square",
+        "post_slug": "qa-square-community",
+        "aspect_ratio": "1:1",
+        "typography": {
+            "headline_font_size": 130,
+            "badge_font_size": 30,
+            "stroke_width": 11,
+        },
+    })
+
+    assert validate_thumbnail_recipe(recipe) == []
+    result = engine.render_recipe(recipe)
+    output = Path(result["output_path"])
+    assert output.is_file()
+    with Image.open(output) as img:
+        assert img.size == (1080, 1080)
+

@@ -371,17 +371,21 @@ class BufferPublisherAdapter(BasePublisherAdapter):
                 }
 
             # Inject Twitter thread metadata strictly when target is Twitter/X
+            # Buffer GraphQL Rule: every post in the thread — including the initial root post (thread[0]) —
+            # must be declared inside metadata.twitter.thread, and input_payload["text"] must match thread[0].
             if service in ("x", "twitter"):
                 thread = kwargs.get("thread") or kwargs.get("thread_items")
                 if thread and isinstance(thread, list) and len(thread) > 1:
-                    input_payload["text"] = thread[0]
+                    first_text = thread[0] if isinstance(thread[0], str) else thread[0].get("text", "")
+                    input_payload["text"] = first_text
                     thread_objs = []
-                    for item in thread[1:]:
+                    for idx, item in enumerate(thread):
+                        item_assets = target_assets if (idx == 0 and target_assets) else []
                         if isinstance(item, str):
-                            thread_objs.append({"text": item, "assets": []})
+                            thread_objs.append({"text": item, "assets": item_assets})
                         elif isinstance(item, dict):
                             if "assets" not in item:
-                                item["assets"] = []
+                                item["assets"] = item_assets
                             thread_objs.append(item)
                     input_payload["metadata"] = {
                         "twitter": {
@@ -547,3 +551,67 @@ class BufferPublisherAdapter(BasePublisherAdapter):
             return {"success": False, "provider": "buffer_graphql", "status_code": res.status_code, "error": res.text}
         except requests.RequestException as e:
             return {"success": False, "provider": "buffer_graphql", "error": str(e)}
+
+    def get_post_status(self, post_id: str, channel_slug: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Queries the current status of a post in Buffer via GraphQL (Rule 09 Verification Gate).
+        Returns status ('scheduled', 'sent', 'error'), dueAt, and details.
+        """
+        effective_key = self.get_api_key(channel_slug)
+        if not effective_key:
+            return {"success": False, "error": "BUFFER_API_KEY is not configured."}
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {effective_key}",
+        }
+
+        query = """
+        query GetPost($input: PostInput!) {
+          post(input: $input) {
+            id
+            status
+            dueAt
+            sentAt
+            channelService
+            externalLink
+            error {
+              message
+            }
+            text
+            metadata {
+              ... on TwitterPostMetadata {
+                threadCount
+              }
+            }
+          }
+        }
+        """
+        try:
+            res = requests.post(
+                self.GRAPHQL_URL,
+                json={"query": query, "variables": {"input": {"id": post_id}}},
+                headers=headers,
+                timeout=15,
+            )
+            if res.status_code == 200:
+                data = res.json().get("data", {}).get("post")
+                if data:
+                    t_meta = (data.get("metadata") or {}) if isinstance(data.get("metadata"), dict) else {}
+                    return {
+                        "success": True,
+                        "provider": "buffer_graphql",
+                        "post": data,
+                        "status": data.get("status"),
+                        "dueAt": data.get("dueAt"),
+                        "sentAt": data.get("sentAt"),
+                        "externalLink": data.get("externalLink"),
+                        "thread_count": t_meta.get("threadCount"),
+                        "error_message": data.get("error", {}).get("message") if data.get("error") else None,
+                    }
+                errs = res.json().get("errors")
+                return {"success": False, "provider": "buffer_graphql", "error": errs or "Post not found."}
+            return {"success": False, "provider": "buffer_graphql", "status_code": res.status_code, "error": res.text}
+        except requests.RequestException as e:
+            return {"success": False, "provider": "buffer_graphql", "error": str(e)}
+

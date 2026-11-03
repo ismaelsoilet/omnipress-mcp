@@ -46,19 +46,22 @@ def validate_thumbnail_recipe(recipe: Dict[str, Any]) -> List[str]:
         errors.append("media is required (authentic visual foundation)")
 
     aspect = str(recipe.get("aspect_ratio") or "16:9")
-    if aspect not in ("16:9", "9:16"):
-        errors.append("aspect_ratio must be 16:9 or 9:16")
+    if aspect not in ("16:9", "9:16", "1:1"):
+        errors.append("aspect_ratio must be 16:9, 9:16 or 1:1")
 
     typography = recipe.get("typography") or {}
-    headline_size = int(typography.get("headline_font_size") or 190)
-    if not (MIN_HEADLINE_FONT <= headline_size <= MAX_HEADLINE_FONT):
+    headline_size = int(typography.get("headline_font_size") or (130 if aspect == "1:1" else 190))
+    min_hl = 100 if aspect == "1:1" else MIN_HEADLINE_FONT
+    max_hl = 180 if aspect == "1:1" else MAX_HEADLINE_FONT
+    if not (min_hl <= headline_size <= max_hl):
         errors.append(
-            f"headline_font_size must be between {MIN_HEADLINE_FONT} and {MAX_HEADLINE_FONT}px"
+            f"headline_font_size must be between {min_hl} and {max_hl}px"
         )
 
-    badge_size = int(typography.get("badge_font_size") or 56)
-    if badge_size < MIN_BADGE_FONT:
-        errors.append(f"badge_font_size must be >= {MIN_BADGE_FONT}px")
+    badge_size = int(typography.get("badge_font_size") or (28 if aspect == "1:1" else 56))
+    min_badge = 24 if aspect == "1:1" else MIN_BADGE_FONT
+    if badge_size < min_badge:
+        errors.append(f"badge_font_size must be >= {min_badge}px")
 
     stroke_width = int(typography.get("stroke_width") or 12)
     if stroke_width < MIN_STROKE:

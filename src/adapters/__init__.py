@@ -7,6 +7,7 @@ from .webhook_adapter import WebhookPublisherAdapter
 from .reddit_adapter import RedditPublisherAdapter
 from .youtube_adapter import YouTubeStagingAdapter
 from .instagram_adapter import InstagramGraphAdapter
+from .meta_adapter import MetaPublisherAdapter, MetaGraphAdapter
 
 __all__ = [
     "BasePublisherAdapter",
@@ -16,5 +17,7 @@ __all__ = [
     "RedditPublisherAdapter",
     "YouTubeStagingAdapter",
     "InstagramGraphAdapter",
+    "MetaPublisherAdapter",
+    "MetaGraphAdapter",
 ]
 

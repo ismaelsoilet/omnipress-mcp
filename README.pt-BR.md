@@ -1,6 +1,6 @@
 # 🌐 OmniPress MCP
 
-[🇺🇸 English](README.md) | [🇧🇷 Português](README.pt-BR.md) | [🤖 Manual para Agentes](docs/AGENT_MANUAL.md) | [🎬 Skills de Vídeo](docs/VIDEO_CREATION_AND_PLATFORM_SKILLS.md) | [🎞️ Referência Remotion](docs/REMOTION_SKILLS_AND_DOCS.md) | [📜 Changelog](CHANGELOG.md)
+[🇺🇸 English](README.md) | [🇧🇷 Português](README.pt-BR.md) | [🤖 Manual para Agentes](docs/AGENT_MANUAL.md) | [🎬 Skills de Vídeo](docs/VIDEO_CREATION_AND_PLATFORM_SKILLS.md) | [🎞️ Referência Remotion](docs/REMOTION_SKILLS_AND_DOCS.md) | [📜 Changelog](CHANGELOG.md) | [📦 Notas de Release 0.12.0](docs/RELEASE_NOTES_0.12.0.md)
 
 > **O Protocolo Universal de Publicação Agêntica e Motor de Distribuição Multi-Canal para Agentes de IA via Model Context Protocol (MCP)**
 

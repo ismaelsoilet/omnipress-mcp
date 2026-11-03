@@ -22,7 +22,7 @@ from src.engine.rule15_validator import validate_thumbnail_recipe
 
 logger = logging.getLogger("omnipress.universal_thumbnail")
 
-ASPECT_DIMENSIONS = {"16:9": (1920, 1080), "9:16": (1080, 1920)}
+ASPECT_DIMENSIONS = {"16:9": (1920, 1080), "9:16": (1080, 1920), "1:1": (1080, 1080)}
 
 
 class UniversalThumbnailEngine:
