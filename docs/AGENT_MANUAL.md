@@ -446,7 +446,9 @@ Quando o usuário pedir: *"Quero ajustar o episódio no Studio"*, *"editar as ce
 5. **Regras de segurança**:
    - O TSX gerado é a fonte de verdade após o scaffold.
    - Reexecutar `--scaffold-editable` sem `--force` falha se o TSX foi editado; `--force` cria backup.
-   - Não edite `media.json` manualmente; ele é regenerado.
+   - O `video_recipe.editable.json` não fixa `duration_frames`; a duração da composição em `index.ts` é a autoridade.
+   - Não edite `media.json` manualmente; ele é regenerado com caminhos relativos portáveis.
+   - Legendas do `align-captions` são normalizadas automaticamente e `actTimelines` é derivado quando ausente.
    - Áudio e legendas permanecem travados ao alinhamento da fala. Retiming que dessincronize narração exige re-alinhamento e novo scaffold.
    - `staticFile()` nunca recebe caminho absoluto; use `media.json` + `--public-dir`.
 

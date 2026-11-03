@@ -61,11 +61,15 @@ export interface WordTiming {
 }
 
 export interface CaptionChunk {
+  id?: string | number;
   text: string;
   start: number;
   end: number;
+  duration?: number;
   words: WordTiming[];
 }
+
+export type CaptionsData = Record<string, ActData> | CaptionChunk[];
 
 export interface ActData {
   name: string;
@@ -103,7 +107,7 @@ export interface EpisodeConfig {
   outroMusicStartSec?: number;
   voiceovers?: VoiceoverTrack[];
   scenes: DocumentaryScene[];
-  captions?: Record<string, ActData>;
+  captions?: CaptionsData;
   actTimelines?: ActTimeline[];
   introProps?: ChannelIntroProps;
 }

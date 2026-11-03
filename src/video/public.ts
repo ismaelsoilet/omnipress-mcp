@@ -28,6 +28,7 @@ export type {
   ActData,
   ActTimeline,
   CaptionChunk,
+  CaptionsData,
   ChannelIntroProps,
   DocumentaryScene,
   EpisodeConfig,

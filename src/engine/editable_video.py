@@ -209,7 +209,13 @@ class EditableVideoEngine:
             source = self._resolve_media(source_value, channel_dir)
             if source is None:
                 return str(source_value or "")
-            entries.append({"source": str(source), "target": target})
+            try:
+                source_ref = source.relative_to(self.project_root).as_posix()
+            except ValueError as exc:
+                raise EditableVideoError(
+                    f"Media source escapes the project root: {source}"
+                ) from exc
+            entries.append({"source": source_ref, "target": target})
             return target
 
         scenes = config.get("scenes") or []
@@ -359,10 +365,31 @@ class EditableVideoEngine:
         if not media:
             raw = scene.get("mediaSrc") or scene.get("media") or ""
             media = str(raw) if str(raw).startswith(REMOTE_PREFIXES) else ""
+        direction_map = {
+            "slow_zoom_in": "zoom-in",
+            "slow_zoom_out": "zoom-out",
+            "pan_left": "pan-left",
+            "pan_right": "pan-right",
+            "static": "subtle-zoom",
+        }
+        direction_raw = str(scene.get("cameraDirection") or "zoom-in")
+        direction = direction_map.get(direction_raw, direction_raw)
+        valid_directions = {
+            "zoom-in",
+            "zoom-out",
+            "pan-left",
+            "pan-right",
+            "snap-zoom",
+            "dramatic-push",
+            "tilt-down",
+            "subtle-zoom",
+        }
+        if direction not in valid_directions:
+            direction = "zoom-in"
         props = [
             *common,
             _js_prop("imageSrc", media),
-            _js_prop("direction", str(scene.get("cameraDirection") or "zoom-in")),
+            _js_prop("direction", direction),
             _js_prop("badge", str(scene.get("badge") or "")),
             _js_prop("headline", headline),
             _js_prop("caption", str(scene.get("notes") or "")),
@@ -386,11 +413,12 @@ class EditableVideoEngine:
         duration_frames: int,
         episode_slug: str,
         warnings: List[str],
+        act_timelines: List[Dict[str, Any]],
     ) -> str:
         scenes = config.get("scenes") or []
         intro_props = config.get("introProps") or {}
         cursor = 0.0
-        scene_nodes: List[str] = []
+        scene_timeline: List[Tuple[int, int, str]] = []
         scene_audio_nodes: List[str] = []
         sfx_nodes: List[str] = []
 
@@ -414,7 +442,9 @@ class EditableVideoEngine:
                 intro_props,
                 channel,
             )
-            scene_nodes.append(f"        {node}")
+            scene_timeline.append(
+                (start_frame, start_frame + scene_frames, f"        {node}")
+            )
             if unknown:
                 warnings.append(
                     f"Scene {scene.get('id') or index} has unsupported type "
@@ -435,6 +465,30 @@ class EditableVideoEngine:
           <Audio src={{staticFile({_js(scene_sfx)})}} volume={{{float(scene.get("sfxVolume") or 0.35)}}} />
         </Sequence>"""
                 )
+
+        scene_lanes: List[List[Tuple[int, int, str]]] = []
+        for item in scene_timeline:
+            placed = False
+            for lane in scene_lanes:
+                if all(
+                    item[1] <= other[0] or item[0] >= other[1]
+                    for other in lane
+                ):
+                    lane.append(item)
+                    placed = True
+                    break
+            if not placed:
+                scene_lanes.append([item])
+
+        scene_track_blocks: List[str] = []
+        for lane_index, lane in enumerate(scene_lanes):
+            track_name = "Cenas" if lane_index == 0 else f"Cenas {lane_index + 1}"
+            scene_track_blocks.append(
+                f'      <Track name="{track_name}">\n'
+                + "\n".join(node for _, _, node in lane)
+                + "\n      </Track>"
+            )
+        scene_tracks_block = "\n".join(scene_track_blocks)
 
         voiceovers: List[Dict[str, Any]] = []
         for index, voiceover in enumerate(config.get("voiceovers") or [], start=1):
@@ -463,17 +517,42 @@ class EditableVideoEngine:
 
         intro_block = ""
         if intro_frames > 0:
+            language_raw = str(
+                intro_props.get("language")
+                or config.get("language")
+                or "pt"
+            ).lower()
+            intro_language = "en" if language_raw.startswith("en") else "pt"
+            intro_attrs = " ".join(
+                [
+                    _js_prop(
+                        "channelName", str(intro_props.get("channelName") or "")
+                    ),
+                    _js_prop(
+                        "badgeText", str(intro_props.get("badgeText") or "")
+                    ),
+                    _js_prop("subText", str(intro_props.get("subText") or "")),
+                    _js_prop(
+                        "classifiedCode",
+                        str(intro_props.get("classifiedCode") or ""),
+                    ),
+                    _js_prop(
+                        "primaryColor",
+                        str(intro_props.get("primaryColor") or theme["primary"]),
+                    ),
+                    _js_prop(
+                        "backgroundColor",
+                        str(
+                            intro_props.get("backgroundColor")
+                            or theme["background"]
+                        ),
+                    ),
+                    _js_prop("language", intro_language),
+                ]
+            )
             intro_block = f"""      <Track name="Vinheta">
         <Sequence name="Vinheta de abertura" from={{0}} durationInFrames={{{intro_frames}}}>
-          <ChannelIntro
-            channelName={_js(str(intro_props.get("channelName") or ""))}
-            badgeText={_js(str(intro_props.get("badgeText") or ""))}
-            subText={_js(str(intro_props.get("subText") or ""))}
-            classifiedCode={_js(str(intro_props.get("classifiedCode") or ""))}
-            primaryColor={_js(str(intro_props.get("primaryColor") or theme["primary"]))}
-            backgroundColor={_js(str(intro_props.get("backgroundColor") or theme["background"]))}
-            language={_js(str(intro_props.get("language") or config.get("language") or "pt"))}
-          />
+          <ChannelIntro {intro_attrs} />
         </Sequence>
       </Track>
 """
@@ -524,13 +603,11 @@ export const Episode: React.FC = () => {{
       outroMusicStartSec={{{outro_start}}}
       voiceovers={{{json.dumps(voiceovers, ensure_ascii=False)}}}
       captions={{captions}}
-      actTimelines={{{json.dumps(config.get("actTimelines") or [], ensure_ascii=False)}}}
+      actTimelines={{{json.dumps(act_timelines, ensure_ascii=False)}}}
       captionsIntroDurationFrames={{{intro_frames}}}
       introDurationFrames={{{intro_frames}}}
     >
-{intro_block}      <Track name="Cenas">
-{chr(10).join(scene_nodes)}
-      </Track>
+{intro_block}{scene_tracks_block}
 {scene_audio_block}{sfx_block}    </EpisodeShell>
   );
 }};
@@ -556,11 +633,50 @@ registerRoot(
 """
 
     @staticmethod
-    def _build_captions_ts(captions: Dict[str, Any]) -> str:
-        return f"""// AUTO-GENERATED by OmniPress — manual edits are protected by the hash guard.
-import type {{ ActData }} from {_js(CORE_PUBLIC_DATA)};
+    def _normalize_captions(
+        captions: Any,
+    ) -> Tuple[Any, List[Dict[str, Any]], str]:
+        """Normalize align-captions payloads into a Studio-safe captions shape."""
+        if isinstance(captions, list):
+            return captions, [], "CaptionChunk[]"
+        if not isinstance(captions, dict):
+            return {}, [], "Record<string, ActData>"
 
-export const captions: Record<string, ActData> = {json.dumps(captions, ensure_ascii=False, indent=2)};
+        acts = {
+            key: value
+            for key, value in captions.items()
+            if isinstance(value, dict) and isinstance(value.get("chunks"), list)
+        }
+        if acts:
+            timelines: List[Dict[str, Any]] = []
+            for act_id, act in acts.items():
+                start = float(act.get("start") or 0)
+                duration = float(act.get("duration") or 0)
+                if duration <= 0 and act.get("chunks"):
+                    duration = max(
+                        float(chunk.get("end") or 0)
+                        for chunk in act["chunks"]
+                    )
+                timelines.append(
+                    {
+                        "id": str(act_id),
+                        "globalStart": start,
+                        "globalEnd": start + duration,
+                    }
+                )
+            return acts, timelines, "Record<string, ActData>"
+
+        if isinstance(captions.get("chunks"), list):
+            return captions["chunks"], [], "CaptionChunk[]"
+
+        return captions, [], "Record<string, ActData>"
+
+    @staticmethod
+    def _build_captions_ts(captions: Any, type_name: str) -> str:
+        return f"""// AUTO-GENERATED by OmniPress — manual edits are protected by the hash guard.
+import type {{ ActData, CaptionChunk }} from {_js(CORE_PUBLIC_DATA)};
+
+export const captions: {type_name} = {json.dumps(captions, ensure_ascii=False, indent=2)};
 """
 
     @staticmethod
@@ -709,6 +825,10 @@ export const theme: EpisodeTheme = {json.dumps(theme, ensure_ascii=False, indent
         episode_dir = (
             channel_dir / "video" / "episodes" / folder_name
         )
+        captions_data, derived_act_timelines, captions_type = (
+            self._normalize_captions(data.get("captions"))
+        )
+        act_timelines = data.get("actTimelines") or derived_act_timelines
         public_dir = episode_dir / "public"
         public_rel = public_dir.relative_to(self.project_root).as_posix()
         entry_rel = (episode_dir / "index.ts").relative_to(self.project_root).as_posix()
@@ -735,11 +855,12 @@ export const theme: EpisodeTheme = {json.dumps(theme, ensure_ascii=False, indent
             duration_frames,
             episode_name,
             warnings,
+            act_timelines=act_timelines,
         )
         index_ts = self._build_index_ts(
             composition_id, duration_frames, width, height, fps
         )
-        captions_ts = self._build_captions_ts(data.get("captions") or {})
+        captions_ts = self._build_captions_ts(captions_data, captions_type)
         theme_ts = self._build_theme_ts(theme)
 
         generated = {
@@ -750,11 +871,10 @@ export const theme: EpisodeTheme = {json.dumps(theme, ensure_ascii=False, indent
             "media.json": json.dumps({"files": entries}, ensure_ascii=False, indent=2),
         }
         backup = self._check_guard(episode_dir, generated, force)
+        staged = self.stager.ensure({"files": entries}, public_rel)
 
         for relative, content in generated.items():
             self._write(episode_dir / relative, content)
-
-        staged = self.stager.ensure(media_rel, public_rel)
 
         config_hash = _hash_text(
             json.dumps(data, ensure_ascii=False, sort_keys=True)
@@ -799,7 +919,6 @@ export const theme: EpisodeTheme = {json.dumps(theme, ensure_ascii=False, indent
             "output": output_name,
             "format": "mp4",
             "fps": fps,
-            "duration_frames": duration_frames,
             "editable": True,
             "normalize_media": False,
             "props": {},

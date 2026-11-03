@@ -36,6 +36,8 @@
         "overlay_text": { "type": "string" },
         "camera": { "enum": ["slow_zoom_in", "slow_zoom_out", "pan_left", "pan_right", "static"] },
         "transition": { "enum": ["cut", "whip_pan", "flash", "dissolve"] },
+        "sfx": { "type": "string", "description": "Optional tactical SFX path for this scene." },
+        "sfx_volume": { "type": "number", "minimum": 0, "maximum": 1, "description": "SFX volume ceiling for this scene (defaults to 0.35)." },
         "top_bias": { "type": "number", "minimum": 0, "maximum": 1 },
         "contrast_boost": { "type": "number", "exclusiveMinimum": 0 }
       }
@@ -61,7 +63,22 @@
       "type": "object",
       "additionalProperties": true,
       "properties": {
-        "voiceover": { "type": "string" },
+        "voiceover": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "required": ["src"],
+          "additionalProperties": true,
+          "properties": {
+            "id": { "type": "string" },
+            "src": { "type": "string" },
+            "startInSeconds": { "type": "number", "minimum": 0 },
+            "durationInSeconds": { "type": "number", "minimum": 0 }
+          }
+        }
+      ]
+    },
         "soundtrack": { "type": "string" },
         "soundtrack_volume": { "type": "number", "minimum": 0, "maximum": 0.2 }
       }

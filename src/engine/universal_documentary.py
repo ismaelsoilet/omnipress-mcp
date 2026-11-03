@@ -66,6 +66,14 @@ class UniversalDocumentaryEngine:
                     return (base / candidate).resolve()
         return candidate.resolve()
 
+    def _portable_source(self, path: Path) -> str:
+        """Return a project-relative media source for portable manifests."""
+        root = Path(self.channel_manager.root_dir).resolve()
+        try:
+            return path.resolve().relative_to(root).as_posix()
+        except ValueError:
+            return str(path.resolve())
+
     def output_dir(
         self,
         channel_slug: Optional[str],
@@ -264,6 +272,7 @@ class UniversalDocumentaryEngine:
         manifest_mode = str(data.get("mode") or "render") == "manifest"
 
         rendered: List[Dict[str, Any]] = []
+        warnings: List[str] = []
         cursor = 0.0
         for index, scene in enumerate(data.get("scenes") or [], start=1):
             media = str(scene.get("media") or "").strip()
@@ -287,6 +296,16 @@ class UniversalDocumentaryEngine:
             start = float(scene.get("start_seconds", cursor))
             camera = scene.get("camera") or "slow_zoom_in"
             transition = scene.get("transition") or "cut"
+            sfx_raw = str(scene.get("sfx") or "").strip()
+            sfx_src = ""
+            if sfx_raw:
+                sfx_path = self.resolve_media(sfx_raw, target_slug, recipe_dir)
+                if sfx_path.is_file():
+                    sfx_src = str(sfx_path)
+                else:
+                    warnings.append(
+                        f"Scene {scene_id}: SFX not found: {sfx_raw}"
+                    )
             rendered.append(
                 {
                     "id": scene_id,
@@ -298,7 +317,7 @@ class UniversalDocumentaryEngine:
                     "headline": scene.get("headline", ""),
                     "subheadline": scene.get("subheadline", ""),
                     "badge": scene.get("badge", ""),
-                    "sfxSrc": scene.get("sfx", ""),
+                    "sfxSrc": sfx_src,
                     "sfxVolume": scene.get("sfx_volume"),
                     "cameraDirection": {
                         "slow_zoom_in": "zoom-in",
@@ -335,7 +354,7 @@ class UniversalDocumentaryEngine:
             if media_path.is_file():
                 media_entries.append(
                     {
-                        "source": str(media_path),
+                        "source": self._portable_source(media_path),
                         "target": f"scenes/{index:02d}_{item['id']}{media_path.suffix.lower() or '.jpg'}",
                     }
                 )
@@ -347,11 +366,13 @@ class UniversalDocumentaryEngine:
             if soundtrack_path.is_file():
                 media_entries.append(
                     {
-                        "source": str(soundtrack_path),
+                        "source": self._portable_source(soundtrack_path),
                         "target": f"music/bed{soundtrack_path.suffix.lower() or '.mp3'}",
                     }
                 )
                 soundtrack = str(soundtrack_path)
+            else:
+                warnings.append(f"Soundtrack not found: {soundtrack}")
 
         voiceovers: List[Dict[str, Any]] = []
         raw_voiceover = audio.get("voiceover")
@@ -366,7 +387,7 @@ class UniversalDocumentaryEngine:
                 if voiceover_path.is_file():
                     target = f"audio/vo_01{voiceover_path.suffix.lower() or '.mp3'}"
                     media_entries.append(
-                        {"source": str(voiceover_path), "target": target}
+                        {"source": self._portable_source(voiceover_path), "target": target}
                     )
                     voiceovers.append(
                         {
@@ -375,6 +396,10 @@ class UniversalDocumentaryEngine:
                             "src": str(voiceover_path),
                         }
                     )
+                else:
+                    warnings.append(
+                        f"Voiceover not found: {voiceover_src}"
+                    )
         elif isinstance(raw_voiceover, str) and raw_voiceover.strip():
             voiceover_path = self.resolve_media(
                 raw_voiceover, target_slug, recipe_dir
@@ -382,7 +407,7 @@ class UniversalDocumentaryEngine:
             if voiceover_path.is_file():
                 target = f"audio/vo_01{voiceover_path.suffix.lower() or '.mp3'}"
                 media_entries.append(
-                    {"source": str(voiceover_path), "target": target}
+                    {"source": self._portable_source(voiceover_path), "target": target}
                 )
                 voiceovers.append(
                     {
@@ -392,6 +417,8 @@ class UniversalDocumentaryEngine:
                         "durationInSeconds": cursor,
                     }
                 )
+            else:
+                warnings.append(f"Voiceover not found: {raw_voiceover}")
 
         # Per-scene tactical SFX (optional) are staged under sfx/.
         for index, scene in enumerate(rendered, start=1):
@@ -402,7 +429,7 @@ class UniversalDocumentaryEngine:
             if sfx_path.is_file():
                 media_entries.append(
                     {
-                        "source": str(sfx_path),
+                        "source": self._portable_source(sfx_path),
                         "target": f"sfx/{index:02d}{sfx_path.suffix.lower() or '.mp3'}",
                     }
                 )
@@ -445,6 +472,7 @@ class UniversalDocumentaryEngine:
             "scenes": [item["mediaSrc"] for item in rendered],
             "episode_config": str(config_path),
             "media_manifest": str(media_manifest_path),
+            "warnings": warnings,
             "total_duration_seconds": round(cursor, 3),
         }
 

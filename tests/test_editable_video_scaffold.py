@@ -112,6 +112,12 @@ def test_scaffold_generates_explicit_scene_nodes(tmp_path: Path):
     assert meta["config_hash"]
     assert meta["generated_files"]["Episode.tsx"]
     assert len(media["files"]) == 6
+    assert all(not item["source"].startswith("/") for item in media["files"])
+    recipe = json.loads(
+        (episode / "video_recipe.editable.json").read_text(encoding="utf-8")
+    )
+    assert recipe["editable"] is True
+    assert "duration_frames" not in recipe
     assert (episode / "public/scenes/01_s1.jpg").is_file()
     assert (episode / "data/captions.ts").is_file()
     assert (episode / "data/theme.ts").is_file()
@@ -176,3 +182,118 @@ def test_unknown_channel_raises(tmp_path: Path):
         EditableVideoEngine(project_root=tmp_path).scaffold(
             make_episode_config(), channel_slug="missing"
         )
+
+
+def test_intro_attributes_escape_quotes_newlines_and_backslashes(tmp_path: Path):
+    make_channel(tmp_path)
+    config = make_episode_config()
+    config["introProps"]["channelName"] = 'CANAL "TESTE" \\quoted'
+    config["introProps"]["subText"] = "LINHA\nNOVA"
+    result = EditableVideoEngine(project_root=tmp_path).scaffold(config)
+    tsx = (Path(result["episode_dir"]) / "Episode.tsx").read_text(encoding="utf-8")
+    assert r'channelName={"CANAL \"TESTE\" \\quoted"}' in tsx
+    assert r'subText={"LINHA\nNOVA"}' in tsx
+
+
+def test_align_captions_payload_is_normalized_and_timeline_derived(tmp_path: Path):
+    make_channel(tmp_path)
+    config = make_episode_config()
+    config["captions"] = {
+        "metadata": {"act_id": "act_01", "duration_seconds": 0.5},
+        "words": [{"word": "OLA", "start": 0.0, "end": 0.5}],
+        "chunks": [
+            {
+                "id": 1,
+                "text": "OLA",
+                "start": 0.0,
+                "end": 0.5,
+                "duration": 0.5,
+                "words": [{"word": "OLA", "start": 0.0, "end": 0.5}],
+            }
+        ],
+        "act_01": {
+            "name": "act_01",
+            "duration": 0.5,
+            "words": [{"word": "OLA", "start": 0.0, "end": 0.5}],
+            "chunks": [
+                {
+                    "id": 1,
+                    "text": "OLA",
+                    "start": 0.0,
+                    "end": 0.5,
+                    "duration": 0.5,
+                    "words": [{"word": "OLA", "start": 0.0, "end": 0.5}],
+                }
+            ],
+        },
+    }
+    result = EditableVideoEngine(project_root=tmp_path).scaffold(config)
+    episode = Path(result["episode_dir"])
+    captions_ts = (episode / "data/captions.ts").read_text(encoding="utf-8")
+    tsx = (episode / "Episode.tsx").read_text(encoding="utf-8")
+    assert "Record<string, ActData>" in captions_ts
+    assert '"id": 1' in captions_ts
+    assert '"act_01"' in captions_ts
+    assert '"globalEnd": 0.5' in tsx
+
+
+def test_flat_caption_chunks_use_array_type(tmp_path: Path):
+    make_channel(tmp_path)
+    config = make_episode_config()
+    config["captions"] = [
+        {
+            "text": "OLA",
+            "start": 0.0,
+            "end": 0.5,
+            "words": [{"word": "OLA", "start": 0.0, "end": 0.5}],
+        }
+    ]
+    result = EditableVideoEngine(project_root=tmp_path).scaffold(config)
+    captions_ts = (
+        Path(result["episode_dir"]) / "data/captions.ts"
+    ).read_text(encoding="utf-8")
+    assert "CaptionChunk[]" in captions_ts
+
+
+def test_media_manifest_sources_are_project_relative(tmp_path: Path):
+    make_channel(tmp_path)
+    result = EditableVideoEngine(project_root=tmp_path).scaffold(
+        make_episode_config()
+    )
+    media = json.loads(
+        (Path(result["episode_dir"]) / "media.json").read_text(encoding="utf-8")
+    )
+    assert media["files"]
+    assert all(not item["source"].startswith("/") for item in media["files"])
+
+
+def test_overlapping_scenes_are_packed_into_separate_tracks(tmp_path: Path):
+    make_channel(tmp_path)
+    config = make_episode_config()
+    config["scenes"][1]["startInSeconds"] = 2
+    result = EditableVideoEngine(project_root=tmp_path).scaffold(config)
+    tsx = (Path(result["episode_dir"]) / "Episode.tsx").read_text(encoding="utf-8")
+    assert 'Track name="Cenas 2"' in tsx
+
+
+def test_staging_failure_does_not_leave_partial_episode(tmp_path: Path):
+    make_channel(tmp_path)
+    outside = tmp_path.parent / f"outside-{tmp_path.name}.jpg"
+    outside.write_bytes(b"outside")
+    config = make_episode_config()
+    config["scenes"][0]["mediaSrc"] = str(outside)
+    with pytest.raises(EditableVideoError, match="escapes the project root"):
+        EditableVideoEngine(project_root=tmp_path).scaffold(config)
+    episode = tmp_path / "channels/test-channel/video/episodes/ep-test-16x9"
+    assert not (episode / "Episode.tsx").exists()
+
+
+def test_language_and_camera_are_normalized_for_typescript(tmp_path: Path):
+    make_channel(tmp_path)
+    config = make_episode_config()
+    config["language"] = "pt-BR"
+    config["scenes"][0]["cameraDirection"] = "slow_zoom_in"
+    result = EditableVideoEngine(project_root=tmp_path).scaffold(config)
+    tsx = (Path(result["episode_dir"]) / "Episode.tsx").read_text(encoding="utf-8")
+    assert 'language={"pt"}' in tsx
+    assert 'direction={"zoom-in"}' in tsx

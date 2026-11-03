@@ -3,7 +3,6 @@
 import os
 import sys
 import argparse
-import subprocess
 from pathlib import Path
 from typing import Optional
 
@@ -747,15 +746,22 @@ def cmd_studio(args: argparse.Namespace) -> int:
             print(f"❌ Error: Remotion entry point not found: {entry}")
             return 1
 
-        cmd = ["npx", "remotion", "studio", str(entry)]
-        if public_dir is not None:
-            cmd.extend(["--public-dir", str(public_dir)])
-        if getattr(args, "port", None):
-            cmd.extend(["--port", str(args.port)])
+        from src.engine.providers.remotion_provider import RemotionProvider
 
+        provider = RemotionProvider(project_root=project_root)
+        entry_rel = entry.relative_to(project_root).as_posix()
+        public_rel_arg = (
+            public_dir.relative_to(project_root).as_posix()
+            if public_dir is not None
+            else None
+        )
         print("🎬 Abrindo Remotion Studio:")
-        print("   " + " ".join(cmd))
-        return subprocess.run(cmd, cwd=str(project_root), check=False).returncode
+        print(f"   {entry_rel}")
+        return provider.open_studio(
+            entry_rel,
+            public_dir=public_rel_arg,
+            port=getattr(args, "port", None),
+        )
     except Exception as e:
         print(f"❌ Studio error: {e}")
         return 1

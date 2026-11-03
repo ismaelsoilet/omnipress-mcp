@@ -134,3 +134,53 @@ def test_missing_media_manifest_is_reported(tmp_path: Path):
         }
     )
     assert any("Media manifest not found" in error for error in errors)
+
+
+def test_editable_recipe_does_not_force_stale_frame_range(tmp_path: Path):
+    entry = make_entry(tmp_path)
+    provider = RemotionProvider(project_root=tmp_path)
+    provider._require = MagicMock(return_value=None)  # type: ignore[method-assign]
+    out_dir = tmp_path / "out"
+
+    def fake_run(cmd, **kwargs):
+        Path(cmd[5]).write_bytes(b"rendered")
+        return MagicMock(returncode=0, stdout="", stderr="")
+
+    spec = {
+        "composition": "Episode-ep-test-16x9",
+        "channel_slug": "test-channel",
+        "entry_point": entry.relative_to(tmp_path).as_posix(),
+        "output": "out.mp4",
+        "format": "mp4",
+        "editable": True,
+        "duration_frames": 100,
+    }
+    with patch(
+        "src.engine.providers.remotion_provider.subprocess.run",
+        side_effect=fake_run,
+    ) as run:
+        provider.render(spec, out_dir)
+    cmd = run.call_args.args[0]
+    assert "--frames" not in cmd
+
+
+def test_open_studio_uses_provider_command(tmp_path: Path):
+    entry = make_entry(tmp_path)
+    public = tmp_path / "channels/test-channel/video/episodes/ep-test-16x9/public"
+    public.mkdir(parents=True, exist_ok=True)
+    provider = RemotionProvider(project_root=tmp_path)
+    provider._require = MagicMock(return_value=None)  # type: ignore[method-assign]
+    with patch(
+        "src.engine.providers.remotion_provider.subprocess.run",
+        return_value=MagicMock(returncode=0),
+    ) as run:
+        code = provider.open_studio(
+            entry.relative_to(tmp_path).as_posix(),
+            public_dir=public.relative_to(tmp_path).as_posix(),
+            port=3010,
+        )
+    assert code == 0
+    cmd = run.call_args.args[0]
+    assert cmd[:4] == ["npx", "remotion", "studio", str(entry.resolve())]
+    assert "--public-dir" in cmd
+    assert "--port" in cmd

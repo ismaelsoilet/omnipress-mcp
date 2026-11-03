@@ -11,6 +11,7 @@ import { themeVars, type VideoTheme } from "../theme";
 import {
   ActTimeline,
   ActData,
+  CaptionsData,
   VoiceoverTrack,
 } from "../types";
 import { SynchronizedCaptions } from "./SynchronizedCaptions";
@@ -22,7 +23,7 @@ export interface EpisodeShellProps {
   outroMusicSrc?: string;
   outroMusicStartSec?: number;
   voiceovers?: VoiceoverTrack[];
-  captions?: Record<string, ActData>;
+  captions?: CaptionsData;
   actTimelines?: ActTimeline[];
   captionsIntroDurationFrames?: number;
   introDurationFrames?: number;
@@ -53,8 +54,11 @@ export const EpisodeShell: React.FC<EpisodeShellProps> = ({
   const isVertical = height > width;
 
   const getMusicVolume = (frame: number): number => {
+    if (backgroundMusicVolume <= 0) {
+      return 0;
+    }
     if (frame < introDurationFrames) {
-      return 0.28;
+      return Math.min(0.28, backgroundMusicVolume);
     }
     const currentSec = (frame - introDurationFrames) / fps;
     const isSpeaking = voiceovers.some((vox) => {
@@ -63,7 +67,9 @@ export const EpisodeShell: React.FC<EpisodeShellProps> = ({
         currentSec <= vox.startInSeconds + vox.durationInSeconds
       );
     });
-    return isSpeaking ? Math.min(0.18, backgroundMusicVolume) : 0.28;
+    return isSpeaking
+      ? Math.min(0.18, backgroundMusicVolume)
+      : Math.min(0.28, backgroundMusicVolume);
   };
 
   return (

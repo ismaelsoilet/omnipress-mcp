@@ -32,6 +32,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **`staticFile()` com caminhos absolutos**: mídia de canal agora passa por staging e `--public-dir`; caminhos absolutos legados são normalizados automaticamente.
+- **TSX gerado com aspas/newlines**: atributos da vinheta agora usam expressões JSX (`prop={"..."}`) e escapam corretamente aspas, barras e quebras de linha.
+- **Legendas do `align-captions`**: payloads act-keyed e flat são normalizados; `id`/`duration` são aceitos por `CaptionChunk`; `actTimelines` é derivado automaticamente quando ausente.
+- **Re-render após edição de duração**: recipes editáveis não fixam mais `duration_frames`; o provider ignora `--frames` quando `editable=true`.
+- **`media.json` portátil**: fontes são gravadas relativas à raiz do projeto, permitindo reconstruir o staging em outro clone/máquina.
+- **SFX documental**: `sfx` relativo agora é resolvido para caminho absoluto no `episode_config`, evitando 404 no render template.
+- **Overlap de cenas**: cenas sobrepostas são distribuídas em múltiplas tracks (`Cenas`, `Cenas 2`, ...) no TSX gerado.
+- **Staging antes da escrita**: falha de staging não deixa mais um episódio parcial sem `meta.json`.
+- **Volume da trilha**: `EpisodeShell` respeita `backgroundMusicVolume` também no intro e nas pausas; volume 0 permanece silencioso.
+- **Studio provider**: `remotion studio` passa pelo `RemotionProvider`, mantendo o subprocesso na camada de provider.
 - **`RemotionProvider` PROJECT_ROOT**: corrigido de `src/` para a raiz do repositório.
 - **Overlap de tracks**: locução, SFX, trilha e música de encerramento foram separados em tracks próprias.
 - **Guard de edição manual**: scaffold recusa sobrescrever TSX editado sem `--force` e cria backup no overwrite forçado.

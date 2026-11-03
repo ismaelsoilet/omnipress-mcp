@@ -144,11 +144,25 @@ export const SynchronizedCaptions: React.FC<SynchronizedCaptionsProps> = ({
   }
 
   // CASO 2: captionsData agrupado por Atos
-  if (!actTimelines || actTimelines.length === 0) {
+  const actEntries = Object.entries(captionsData as Record<string, ActData>).filter(
+    ([, value]) => Boolean(value) && Array.isArray(value.chunks)
+  );
+  const effectiveActTimelines =
+    actTimelines && actTimelines.length > 0
+      ? actTimelines
+      : actEntries.map(([id, act]) => ({
+          id,
+          globalStart: 0,
+          globalEnd:
+            act.duration ||
+            Math.max(...act.chunks.map((chunk) => chunk.end), 0),
+        }));
+
+  if (effectiveActTimelines.length === 0) {
     return null;
   }
 
-  const activeAct = actTimelines.find(
+  const activeAct = effectiveActTimelines.find(
     (act) =>
       currentGlobalSec >= act.globalStart && currentGlobalSec < act.globalEnd
   );

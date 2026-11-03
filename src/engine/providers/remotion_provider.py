@@ -11,8 +11,6 @@ from src.engine.media_stager import MediaStageError, MediaStager
 from src.engine.providers.base import ProviderError, RenderProvider, file_sha256, register
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-_DEFAULT_ENTRY_POINT = PROJECT_ROOT / "src" / "video" / "index.ts"
-_DEFAULT_PUBLIC_DIR = PROJECT_ROOT / "public"
 
 
 @register
@@ -45,7 +43,7 @@ class RemotionProvider(RenderProvider):
     def _entry_point(self, spec: Dict[str, Any]) -> Path:
         value = str(spec.get("entry_point") or "").strip()
         if not value:
-            return _DEFAULT_ENTRY_POINT
+            return (self.project_root / "src" / "video" / "index.ts").resolve()
         resolved = self._resolve_relative(value, label="entry_point")
         if not resolved.is_file():
             raise ProviderError(f"Remotion entry point not found: {resolved}")
@@ -86,6 +84,35 @@ class RemotionProvider(RenderProvider):
         if not resolved.is_file():
             raise ProviderError(f"Media manifest not found: {resolved}")
         return resolved
+
+    # ------------------------------------------------------------------
+    # Studio
+    # ------------------------------------------------------------------
+    def open_studio(
+        self,
+        entry_point: str,
+        public_dir: Optional[str] = None,
+        port: Optional[int] = None,
+    ) -> int:
+        """Launch Remotion Studio for a channel entry point."""
+        self._require(None)
+        entry = self._resolve_relative(entry_point, label="entry_point")
+        if not entry.is_file():
+            raise ProviderError(f"Remotion entry point not found: {entry}")
+
+        cmd = ["npx", "remotion", "studio", str(entry)]
+        if public_dir:
+            resolved_public = self._resolve_relative(
+                public_dir, label="public_dir"
+            )
+            cmd.extend(["--public-dir", str(resolved_public)])
+        if port:
+            cmd.extend(["--port", str(int(port))])
+        return subprocess.run(
+            cmd,
+            cwd=str(self.project_root),
+            check=False,
+        ).returncode
 
     # ------------------------------------------------------------------
     # Validation
@@ -139,7 +166,8 @@ class RemotionProvider(RenderProvider):
             output = output.with_suffix(f".{fmt}")
 
         entry_point = self._entry_point(spec)
-        public_dir = self._public_dir(spec) or _DEFAULT_PUBLIC_DIR
+        default_public = (self.project_root / "public").resolve()
+        public_dir = self._public_dir(spec) or default_public
         public_dir.mkdir(parents=True, exist_ok=True)
 
         props: Dict[str, Any] = dict(spec.get("props") or {})
@@ -176,13 +204,13 @@ class RemotionProvider(RenderProvider):
             f"--props={props_path}",
             "--log=error",
         ]
-        if public_dir != _DEFAULT_PUBLIC_DIR:
+        if public_dir != default_public:
             cmd.extend(["--public-dir", str(public_dir)])
         if spec.get("codec"):
             cmd.extend(["--codec", str(spec["codec"])])
         if spec.get("fps"):
             cmd.extend(["--fps", str(int(spec["fps"]))])
-        if spec.get("duration_frames"):
+        if spec.get("duration_frames") and not spec.get("editable"):
             cmd.extend(["--frames", f"0-{max(0, int(spec['duration_frames']) - 1)}"])
 
         timeout = int(spec.get("timeout_seconds", 3600))

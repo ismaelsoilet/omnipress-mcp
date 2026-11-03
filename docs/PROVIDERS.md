@@ -80,6 +80,7 @@ Runs `npx remotion render <entry_point> <composition> <output> --props=<json> [-
 - `public_dir` defaults to `public/`; editable episodes use their own staging directory.
 - `media_manifest` is a `media.json` file staged by `MediaStager` before render.
 - Absolute media paths in legacy props are rewritten to public-relative paths; `staticFile()` never receives an absolute path.
+- When `editable` is true, the provider does not pass `--frames`; the generated composition duration is authoritative.
 - Path safety: `entry_point`/`public_dir` must stay inside the project; when `channel_slug` is present, inside `channels/<slug>/`.
 
 ### 3.3 `ffmpeg`
