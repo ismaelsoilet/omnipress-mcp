@@ -117,6 +117,8 @@ Full React & TypeScript video engine (`src/video/`) engineered for YouTube Docum
 - **Cinematic Components**: Built-in military cipher decryption (`ScrambledText`), 3D floating dust motes (`DustParticles`), anamorphic golden flares (`AnamorphicFlare`), distressed official stamps with camera shake (`ClassifiedStamp`), tactical grids (`TacticalGrid`), film grain (`FilmGrain`), and Ken Burns camera movements (`KenBurnsImage`).
 - **Synchronized Broadcast Soundscape**: Multi-layered 48kHz stereo audio embedded via `<Audio />` with dynamic audio ducking (-18dB to -22dB under speech).
 - **Programmatic Thumbnail Generator (Rule 15)**: High-CTR 16:9 thumbnails rendered directly from React (`ThumbnailEpisode.tsx`) complying with the Titanic Typography Scale (160px–220px, 3-word limit, zero micro-fonts < 50px, and YouTube duration badge clear zone).
+- **New Interactive Editing Experience (Remotion 4.0.540)**: Long-form timelines use `<Track>` + named sequences; reusable scene atoms use `Interactive.create()`. `omnipress video --scaffold-editable` generates a per-episode TSX with one JSX node per scene, and `omnipress studio` opens it for human refinement. Manual edits are protected by a hash guard and persist as the episode source of truth.
+- **Media Staging for `staticFile()`**: Channel media is staged through `media.json` + `MediaStager` and served with `--public-dir`; absolute paths never reach Remotion's `staticFile()`.
 
 ### 6. Multi-Channel Syndication & YouTube Integration
 - **YouTube Direct Integration**: Connects seamlessly with YouTube via Buffer (`buffer_channel_id` mapped in `channel.json`).
@@ -147,10 +149,10 @@ Declarative photorealistic 3D asset generation powered by headless Blender 4.2+ 
 | Layer | Responsibility |
 |---|---|
 | `src/core/` | Channel discovery, credentials, cache, schema validation, capability registry |
-| `src/engine/` | `universal_carousel`, `universal_publisher`, `universal_audio`, `universal_captions`, `universal_thumbnail`, `universal_documentary`, `universal_video`, `universal_assets`, `universal_3d`, `universal_deploy` |
+| `src/engine/` | `universal_carousel`, `universal_publisher`, `universal_audio`, `universal_captions`, `universal_thumbnail`, `universal_documentary`, `universal_video`, `editable_video`, `media_stager`, `universal_assets`, `universal_3d`, `universal_deploy` |
 | `src/engine/providers/` | The only door to external runtimes: Blender, Remotion, FFmpeg, Edge-TTS, Whisper, AI image, prompt export, stock assets |
 | `src/adapters/` | Publishing providers (Buffer, Instagram, Dev.to, Ghost, Reddit, Webhook, Markdown) |
-| `src/video/` | Remotion compositions with a fully prop-driven theme (`theme.ts`) |
+| `src/video/` | Remotion compositions with a fully prop-driven theme (`theme.ts`); `public.ts` exposes generic factories for generated channel episodes |
 
 Declarative recipes are validated against `.agents/schemas/*.schema.json` before any work:
 
@@ -159,6 +161,9 @@ omnipress carousel    --recipe channels/<slug>/episodios/<ep>/carrossel/carousel
 omnipress thumbnail   --recipe channels/<slug>/media/thumbnails/<post>/thumbnail_recipe.json --preview 120 320
 omnipress documentary --recipe channels/<slug>/episodios/<ep>/documentario/documentary_recipe.json
 omnipress video       --recipe channels/<slug>/recursos_globais/vinhetas/intro_recipe.json
+omnipress video       --recipe channels/<slug>/episodios/<ep>/documentario/episode_config.json --scaffold-editable
+omnipress studio      --channel <slug> --episode <ep>
+omnipress video       --recipe channels/<slug>/video/episodes/<ep>-16x9/video_recipe.editable.json
 omnipress master-audio voice.mp3 -o master.mp3 --mix-bed soundtrack.mp3 --bed-volume 0.18
 omnipress align-captions whisper.json -o captions.json --verify
 omnipress assets      --recipe channels/<slug>/media/raw/assets/asset_recipe.json
@@ -398,6 +403,14 @@ npm run remotion:render:intro
 npm run remotion:render:intro:shorts
 ```
 Rendered MP4s are saved to `media/output/intro_dossie_16x9.mp4` and `media/output/intro_dossie_9x16.mp4`.
+
+3. Generate and refine an editable documentary episode:
+```bash
+omnipress video --recipe <episode_config.json> --channel <slug> --scaffold-editable
+omnipress studio --channel <slug> --episode <episode-slug>
+omnipress video --recipe channels/<slug>/video/episodes/<episode-slug>-16x9/video_recipe.editable.json
+```
+The generated `Episode.tsx` has one JSX node per scene, so trims, duplication, text/color edits and keyframes persist in code.
 
 #### Workflow F: Human Voiceover + Dynamic Remotion Timing
 1. Have OmniPress draft the teleprompter script broken down by scenes (`Scene 01`, `Scene 02`...).

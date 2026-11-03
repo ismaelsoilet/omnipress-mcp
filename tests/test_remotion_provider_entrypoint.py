@@ -1,0 +1,136 @@
+"""Remotion provider entry-point, public-dir and media-normalisation tests."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from src.engine.providers.base import ProviderError
+from src.engine.providers.remotion_provider import RemotionProvider
+
+
+def make_entry(root: Path) -> Path:
+    entry = (
+        root
+        / "channels"
+        / "test-channel"
+        / "video"
+        / "episodes"
+        / "ep-test-16x9"
+        / "index.ts"
+    )
+    entry.parent.mkdir(parents=True, exist_ok=True)
+    entry.write_text("// entry\n", encoding="utf-8")
+    return entry
+
+
+def test_entry_point_and_public_dir_are_used(tmp_path: Path):
+    entry = make_entry(tmp_path)
+    public = tmp_path / "channels/test-channel/video/episodes/ep-test-16x9/public"
+    public.mkdir(parents=True, exist_ok=True)
+    media = tmp_path / "channels/test-channel/media/raw/a.jpg"
+    media.parent.mkdir(parents=True, exist_ok=True)
+    media.write_bytes(b"image")
+    manifest = tmp_path / "channels/test-channel/video/episodes/ep-test-16x9/media.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "files": [
+                    {
+                        "source": "channels/test-channel/media/raw/a.jpg",
+                        "target": "scenes/01.jpg",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    provider = RemotionProvider(project_root=tmp_path)
+    provider._require = MagicMock(return_value=None)  # type: ignore[method-assign]
+    out_dir = tmp_path / "out"
+
+    def fake_run(cmd, **kwargs):
+        Path(cmd[5]).write_bytes(b"rendered")
+        return MagicMock(returncode=0, stdout="", stderr="")
+
+    spec = {
+        "composition": "Episode-ep-test-16x9",
+        "channel_slug": "test-channel",
+        "entry_point": entry.relative_to(tmp_path).as_posix(),
+        "public_dir": public.relative_to(tmp_path).as_posix(),
+        "media_manifest": manifest.relative_to(tmp_path).as_posix(),
+        "props": {"imageSrc": str(media)},
+        "output": "out.mp4",
+        "format": "mp4",
+    }
+    with patch("src.engine.providers.remotion_provider.subprocess.run", side_effect=fake_run) as run:
+        result = provider.render(spec, out_dir)
+
+    cmd = run.call_args.args[0]
+    assert entry.relative_to(tmp_path).as_posix() in " ".join(cmd)
+    assert "--public-dir" in cmd
+    assert result["media_replacements"] == 1
+    props = json.loads((out_dir / "remotion_props.json").read_text(encoding="utf-8"))
+    assert props["imageSrc"] == "scenes/01.jpg"
+    assert result["entry_point"].endswith("index.ts")
+
+
+def test_entry_point_outside_channel_is_rejected(tmp_path: Path):
+    entry = make_entry(tmp_path)
+    other = tmp_path / "channels" / "other" / "video" / "index.ts"
+    other.parent.mkdir(parents=True, exist_ok=True)
+    other.write_text("// other\n", encoding="utf-8")
+
+    provider = RemotionProvider(project_root=tmp_path)
+    errors = provider.validate(
+        {
+            "composition": "Episode-x",
+            "channel_slug": "test-channel",
+            "entry_point": other.relative_to(tmp_path).as_posix(),
+        }
+    )
+    assert any("must stay inside channels/test-channel" in error for error in errors)
+
+
+def test_entry_point_escape_is_rejected(tmp_path: Path):
+    provider = RemotionProvider(project_root=tmp_path)
+    errors = provider.validate(
+        {
+            "composition": "Episode-x",
+            "channel_slug": "test-channel",
+            "entry_point": "../../outside.ts",
+        }
+    )
+    assert any("escapes the project root" in error for error in errors)
+
+
+def test_public_dir_escape_is_rejected(tmp_path: Path):
+    entry = make_entry(tmp_path)
+    provider = RemotionProvider(project_root=tmp_path)
+    errors = provider.validate(
+        {
+            "composition": "Episode-x",
+            "channel_slug": "test-channel",
+            "entry_point": entry.relative_to(tmp_path).as_posix(),
+            "public_dir": "public",
+        }
+    )
+    assert any("must stay inside channels/test-channel" in error for error in errors)
+
+
+def test_missing_media_manifest_is_reported(tmp_path: Path):
+    entry = make_entry(tmp_path)
+    provider = RemotionProvider(project_root=tmp_path)
+    errors = provider.validate(
+        {
+            "composition": "Episode-x",
+            "channel_slug": "test-channel",
+            "entry_point": entry.relative_to(tmp_path).as_posix(),
+            "media_manifest": "channels/test-channel/missing.json",
+        }
+    )
+    assert any("Media manifest not found" in error for error in errors)

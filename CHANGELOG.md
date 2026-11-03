@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] — 2026-11-03
+
+### Added
+- **Novo Fluxo de Edição Interativa do Remotion (4.0.540)**:
+  - `EditableVideoEngine` (`src/engine/editable_video.py`): gera um episódio Remotion editável por canal em `channels/<slug>/video/episodes/<episode>-<aspect>/`, com `Episode.tsx` contendo **um nó JSX por cena**, `index.ts` com entry point próprio, `meta.json` com hash guard, `media.json`, `data/captions.ts`, `data/theme.ts` e `video_recipe.editable.json`.
+  - `MediaStager` (`src/engine/media_stager.py`): staging determinístico de mídia para `public/`, com validação de path safety, manifesto versionado e normalização de caminhos absolutos legados.
+  - `createEpisodeRoot()` e `public.ts` em `src/video/`: fábrica genérica de root Remotion e superfície pública estável para código gerado.
+  - Componentes de cena interativos com `Interactive.create()`: `SceneKenBurns`, `SceneDocumentReveal`, `SceneHeraldic`, `SceneOutro`, mais previews conectados no Root.
+  - `EpisodeShell`: shell universal de tema, trilha, locução, ducking e legendas para episódios editáveis.
+  - CLI `omnipress video --scaffold-editable [--force] [--render] [--aspect-ratio]` e `omnipress studio --channel ... --episode ...`.
+  - MCP tool `omnipress_prepare_editable_video` com anotações e docstring canônica.
+  - Suporte a `entry_point`, `public_dir`, `media_manifest`, `normalize_media` e `stage_legacy_media` no `video_recipe.schema.json` e no `RemotionProvider`.
+  - Workspace `channels/_template/video/` com README canônico do fluxo editável.
+- **Timeline Estruturada**: `<Track name="...">` e `name` descritivo em cenas, locução, trilha, SFX e vinheta; previews de cena conectados.
+- **Testes**: `test_media_stager.py`, `test_editable_video_scaffold.py`, `test_remotion_provider_entrypoint.py`, fixture TypeScript de episódio editável e validação do workspace `video/`.
+
+### Changed
+- **Remotion 4.0.535 → 4.0.540**: todos os pacotes `remotion`/`@remotion/*` alinhados; skills oficiais atualizadas.
+- `DocumentaryEpisode` e `DocumentaryShort` agora usam cenas interativas, tracks nomeadas e `resolveMediaSrc()`.
+- `Root.tsx` extraído para `CoreCompositions` + `Root`, com tipagem explícita e `defaultProps` inline.
+- `RemotionProvider` corrigido para resolver a raiz do projeto (`parents[3]`), validar entry point/public dir e aplicar staging/normalização de mídia.
+- `UniversalDocumentaryEngine` emite `media.json` e normaliza soundtrack, locução e SFX.
+- `tsconfig.json` inclui `channels/*/video/**/*` e o fixture de episódio editável.
+- Documentação sincronizada em `AGENTS.md`, `README.md`, `docs/AGENT_MANUAL.md`, `docs/REMOTION_SKILLS_AND_DOCS.md` e `channels/_template/README.md`.
+
+### Fixed
+- **`staticFile()` com caminhos absolutos**: mídia de canal agora passa por staging e `--public-dir`; caminhos absolutos legados são normalizados automaticamente.
+- **`RemotionProvider` PROJECT_ROOT**: corrigido de `src/` para a raiz do repositório.
+- **Overlap de tracks**: locução, SFX, trilha e música de encerramento foram separados em tracks próprias.
+- **Guard de edição manual**: scaffold recusa sobrescrever TSX editado sem `--force` e cria backup no overwrite forçado.
+
 ## [0.10.1] — 2026-10-29
 
 ### Added

@@ -5,12 +5,14 @@ from __future__ import annotations
 import json
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
+from src.engine.media_stager import MediaStageError, MediaStager
 from src.engine.providers.base import ProviderError, RenderProvider, file_sha256, register
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-_ENTRY_POINT = PROJECT_ROOT / "src" / "video" / "index.ts"
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+_DEFAULT_ENTRY_POINT = PROJECT_ROOT / "src" / "video" / "index.ts"
+_DEFAULT_PUBLIC_DIR = PROJECT_ROOT / "public"
 
 
 @register
@@ -20,6 +22,74 @@ class RemotionProvider(RenderProvider):
     supports = frozenset({"video"})
     default_extension = "mp4"
 
+    def __init__(self, project_root: Optional[Path] = None):
+        self.project_root = Path(project_root or PROJECT_ROOT).resolve()
+        self.stager = MediaStager(self.project_root)
+
+    # ------------------------------------------------------------------
+    # Path resolution
+    # ------------------------------------------------------------------
+    def _resolve_relative(self, value: str, *, label: str) -> Path:
+        candidate = Path(value)
+        resolved = (
+            candidate.resolve()
+            if candidate.is_absolute()
+            else (self.project_root / candidate).resolve()
+        )
+        try:
+            resolved.relative_to(self.project_root)
+        except ValueError as exc:
+            raise ProviderError(f"{label} escapes the project root: {resolved}") from exc
+        return resolved
+
+    def _entry_point(self, spec: Dict[str, Any]) -> Path:
+        value = str(spec.get("entry_point") or "").strip()
+        if not value:
+            return _DEFAULT_ENTRY_POINT
+        resolved = self._resolve_relative(value, label="entry_point")
+        if not resolved.is_file():
+            raise ProviderError(f"Remotion entry point not found: {resolved}")
+        channel_slug = str(spec.get("channel_slug") or "").strip()
+        if channel_slug:
+            channel_dir = (self.project_root / "channels" / channel_slug).resolve()
+            try:
+                resolved.relative_to(channel_dir)
+            except ValueError as exc:
+                raise ProviderError(
+                    f"entry_point must stay inside channels/{channel_slug}/: {resolved}"
+                ) from exc
+        return resolved
+
+    def _public_dir(self, spec: Dict[str, Any]) -> Optional[Path]:
+        value = str(spec.get("public_dir") or "").strip()
+        if not value:
+            return None
+        resolved = self._resolve_relative(value, label="public_dir")
+        if not resolved.is_dir():
+            resolved.mkdir(parents=True, exist_ok=True)
+        channel_slug = str(spec.get("channel_slug") or "").strip()
+        if channel_slug:
+            channel_dir = (self.project_root / "channels" / channel_slug).resolve()
+            try:
+                resolved.relative_to(channel_dir)
+            except ValueError as exc:
+                raise ProviderError(
+                    f"public_dir must stay inside channels/{channel_slug}/: {resolved}"
+                ) from exc
+        return resolved
+
+    def _media_manifest(self, spec: Dict[str, Any]) -> Optional[Path]:
+        value = str(spec.get("media_manifest") or "").strip()
+        if not value:
+            return None
+        resolved = self._resolve_relative(value, label="media_manifest")
+        if not resolved.is_file():
+            raise ProviderError(f"Media manifest not found: {resolved}")
+        return resolved
+
+    # ------------------------------------------------------------------
+    # Validation
+    # ------------------------------------------------------------------
     def validate(self, spec: Dict[str, Any]) -> List[str]:
         errors = super().validate(spec)
         errors.extend(self.check_required(spec, ["composition"]))
@@ -32,14 +102,31 @@ class RemotionProvider(RenderProvider):
         if props is not None and not isinstance(props, dict):
             errors.append("props must be an object")
 
-        if not _ENTRY_POINT.exists():
-            errors.append(f"Remotion entry point not found: {_ENTRY_POINT}")
+        try:
+            entry = self._entry_point(spec)
+            if not entry.exists():
+                errors.append(f"Remotion entry point not found: {entry}")
+        except ProviderError as exc:
+            errors.append(str(exc))
+
+        try:
+            self._public_dir(spec)
+        except ProviderError as exc:
+            errors.append(str(exc))
+
+        try:
+            self._media_manifest(spec)
+        except ProviderError as exc:
+            errors.append(str(exc))
 
         fmt = str(spec.get("format") or "mp4").lower()
         if fmt not in ("mp4", "webm"):
             errors.append("format must be mp4 or webm")
         return errors
 
+    # ------------------------------------------------------------------
+    # Render
+    # ------------------------------------------------------------------
     def render(self, spec: Dict[str, Any], out_dir: Path) -> Dict[str, Any]:
         errors = self.validate(spec)
         if errors:
@@ -51,9 +138,31 @@ class RemotionProvider(RenderProvider):
         if output.suffix.lower() != f".{fmt}":
             output = output.with_suffix(f".{fmt}")
 
+        entry_point = self._entry_point(spec)
+        public_dir = self._public_dir(spec) or _DEFAULT_PUBLIC_DIR
+        public_dir.mkdir(parents=True, exist_ok=True)
+
+        props: Dict[str, Any] = dict(spec.get("props") or {})
+        staged_mapping: Dict[str, str] = {}
+        staged_report: Optional[Dict[str, Any]] = None
+        manifest_path = self._media_manifest(spec)
+        if manifest_path is not None:
+            staged_report = self.stager.ensure(manifest_path, public_dir)
+            staged_mapping = staged_report.get("mapping", {})
+
+        if spec.get("normalize_media", True):
+            props, replacements = self.stager.normalize_props(
+                props,
+                public_dir,
+                mapping=staged_mapping,
+                allow_legacy=bool(spec.get("stage_legacy_media", True)),
+            )
+        else:
+            replacements = []
+
         props_path = Path(out_dir).resolve() / "remotion_props.json"
         props_path.write_text(
-            json.dumps(spec.get("props") or {}, ensure_ascii=False, indent=2),
+            json.dumps(props, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
 
@@ -61,12 +170,14 @@ class RemotionProvider(RenderProvider):
             "npx",
             "remotion",
             "render",
-            str(_ENTRY_POINT),
+            str(entry_point),
             str(spec["composition"]),
             str(output),
             f"--props={props_path}",
             "--log=error",
         ]
+        if public_dir != _DEFAULT_PUBLIC_DIR:
+            cmd.extend(["--public-dir", str(public_dir)])
         if spec.get("codec"):
             cmd.extend(["--codec", str(spec["codec"])])
         if spec.get("fps"):
@@ -78,7 +189,7 @@ class RemotionProvider(RenderProvider):
         try:
             result = subprocess.run(
                 cmd,
-                cwd=str(PROJECT_ROOT),
+                cwd=str(self.project_root),
                 capture_output=True,
                 text=True,
                 timeout=timeout,
@@ -89,17 +200,30 @@ class RemotionProvider(RenderProvider):
 
         if result.returncode != 0:
             tail = (result.stderr or result.stdout or "")[-1200:]
-            raise ProviderError(f"Remotion render failed (code {result.returncode}): {tail}")
+            raise ProviderError(
+                f"Remotion render failed (code {result.returncode}): {tail}"
+            )
 
         if not output.exists():
-            raise ProviderError(f"Remotion finished but output was not produced: {output}")
+            raise ProviderError(
+                f"Remotion finished but output was not produced: {output}"
+            )
 
-        return {
+        payload = {
             "status": "success",
             "provider": self.name,
             "output_path": str(output),
             "composition": spec["composition"],
+            "entry_point": str(entry_point),
+            "public_dir": str(public_dir),
             "format": fmt,
             "file_size_bytes": output.stat().st_size,
             "sha256": file_sha256(output),
+            "media_replacements": len(replacements),
         }
+        if staged_report is not None:
+            payload["media_staging"] = {
+                "public_dir": staged_report["public_dir"],
+                "files": len(staged_report["files"]),
+            }
+        return payload

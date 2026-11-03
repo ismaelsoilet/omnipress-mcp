@@ -11,5 +11,10 @@
     "esModuleInterop": true,
     "resolveJsonModule": true
   },
-  "include": ["src/video/**/*", "remotion.config.ts"]
+  "include": [
+    "src/video/**/*",
+    "channels/*/video/**/*",
+    "tests/fixtures/editable_video/**/*",
+    "remotion.config.ts"
+  ]
 }

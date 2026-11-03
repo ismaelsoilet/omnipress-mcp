@@ -298,6 +298,15 @@ omnipress status
 omnipress setup
 ```
 
+### 2.21. `omnipress_prepare_editable_video`
+Gera um episódio Remotion editável a partir de `episode_config.json`, com um nó JSX por cena e entry point próprio.
+
+* **Anotações**: `readOnlyHint=False`, `destructiveHint=False`, `idempotentHint=False`, `openWorldHint=False`.
+* **Quando USAR**: quando um humano precisa refinar no Studio um episódio gerado pelo agente (textos, cores, keyframes, timing visual).
+* **Quando NÃO usar**: para renderizar o MP4 final; use `omnipress_render_video` depois da edição.
+* **Retorno**: JSON com `episode_tsx`, `entry_point`, `public_dir`, `studio_command`, `render_command`, `warnings` e `backup`.
+* **Proteção**: edições manuais no TSX são preservadas por hash; `force=true` cria backup antes de sobrescrever.
+
 ---
 
 ## 3. Playbooks Operacionais Passo a Passo para Agentes
@@ -404,6 +413,42 @@ Quando o usuário pedir: *"Renderize a vinheta ou o episódio de vídeo do canal
 11. **Padrões de Luminância & Fidelidade Histórica**:
     - Luminância média obrigatória entre **45 e 180** (escala 0-255). Imagens com fundos pretos opacos (< 45) são sumariamente rejeitadas. Fundo em ardósia escura (`#12161F` / `#161B22`).
     - Portão Anti-Anacronismo: banimento de armas pré/pós-época ou bandeiras errôneas. Cenas de "Caso Encerrado" permitidas apenas no Ato Final.
+
+---
+
+### Playbook 3.2: Edição Humana de Episódio no Remotion Studio (Regra 10)
+
+Quando o usuário pedir: *"Quero ajustar o episódio no Studio"*, *"editar as cenas do documentário"* ou *"refinar o vídeo gerado pelo agente"*.
+
+1. **Gerar o episódio editável**:
+   ```bash
+   omnipress video --recipe <episode_config.json> --channel <slug> --scaffold-editable
+   ```
+   O motor cria `channels/<slug>/video/episodes/<episode>-16x9/` com `Episode.tsx`, `index.ts`, `meta.json`, `media.json`, `data/` e `video_recipe.editable.json`.
+
+2. **Abrir o Studio**:
+   ```bash
+   omnipress studio --channel <slug> --episode <episode-slug>
+   ```
+   O comando garante o staging de mídia e passa `--public-dir` correto.
+
+3. **Editar no Studio**:
+   - Selecionar cenas na timeline (`Track` "Cenas").
+   - Editar texto, badge, cores e imagens no Inspetor.
+   - Ajustar keyframes/easing, trim, duplicar ou deletar cenas.
+   - O Studio grava as alterações no `Episode.tsx`.
+
+4. **Renderizar o resultado editado**:
+   ```bash
+   omnipress video --recipe channels/<slug>/video/episodes/<episode>-16x9/video_recipe.editable.json
+   ```
+
+5. **Regras de segurança**:
+   - O TSX gerado é a fonte de verdade após o scaffold.
+   - Reexecutar `--scaffold-editable` sem `--force` falha se o TSX foi editado; `--force` cria backup.
+   - Não edite `media.json` manualmente; ele é regenerado.
+   - Áudio e legendas permanecem travados ao alinhamento da fala. Retiming que dessincronize narração exige re-alinhamento e novo scaffold.
+   - `staticFile()` nunca recebe caminho absoluto; use `media.json` + `--public-dir`.
 
 ---
 
@@ -568,6 +613,8 @@ A partir da v0.10.0, todo runtime externo passa por uma camada de **providers** 
 | Thumbnail (Regra 15) | `omnipress thumbnail --recipe R.json [--validate-only] [--preview 120 320]` | `thumbnail_recipe.json` | `thumbnail_recipe.schema.json` |
 | Cenas documentais | `omnipress documentary --recipe R.json` | `documentary_recipe.json` | `documentary_recipe.schema.json` |
 | Vídeo Remotion | `omnipress video --recipe R.json` | `video_recipe.json` / `intro_recipe.json` | `video_recipe.schema.json` |
+| Episódio editável | `omnipress video --recipe R.json --scaffold-editable [--force]` | `episode_config.json` | `video_recipe.schema.json` |
+| Studio do episódio | `omnipress studio --channel <slug> --episode <slug>` | `meta.json` do episódio | — |
 | Áudio + trilha | `omnipress master-audio in.m4a -o out.mp3 --mix-bed trilha.mp3 --bed-volume 0.18` | `audio_recipe.json` | `audio_recipe.schema.json` |
 | Legendas | `omnipress align-captions whisper.json -o captions.json --verify` | `caption_recipe.json` | `caption_recipe.schema.json` |
 | Asset público | `omnipress assets --recipe R.json` ou `--prepare SRC -o OUT` | `asset_recipe.json` | `asset_recipe.schema.json` |

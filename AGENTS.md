@@ -33,7 +33,7 @@ When an agent generates a content campaign, it must produce three synchronized a
 - **Structured Guidance**: Docstrings and descriptions must specify `Use when:`, `Do NOT use when:`, and `Returns:`.
 
 ### 4. Multi-Channel Agnostic Architecture
-- **Isolation by Default**: Every media brand or publication must live in its own directory under `channels/<slug>/` containing `channel.json`, `articles/`, `media/` (`raw/`, `carousels/`, `stories/`, `visuals/`, `voiceover/`, `soundtrack/`, `output/`), `documentarios/`, `shorts/`, and `scripts/`. See [`channels/_template/`](channels/_template/README.md) as the canonical workspace standard.
+- **Isolation by Default**: Every media brand or publication must live in its own directory under `channels/<slug>/` containing `channel.json`, `articles/`, `media/` (`raw/`, `carousels/`, `stories/`, `visuals/`, `voiceover/`, `soundtrack/`, `output/`), `documentarios/`, `shorts/`, `video/` (optional editable episodes), and `scripts/`. See [`channels/_template/`](channels/_template/README.md) as the canonical workspace standard.
 - **Strict Decoupling Gate**: Channel-specific assets (video episode configs, Whisper alignment JSON, voiceovers, background music, or custom scripts) must NEVER be committed to `src/` (e.g. `src/video/fixtures/` or `Root.tsx`). The core engine must remain 100% agnostic.
 - **Engine vs. Channel Asset Separation**: Core layout engines, publisher adapters, and MCP tools remain in `src/` (`src/core/`, `src/engine/`, `src/adapters/`, `src/video/`). Channel-specific generation scripts and post definitions belong in `channels/<slug>/scripts/`.
 - **Dynamic Configuration**: Publisher adapters resolve credentials and channel IDs (e.g., `buffer_channel_id`) dynamically from `channel.json` before falling back to `.env`.
@@ -90,6 +90,14 @@ When an agent generates a content campaign, it must produce three synchronized a
   - Estimating, interpolating, or uniformly distributing scene durations is strictly prohibited when an audio track exists. Scene start and end points must derive directly from speech alignment (Whisper word/segment timestamps or acoustic speech detection).
   - Compositions must leverage Remotion for dynamic viewer retention: spring-based camera moves (`spring()`), directional whip pans, optical flash transitions, animated badges/lower-thirds, kinetic typography, tactical HUD scanning overlays, and camera shake on emphatic moments.
 
+- **Studio Editing & Interactivity Standard (Remotion 4.0.540+)**:
+  - Long-form compositions must group timed layers with `<Track name="...">` and give every sequence a descriptive `name` (`Cenas`, `Locução`, `Trilha Sonora`, `SFX de Cena`, `Legendas`). Clips on the same track must never overlap.
+  - Reusable scene atoms and reusable elements must use `Interactive.create()` with an `InteractivitySchema`; editable values must stay inline in JSX, animations must use inline `interpolate()`/`spring()`, and transforms must prefer `translate`/`scale`/`rotate` over `transform`.
+  - Editable episodes are generated under `channels/<slug>/video/episodes/<episode>-<aspect>/` by the universal `EditableVideoEngine`. After scaffolding, the generated TSX is the source of truth for that episode; the JSON config is the scaffold input.
+  - Manual edits are protected by the `meta.json` hash guard. Re-scaffolding without `--force` must fail; `--force` must create a backup before overwriting.
+  - Audio remains locked to speech alignment (Rule 10). Visual retiming that desynchronizes narration/captions requires re-alignment and a fresh scaffold.
+  - `staticFile()` must receive public-dir-relative paths only. Absolute channel media paths must go through `media.json` + `MediaStager` and `--public-dir`; never pass an absolute path to `staticFile()`.
+
 ### 8. Multi-CMS Article Syndication & CLI Standards (Rule 11)
 - **Universal Article Contract**: Any long-form article adapter must inherit from `BasePublisherAdapter` and implement `publish_article(title, content_markdown, category, tags, author, canonical_url, published, force_duplicate, **kwargs)`.
 - **Pre-Flight Idempotency Shield**: All article dispatches must call `PublishingShield.check_duplicate()` before touching remote network APIs and call `PublishingShield.record_published()` upon success.
@@ -103,6 +111,8 @@ When an agent generates a content campaign, it must produce three synchronized a
   - `omnipress master-audio <input> -o <output>` (Rule 10 studio mastering chain & -14.0 LUFS EBU R128).
   - `omnipress align-captions <whisper.json> -o <output.json>` (Whisper timestamp standardization & 2-4 word chunking).
   - `omnipress publish --recipe ...` (privacy sanitization & PublishingShield duplicate protection).
+- **Generated Editable Artifacts**: Per-episode Remotion TSX under `channels/<slug>/video/episodes/` is an output of the universal `EditableVideoEngine`, not a bespoke script. It may be generated and manually refined; commit the recipe, manifest and generated TSX, never media binaries.
+
 ### 10. Continuous Documentation, Semantic Versioning & Release Standards (Rule 13)
 - **Mandatory Synchronized Documentation**: Any architectural change, new feature, engine expansion, template modification, or adapter addition MUST be simultaneously documented across:
   - `README.md` (architecture, capabilities, examples, diagrams, badges)
@@ -123,6 +133,7 @@ When an agent generates a content campaign, it must produce three synchronized a
 - **Universal Credential Cascade**: Channel API keys and tokens must be resolved exclusively via `ChannelManager.get_credential(key, channel_slug)`: `channels/<slug>/.env` -> `<SLUG>_<KEY>` -> global `.env`. Direct `os.getenv` calls in adapters are prohibited.
 - **High-Performance Nanosecond Signature Caching**: File reads for channel configs and `.env` files must be cached in memory with nanosecond `(st_mtime_ns, st_size)` signature verification to guarantee zero disk I/O bottlenecks and instant deterministic cache invalidation upon any disk edit.
 - **Generalization Over Bespoke Code (Anti-Gambiarra)**: When a channel needs a new visual feature or layout behavior, agents are strictly forbidden from writing conditional channel checks (`if channel_slug == ...`) or bespoke workaround scripts. Features must be added as generic, reusable schema parameters in `src/` available to all channels.
+- **Channel Video Isolation**: Generated editable episodes, their TSX, data files and media manifests live only in `channels/<slug>/video/episodes/`. Core `src/video/` exposes generic factories (`createEpisodeRoot`, `EpisodeShell`, `Scene*`) and must never import a channel module or contain a channel slug.
 
 ### 12. High-CTR Thumbnail Typography & Documentary Packaging Standards (Rule 15)
 - **Mathematical CTR Benchmark (>5.0% - 10.0%+)**: Thumbnails for YouTube long-form documentaries and explainer videos must be engineered to convert impressions aggressively, lifting CTR from low baseline levels (0.90% - 1.5%) to high-performance benchmarks (>5.0% - 10.0%+).
@@ -163,7 +174,7 @@ Ao gerar campanhas de conteúdo, o agente deve produzir 3 formatos integrados:
 - **Estruturação**: Descrições e docstrings devem conter `Use when:`, `Do NOT use when:` e `Returns:`.
 
 ### 4. Arquitetura Agnóstica Multi-Canal
-- **Isolamento por Canal**: Cada canal de mídia reside exclusivamente em sua pasta em `channels/<slug>/` com seu respectivo `channel.json`, `articles/`, `media/` (`raw/`, `carousels/`, `stories/`, `visuals/`, `voiceover/`, `soundtrack/`, `output/`), `documentarios/`, `shorts/` e `scripts/`. Consulte [`channels/_template/`](channels/_template/README.md) como o padrão canônico de workspace.
+- **Isolamento por Canal**: Cada canal de mídia reside exclusivamente em sua pasta em `channels/<slug>/` com seu respectivo `channel.json`, `articles/`, `media/` (`raw/`, `carousels/`, `stories/`, `visuals/`, `voiceover/`, `soundtrack/`, `output/`), `documentarios/`, `shorts/`, `video/` (episódios editáveis opcionais) e `scripts/`. Consulte [`channels/_template/`](channels/_template/README.md) como o padrão canônico de workspace.
 - **Portão de Desacoplamento Estrito**: Ativos de canal (arquivos de configuração de episódios, JSONs de alinhamento Whisper, locuções gravadas, trilhas musicais ou scripts locais) NUNCA devem ser commitados no diretório `src/` (como `src/video/fixtures/` ou `Root.tsx`). O motor central do repositório deve permanecer 100% agnóstico e genérico.
 - **Separação Motor vs. Canal**: Motores universais de layout, adaptadores e ferramentas MCP pertencem a `src/` (`src/core/`, `src/engine/`, `src/adapters/`, `src/video/`). Scripts e criativos específicos do canal pertencem a `channels/<slug>/scripts/`.
 - **Configuração Dinâmica**: Adaptadores de publicação resolvem IDs de canal (ex.: `buffer_channel_id`) diretamente de `channel.json` antes de consultar `.env`.
@@ -221,6 +232,14 @@ Ao gerar campanhas de conteúdo, o agente deve produzir 3 formatos integrados:
   - É terminantemente proibido definir durações uniformes, dividir o tempo total linearmente por estimativa ou usar tempos arbitrários quando houver áudio gravado. O início e o término de cada beat visual devem ser obrigatoriamente extraídos do alinhamento fonético da fala (timestamps de frases e palavras via Whisper ou segmentação acústica).
   - O motor programático do Remotion deve ser utilizado para retenção visual dinâmica e ritmo de cinema: movimentos de câmera com física spring (`spring()`), whip-pans direcionais, flashes ópticos de transição, tipografia cinética, badges animados com decodificação (`ScrambledText`), retículas táticas de arquivo (`<TacticalGrid />`) e granulação de película 35mm (`<FilmGrain />`).
 
+- **Padrão de Edição no Studio & Interatividade (Remotion 4.0.540+)**:
+  - Composições long-form devem agrupar camadas temporizadas com `<Track name="...">` e dar `name` descritivo a cada sequência (`Cenas`, `Locução`, `Trilha Sonora`, `SFX de Cena`, `Legendas`). Clipes na mesma track nunca podem se sobrepor.
+  - Átomos de cena e elementos reutilizáveis devem usar `Interactive.create()` com `InteractivitySchema`; valores editáveis permanecem inline no JSX, animações usam `interpolate()`/`spring()` inline e transformações preferem `translate`/`scale`/`rotate` a `transform`.
+  - Episódios editáveis são gerados em `channels/<slug>/video/episodes/<episode>-<aspect>/` pelo motor universal `EditableVideoEngine`. Após o scaffold, o TSX gerado é a fonte de verdade daquele episódio; o JSON é o insumo de geração.
+  - Edições manuais são protegidas pelo hash guard do `meta.json`. Reexecutar o scaffold sem `--force` deve falhar; `--force` deve criar backup antes de sobrescrever.
+  - O áudio permanece travado ao alinhamento da fala (Regra 10). Retiming visual que dessincronize narração/legendas exige re-alinhamento e novo scaffold.
+  - `staticFile()` só pode receber caminhos relativos ao public dir. Caminhos absolutos de mídia do canal devem passar por `media.json` + `MediaStager` e `--public-dir`; nunca passe caminho absoluto para `staticFile()`.
+
 ### 8. Padrão de Sindicação Multi-CMS & Ferramental CLI (Regra 11)
 - **Contrato Universal de Artigos**: Qualquer adaptador de artigos long-form deve herdar de `BasePublisherAdapter` e implementar `publish_article(title, content_markdown, category, tags, author, canonical_url, published, force_duplicate, **kwargs)`.
 - **Escudo Pré-Voo de Idempotência**: Todo envio de artigo deve consultar `PublishingShield.check_duplicate()` antes de atingir APIs remotas e registrar `PublishingShield.record_published()` em caso de sucesso.
@@ -234,6 +253,7 @@ Ao gerar campanhas de conteúdo, o agente deve produzir 3 formatos integrados:
   - `omnipress master-audio <input> -o <output>`: executa a cadeia broadcast de 6 estágios e crava -14.0 LUFS EBU R128 (Regra 10).
   - `omnipress align-captions <whisper.json> -o <output.json>`: padroniza timestamps do Whisper em blocos dinâmicos de 2 a 4 palavras para Remotion.
   - `omnipress publish --recipe ...`: executa higienização LGPD e proteção anti-duplicação via `PublishingShield` (Regra 09).
+- **Artefatos Editáveis Gerados**: O TSX por episódio em `channels/<slug>/video/episodes/` é saída do motor universal `EditableVideoEngine`, não um script pontual. Ele pode ser gerado e refinado manualmente; versione o recipe, o manifesto e o TSX gerado, nunca os binários de mídia.
 - **Flexibilidade Preservada**: Scripts customizados em `channels/<slug>/scripts/` são estritamente reservados para tarefas verdadeiramente atípicas (como raspagem de dados especializada ou testes gráficos interativos fora do padrão).
 
 ### 10. Padrão de Atualização Contínua de Documentação, Versionamento Semântico e Release (Regra 13)
@@ -256,6 +276,7 @@ Ao gerar campanhas de conteúdo, o agente deve produzir 3 formatos integrados:
 - **Cascata Universal de Credenciais**: Chaves de API e tokens de canais devem ser resolvidos exclusivamente via `ChannelManager.get_credential(key, channel_slug)`: `channels/<slug>/.env` -> `<SLUG>_<KEY>` -> `.env` global. É expressamente proibido fazer leitura direta com `os.getenv` em adaptadores.
 - **Cache de Alta Performance com Validação por Nanossegundos**: O acesso a arquivos de canal e `.env` deve utilizar cache em memória validado pela assinatura `(st_mtime_ns, st_size)`, eliminando I/O repetitivo de disco sem perigo de leitura obsoleta.
 - **Generalização em Vez de Código Ad-Hoc (Anti-Gambiarra)**: Diante de uma nova necessidade visual de um canal, é terminantemente proibido criar condicionais no core (`if channel_slug == ...`) ou scripts paliativos. A nova capacidade deve ser implementada como parâmetro genérico e reutilizável em `src/`, disponível para todos os canais com testes unitários associados.
+- **Isolamento de Vídeo por Canal**: Episódios editáveis gerados, seu TSX, arquivos de dados e manifestos de mídia vivem exclusivamente em `channels/<slug>/video/episodes/`. O core `src/video/` expõe apenas fábricas genéricas (`createEpisodeRoot`, `EpisodeShell`, `Scene*`) e jamais deve importar um módulo de canal ou conter slug de canal.
 
 ### 12. Padrão de Tipografia Titânica e Embalagem de Thumbnails de Alto CTR (Regra 15)
 - **Meta Numérica de CTR (>5,0% a 10,0%+)**: Thumbnails de documentários e episódios investigativos devem ser concebidas para romper o padrão estagnado de **0,90% a 1,5% de cliques**, alcançando patamar de alta performance (>5,0% a 10,0%+).

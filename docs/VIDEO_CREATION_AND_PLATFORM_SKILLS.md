@@ -41,6 +41,7 @@ As 12 skills do ecossistema oficial do Remotion residem em [`.agents/skills/remo
 - **`remotion-captions`**: Legendas sincronizadas palavra por palavra via Whisper timestamps.
 - **`remotion-maps`**: Rotas animadas e sobrevoos 3D (Mapbox, MapLibre, MapTiler, CesiumJS).
 - **`remotion-studio`**: Preview interativo via `npm run remotion:preview`.
+- **`remotion-interactivity`**: `<Track>`, `Interactive.create()` e edição no Studio com escrita de volta no TSX; fluxo `omnipress video --scaffold-editable` + `omnipress studio`.
 - **`remotion-render`**: Parâmetros de CLI e renderização MP4/ProRes.
 - **`remotion-docs`**: Consulta em tempo real à documentação oficial via API Algolia e arquivos `.md`.
 - **`remotion-upgrade`**: Atualizador contínuo de versões e skills.

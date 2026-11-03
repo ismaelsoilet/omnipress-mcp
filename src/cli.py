@@ -3,6 +3,7 @@
 import os
 import sys
 import argparse
+import subprocess
 from pathlib import Path
 from typing import Optional
 
@@ -664,21 +665,99 @@ def cmd_documentary(args: argparse.Namespace) -> int:
 
 
 def cmd_video(args: argparse.Namespace) -> int:
-    """Renders a Remotion composition from a declarative video recipe."""
+    """Renders a Remotion composition or scaffolds an editable episode."""
     import json
     from src.engine.universal_video import UniversalVideoEngine
 
-    engine = UniversalVideoEngine(ChannelManager())
     recipe_path = Path(args.recipe).resolve()
     if not recipe_path.exists():
         print(f"❌ Error: Recipe file not found: {recipe_path}")
         return 1
+
     try:
+        if getattr(args, "scaffold_editable", False):
+            from src.engine.editable_video import EditableVideoEngine
+
+            scaffold_engine = EditableVideoEngine(ChannelManager())
+            scaffold = scaffold_engine.scaffold(
+                recipe_path,
+                channel_slug=args.channel,
+                aspect_ratio=getattr(args, "aspect_ratio", "16:9"),
+                episode_slug=getattr(args, "episode_slug", None),
+                force=bool(getattr(args, "force", False)),
+            )
+            print(json.dumps(scaffold, indent=2, ensure_ascii=False))
+            if getattr(args, "render", False):
+                render_engine = UniversalVideoEngine(ChannelManager())
+                rendered = render_engine.render_recipe(
+                    Path(scaffold["editable_recipe"]),
+                    channel_slug=scaffold["channel_slug"],
+                )
+                print(json.dumps(rendered, indent=2, ensure_ascii=False))
+            return 0
+
+        engine = UniversalVideoEngine(ChannelManager())
         res = engine.render_recipe(recipe_path, channel_slug=args.channel)
         print(json.dumps(res, indent=2, ensure_ascii=False))
         return 0
     except Exception as e:
-        print(f"❌ Video render error: {e}")
+        print(f"❌ Video error: {e}")
+        return 1
+
+
+def cmd_studio(args: argparse.Namespace) -> int:
+    """Launches Remotion Studio for a generated editable episode."""
+    import json
+    from src.engine.media_stager import MediaStager
+
+    project_root = Path(__file__).resolve().parent.parent
+    channel_manager = ChannelManager(project_root)
+    entry: Optional[Path] = None
+    public_dir: Optional[Path] = None
+
+    try:
+        if getattr(args, "entry", None):
+            entry = Path(args.entry)
+            if not entry.is_absolute():
+                entry = (project_root / entry).resolve()
+        else:
+            if not args.channel or not args.episode:
+                print("❌ Error: provide --channel and --episode, or --entry.")
+                return 1
+            aspect = str(args.aspect_ratio).replace(":", "x")
+            episode_dir = (
+                channel_manager.get_channel_dir(args.channel)
+                / "video"
+                / "episodes"
+                / f"{args.episode}-{aspect}"
+            )
+            entry = episode_dir / "index.ts"
+            meta_path = episode_dir / "meta.json"
+            if meta_path.is_file():
+                meta = json.loads(meta_path.read_text(encoding="utf-8"))
+                public_rel = meta.get("public_dir")
+                media_rel = meta.get("media_manifest")
+                if public_rel and media_rel:
+                    public_dir = (project_root / public_rel).resolve()
+                    MediaStager(project_root).ensure(
+                        (project_root / media_rel).resolve(), public_dir
+                    )
+
+        if entry is None or not entry.is_file():
+            print(f"❌ Error: Remotion entry point not found: {entry}")
+            return 1
+
+        cmd = ["npx", "remotion", "studio", str(entry)]
+        if public_dir is not None:
+            cmd.extend(["--public-dir", str(public_dir)])
+        if getattr(args, "port", None):
+            cmd.extend(["--port", str(args.port)])
+
+        print("🎬 Abrindo Remotion Studio:")
+        print("   " + " ".join(cmd))
+        return subprocess.run(cmd, cwd=str(project_root), check=False).returncode
+    except Exception as e:
+        print(f"❌ Studio error: {e}")
         return 1
 
 
@@ -735,7 +814,7 @@ def main(argv: Optional[list] = None) -> int:
         prog="omnipress",
         description="OmniPress CLI - Universal Agentic Publishing Protocol & Management Suite",
     )
-    parser.add_argument("--version", action="version", version="OmniPress MCP 0.10.1")
+    parser.add_argument("--version", action="version", version="OmniPress MCP 0.11.0")
 
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
 
@@ -848,9 +927,22 @@ def main(argv: Optional[list] = None) -> int:
     doc_p.add_argument("-c", "--channel", help="Target channel slug")
 
     # video (Remotion Engine)
-    video_p = subparsers.add_parser("video", help="Render a Remotion composition from a video recipe")
-    video_p.add_argument("--recipe", "-r", required=True, help="Path to video_recipe.json or intro_recipe.json")
+    video_p = subparsers.add_parser("video", help="Render a Remotion composition or scaffold an editable episode")
+    video_p.add_argument("--recipe", "-r", required=True, help="Path to video_recipe.json or episode_config.json")
     video_p.add_argument("-c", "--channel", help="Target channel slug")
+    video_p.add_argument("--scaffold-editable", action="store_true", help="Generate a per-episode editable Remotion TSX")
+    video_p.add_argument("--episode-slug", help="Override the generated episode slug")
+    video_p.add_argument("--aspect-ratio", default="16:9", choices=["16:9", "9:16", "1:1", "4:5", "3:4"], help="Editable episode aspect ratio")
+    video_p.add_argument("--force", action="store_true", help="Overwrite manual edits (creates a backup)")
+    video_p.add_argument("--render", action="store_true", help="Render immediately after scaffolding")
+
+    # studio (Remotion Studio for editable episodes)
+    studio_p = subparsers.add_parser("studio", help="Open Remotion Studio for a generated editable episode")
+    studio_p.add_argument("-c", "--channel", help="Target channel slug")
+    studio_p.add_argument("-e", "--episode", help="Episode slug")
+    studio_p.add_argument("--aspect-ratio", default="16:9", choices=["16:9", "9:16", "1:1", "4:5", "3:4"], help="Editable episode aspect ratio")
+    studio_p.add_argument("--entry", help="Explicit Remotion entry point")
+    studio_p.add_argument("--port", type=int, help="Studio port")
 
     # assets (Public-domain acquisition)
     assets_p = subparsers.add_parser("assets", help="Fetch allowlisted public-domain assets or prepare local media")
@@ -906,6 +998,8 @@ def main(argv: Optional[list] = None) -> int:
         return cmd_documentary(args)
     elif args.command == "video":
         return cmd_video(args)
+    elif args.command == "studio":
+        return cmd_studio(args)
     elif args.command == "assets":
         return cmd_assets(args)
     elif args.command == "deploy":

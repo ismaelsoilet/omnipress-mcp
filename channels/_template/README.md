@@ -66,6 +66,9 @@ channels/<channel-slug>/
 │   ├── soundtrack/                  # Trilhas sonoras licenciadas
 │   └── output/                      # Vídeos finais renderizados
 │
+├── video/                           # Episódios editáveis no Remotion Studio (opcional)
+│   └── episodes/                    # Gerados por omnipress video --scaffold-editable
+│
 ├── recursos_globais/                # Ativos compartilhados e utilitários da marca
 │   ├── branding/                    # Banner e avatar oficial do canal
 │   ├── vinhetas/                    # Vinhetas oficiais 16:9 e 9:16 (quando canal de vídeo)
@@ -91,6 +94,7 @@ O motor do OmniPress já possui geradores universais e independentes para todas 
 | **5. Thumbnails de Alto CTR** | `UniversalThumbnailEngine`, `rule15_validator` | JPG 16:9 (1920x1080) ou 9:16 (1080x1920) + previews 120/320px | `media/thumbnails/<post>/thumbnail_recipe.json` |
 | **6. Cenas Documentais** | `UniversalDocumentaryEngine` | JPG 16:9/9:16 + `episode_config.json` para Remotion | `episodios/*/documentario/documentary_recipe.json` |
 | **7. Assets 3D** | `Universal3DEngine`, provider Blender, templates/manifestos | PNG/WebM/MP4/GLB com alpha | `media/visuals/<post>/3d_recipe.json` |
+| **8. Episódios Editáveis** | `EditableVideoEngine`, `Track`, `Interactive.create()` | TSX por episódio + entry point + staging | `video/episodes/<episode>-16x9/` |
 
 ---
 

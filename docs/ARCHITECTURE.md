@@ -53,11 +53,14 @@ Every deliverable is a JSON document validated by `.agents/schemas/*.schema.json
 | Thumbnail | `thumbnail_recipe.json` | `universal_thumbnail` + `rule15_validator` |
 | Documentary scenes | `documentary_recipe.json` | `universal_documentary` |
 | Video | `video_recipe.json` | `universal_video` |
+| Editable video episode | `episode_config.json` | `editable_video` + `media_stager` |
 | Audio mastering / mix | `audio_recipe.json` | `universal_audio` |
 | Voice | `voice_recipe.json` | `edge_tts` provider |
 | 3D asset | `3d_recipe.json` | `universal_3d` + `blender` provider |
 | Image | `image_recipe.json` | `ai_image` → `prompt_export` fallback |
 | Public archive asset | `asset_recipe.json` | `universal_assets` |
+
+**Editable video episodes** are a generated artifact, not a new source of channel configuration. `EditableVideoEngine` reads an `episode_config.json`, writes `channels/<slug>/video/episodes/<episode>-<aspect>/` and stages media through a versioned `media.json` manifest. The generated TSX becomes the episode source of truth; `meta.json` protects manual edits with hashes. Remotion receives a per-episode `entry_point`, `public_dir` and `media_manifest` through the `video_recipe` contract.
 
 ---
 

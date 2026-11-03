@@ -51,6 +51,12 @@ def test_channel_level_scripts_are_allowlisted():
     assert not offenders, f"Unexpected channel-level scripts: {offenders}"
 
 
+def test_template_has_video_workspace():
+    template = CHANNELS / "_template" / "video"
+    assert (template / "README.md").is_file()
+    assert (template / "episodes").is_dir()
+
+
 def test_canonical_directories_per_archetype():
     for channel in _channels():
         config = json.loads((channel / "channel.json").read_text(encoding="utf-8"))

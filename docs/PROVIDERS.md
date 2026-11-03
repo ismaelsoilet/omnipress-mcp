@@ -72,8 +72,15 @@ Only parameters declared in the template `manifest.json` are passed. Unknown par
 
 ### 3.2 `remotion`
 
-Spec fields: `composition`, `props`, `output`, `format`, `codec`, `fps`, `duration_frames`.
-Runs `npx remotion render src/video/index.ts <composition> <output> --props=<json>` from the repo root.
+Spec fields: `composition`, `props`, `output`, `format`, `codec`, `fps`, `duration_frames`, `entry_point`, `public_dir`, `media_manifest`, `normalize_media`, `stage_legacy_media`.
+
+Runs `npx remotion render <entry_point> <composition> <output> --props=<json> [--public-dir <dir>]` from the repo root.
+
+- `entry_point` defaults to `src/video/index.ts`; generated editable episodes use `channels/<slug>/video/episodes/<episode>/index.ts`.
+- `public_dir` defaults to `public/`; editable episodes use their own staging directory.
+- `media_manifest` is a `media.json` file staged by `MediaStager` before render.
+- Absolute media paths in legacy props are rewritten to public-relative paths; `staticFile()` never receives an absolute path.
+- Path safety: `entry_point`/`public_dir` must stay inside the project; when `channel_slug` is present, inside `channels/<slug>/`.
 
 ### 3.3 `ffmpeg`
 

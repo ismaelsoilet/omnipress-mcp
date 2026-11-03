@@ -1,6 +1,6 @@
 {
   "name": "omnipress-mcp",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "description": "Agentic multi-channel publishing engine for Antigravity via Model Context Protocol (MCP)",
   "main": "src/video/index.ts",
   "scripts": {
@@ -10,6 +10,8 @@
     "test": "uv run pytest tests/",
     "typecheck": "tsc --noEmit",
     "remotion:preview": "remotion preview src/video/index.ts",
+    "remotion:studio": "remotion studio src/video/index.ts",
+    "remotion:compositions": "remotion compositions src/video/index.ts",
     "remotion:render": "remotion render src/video/index.ts",
     "remotion:render:intro": "remotion render src/video/index.ts ChannelIntro-16x9 out/intro_16x9.mp4",
     "remotion:render:intro:shorts": "remotion render src/video/index.ts ChannelIntro-9x16 out/intro_9x16.mp4",
@@ -41,14 +43,14 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@remotion/cli": "^4.0.535",
-    "@remotion/media-utils": "^4.0.535",
-    "@remotion/transitions": "^4.0.535",
+    "@remotion/cli": "4.0.540",
+    "@remotion/media-utils": "4.0.540",
+    "@remotion/transitions": "4.0.540",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "remotion": "^4.0.535",
+    "remotion": "4.0.540",
     "typescript": "^7.0.2"
   }
 }

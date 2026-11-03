@@ -298,6 +298,8 @@ class UniversalDocumentaryEngine:
                     "headline": scene.get("headline", ""),
                     "subheadline": scene.get("subheadline", ""),
                     "badge": scene.get("badge", ""),
+                    "sfxSrc": scene.get("sfx", ""),
+                    "sfxVolume": scene.get("sfx_volume"),
                     "cameraDirection": {
                         "slow_zoom_in": "zoom-in",
                         "slow_zoom_out": "zoom-out",
@@ -325,19 +327,98 @@ class UniversalDocumentaryEngine:
             captions_data = {}
 
         audio = data.get("audio") or {}
+        media_entries: List[Dict[str, str]] = []
+
+        # Scene cards are the exact assets consumed by Remotion.
+        for index, item in enumerate(rendered, start=1):
+            media_path = Path(str(item["mediaSrc"]))
+            if media_path.is_file():
+                media_entries.append(
+                    {
+                        "source": str(media_path),
+                        "target": f"scenes/{index:02d}_{item['id']}{media_path.suffix.lower() or '.jpg'}",
+                    }
+                )
+
+        # Soundtrack and narration are staged under music/ and audio/.
+        soundtrack = str(audio.get("soundtrack") or "").strip()
+        if soundtrack:
+            soundtrack_path = self.resolve_media(soundtrack, target_slug, recipe_dir)
+            if soundtrack_path.is_file():
+                media_entries.append(
+                    {
+                        "source": str(soundtrack_path),
+                        "target": f"music/bed{soundtrack_path.suffix.lower() or '.mp3'}",
+                    }
+                )
+                soundtrack = str(soundtrack_path)
+
+        voiceovers: List[Dict[str, Any]] = []
+        raw_voiceover = audio.get("voiceover")
+        if isinstance(raw_voiceover, dict):
+            voiceover_src = str(
+                raw_voiceover.get("src") or raw_voiceover.get("path") or ""
+            ).strip()
+            if voiceover_src:
+                voiceover_path = self.resolve_media(
+                    voiceover_src, target_slug, recipe_dir
+                )
+                if voiceover_path.is_file():
+                    target = f"audio/vo_01{voiceover_path.suffix.lower() or '.mp3'}"
+                    media_entries.append(
+                        {"source": str(voiceover_path), "target": target}
+                    )
+                    voiceovers.append(
+                        {
+                            **raw_voiceover,
+                            "id": raw_voiceover.get("id") or "vo_01",
+                            "src": str(voiceover_path),
+                        }
+                    )
+        elif isinstance(raw_voiceover, str) and raw_voiceover.strip():
+            voiceover_path = self.resolve_media(
+                raw_voiceover, target_slug, recipe_dir
+            )
+            if voiceover_path.is_file():
+                target = f"audio/vo_01{voiceover_path.suffix.lower() or '.mp3'}"
+                media_entries.append(
+                    {"source": str(voiceover_path), "target": target}
+                )
+                voiceovers.append(
+                    {
+                        "id": "vo_01",
+                        "src": str(voiceover_path),
+                        "startInSeconds": 0,
+                        "durationInSeconds": cursor,
+                    }
+                )
+
+        # Per-scene tactical SFX (optional) are staged under sfx/.
+        for index, scene in enumerate(rendered, start=1):
+            sfx = str(scene.get("sfxSrc") or "").strip()
+            if not sfx:
+                continue
+            sfx_path = self.resolve_media(sfx, target_slug, recipe_dir)
+            if sfx_path.is_file():
+                media_entries.append(
+                    {
+                        "source": str(sfx_path),
+                        "target": f"sfx/{index:02d}{sfx_path.suffix.lower() or '.mp3'}",
+                    }
+                )
+
         episode_config = {
             "id": episode_slug,
             "title": data.get("title") or episode_slug,
             "channelSlug": target_slug,
             "language": data.get("language") or channel.get("language") or "pt",
             "theme": theme,
-            "backgroundMusicSrc": audio.get("soundtrack", ""),
+            "backgroundMusicSrc": soundtrack,
             "backgroundMusicVolume": audio.get("soundtrack_volume", 0.16),
             "scenes": rendered,
             "captions": captions_data,
-            "voiceovers": (
-                [audio["voiceover"]] if isinstance(audio.get("voiceover"), dict) else []
-            ),
+            "voiceovers": voiceovers,
+            "mediaManifest": "media.json",
             "generatedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         }
 
@@ -346,6 +427,12 @@ class UniversalDocumentaryEngine:
         )
         config_path.write_text(
             json.dumps(episode_config, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+
+        media_manifest_path = out_dir / "media.json"
+        media_manifest_path.write_text(
+            json.dumps({"files": media_entries}, ensure_ascii=False, indent=2),
+            encoding="utf-8",
         )
 
         return {
@@ -357,6 +444,7 @@ class UniversalDocumentaryEngine:
             "mode": "manifest" if manifest_mode else "render",
             "scenes": [item["mediaSrc"] for item in rendered],
             "episode_config": str(config_path),
+            "media_manifest": str(media_manifest_path),
             "total_duration_seconds": round(cursor, 3),
         }
 

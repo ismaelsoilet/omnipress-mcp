@@ -30,11 +30,59 @@ Todas as 12 skills oficiais estão instaladas em [`.agents/skills/`](../.agents/
 | **`remotion-studio`** | [`.agents/skills/remotion-studio/`](../.agents/skills/remotion-studio/SKILL.md) | **Preview interativo**. Inicia o Remotion Studio no navegador (`npm run remotion:preview` ou `npx remotion studio`) para validação visual em tempo real antes de renderizar. |
 | **`remotion-render`** | [`.agents/skills/remotion-render/`](../.agents/skills/remotion-render/SKILL.md) | **Exportação de vídeo e still frames**. Parâmetros de CLI, codecs, vídeos transparentes (ProRes 4444 / WebM VP9). |
 | **`remotion-create`** | [`.agents/skills/remotion-create/`](../.agents/skills/remotion-create/SKILL.md) | **Criação de novos vídeos e composições**. Estruturação de novos templates, cenas e layouts. |
-| **`remotion-interactivity`** | [`.agents/skills/remotion-interactivity/`](../.agents/skills/remotion-interactivity/SKILL.md) | **Edição visual interativa no Studio**. Estruturação com `Interactive.*` para permitir que o usuário altere textos, cores e keyframes diretamente pela interface gráfica. |
+| **`remotion-interactivity`** | [`.agents/skills/remotion-interactivity/`](../.agents/skills/remotion-interactivity/SKILL.md) | **Edição visual interativa no Studio**. Estruturação com `<Track>`, `Interactive.*`, `Interactive.create()` e composições conectadas para permitir que o usuário altere textos, cores, keyframes e timing diretamente pela interface gráfica, com escrita de volta no TSX. |
 | **`remotion-maps`** | [`.agents/skills/remotion-maps/`](../.agents/skills/remotion-maps/SKILL.md) | **Animações cartográficas e mapas explicativos**. Integração com Mapbox, MapLibre, MapTiler, GeoJSON e sobrevoos 3D com CesiumJS. |
 | **`remotion-multimedia`** | [`.agents/skills/remotion-multimedia/`](../.agents/skills/remotion-multimedia/SKILL.md) | **Manipulação multimídia via Mediabunny**. Cálculo preciso de dimensões de vídeo, duração de áudio e metadados no navegador. |
 | **`remotion-saas`** | [`.agents/skills/remotion-saas/`](../.agents/skills/remotion-saas/SKILL.md) | **Arquitetura para aplicações e SaaS**. Integração com `@remotion/player`, renderização server-side e Remotion Lambda. |
 | **`remotion-upgrade`** | [`.agents/skills/remotion-upgrade/`](../.agents/skills/remotion-upgrade/SKILL.md) | **Atualização contínua**. Atualiza versões do Remotion, pacotes do ecossistema e as próprias Agent Skills instaladas. |
+
+---
+
+## 🖥️ Novo Fluxo de Edição Interativa (Remotion 4.0.540+)
+
+O Remotion 4.0.540 trouxe a nova timeline do Studio (trilhas, rolling edits, keyframes/easing e edição no canvas) e o `Interactive.create()` (4.0.536) para componentes editáveis. O OmniPress adapta esse fluxo em dois modos:
+
+### 1. Modo template (JSON-driven)
+
+Composições universais como `DocumentaryEpisode-16x9` e `DocumentaryShort-9x16` continuam recebendo `episode_config.json` via `--props`. As camadas são agrupadas com `<Track name="...">` e cada sequência tem `name` descritivo. Use este modo para render em lote, QA e canais sem edição manual.
+
+### 2. Modo episódio editável (TSX por episódio)
+
+```bash
+# 1. Gerar o episódio editável a partir do episode_config.json
+omnipress video --recipe episode_config.json --channel <slug> --scaffold-editable
+
+# 2. Abrir o Studio
+omnipress studio --channel <slug> --episode <episode-slug>
+
+# 3. Renderizar o episódio editado
+omnipress video --recipe channels/<slug>/video/episodes/<episode>-16x9/video_recipe.editable.json
+```
+
+O motor `EditableVideoEngine` gera:
+
+- `Episode.tsx` com **um nó JSX por cena** (sem `.map()`), permitindo trim, duplicação, deleção e edição individual;
+- `index.ts` com `createEpisodeRoot()` e entry point próprio do episódio;
+- `meta.json` com hashes de proteção contra sobrescrita de edições manuais;
+- `media.json` com o manifesto de staging;
+- `data/captions.ts` e `data/theme.ts` tipados;
+- `video_recipe.editable.json` para render.
+
+Após o scaffold, o **TSX gerado é a fonte de verdade** daquele episódio. Reexecutar o scaffold sem `--force` falha se houver edições manuais; `--force` cria backup antes de sobrescrever.
+
+### Regras de mídia
+
+`staticFile()` do Remotion **rejeita caminhos absolutos**. O OmniPress resolve isso com:
+
+- `media.json` + `src/engine/media_stager.py` para copiar mídia para o `public/` do episódio;
+- `--public-dir` no provider Remotion;
+- normalização automática de props legadas com caminhos absolutos.
+
+Nunca passe `/home/...` para `staticFile()`. Use caminhos relativos ao public dir.
+
+### WebMCP
+
+O Studio 4.0.540 expõe ferramentas WebMCP (selecionar cena, seek, render jobs, transcrição). Entre os harnesses principais, **apenas o ChatGPT Codex suporta WebMCP**; o OpenCode ainda não. Não construa automação dependente disso.
 
 ---
 

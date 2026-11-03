@@ -2,18 +2,17 @@ import {
   AbsoluteFill,
   Audio,
   Sequence,
-  staticFile,
+  Track,
   useCurrentFrame,
   useVideoConfig,
   interpolate,
 } from "remotion";
-import { KenBurnsImage } from "../components/KenBurnsImage";
-import { TacticalGrid } from "../components/TacticalGrid";
-import { FilmGrain } from "../components/FilmGrain";
+import { SceneKenBurns } from "../components/scenes/SceneKenBurns";
 import { ActData, ActTimeline, DocumentaryScene } from "../types";
 import { SynchronizedCaptions } from "../components/SynchronizedCaptions";
 import { WordByWordCaptions } from "../components/WordByWordCaptions";
 import { MitoRealidadeOverlays, OverlayEvent } from "../components/MitoRealidadeOverlays";
+import { resolveMediaSrc } from "../media";
 import { themeVars } from "../theme";
 
 export interface DocumentaryShortProps {
@@ -93,40 +92,67 @@ export const DocumentaryShort: React.FC<DocumentaryShortProps> = ({
       }}
     >
       {/* 1. Trilha Sonora do Short (suavizada com fade-in e fade-out automático) */}
-      {musicSrc && (
-        <Audio src={staticFile(musicSrc)} volume={effectiveMusicVolume} />
-      )}
+      {musicSrc ? (
+        <Track name="Trilha Sonora">
+          <Sequence
+            name="Trilha principal"
+            from={0}
+            durationInFrames={durationInFrames}
+          >
+            <Audio
+              src={resolveMediaSrc(musicSrc)}
+              volume={effectiveMusicVolume}
+            />
+          </Sequence>
+        </Track>
+      ) : null}
 
       {/* 2. Locução Principal Suavizada */}
-      {voiceoverSrc && (
-        <Audio src={staticFile(voiceoverSrc)} volume={effectiveVoiceVolume} />
-      )}
+      {voiceoverSrc ? (
+        <Track name="Locução">
+          <Sequence
+            name="Locução principal"
+            from={0}
+            durationInFrames={durationInFrames}
+          >
+            <Audio
+              src={resolveMediaSrc(voiceoverSrc)}
+              volume={effectiveVoiceVolume}
+            />
+          </Sequence>
+        </Track>
+      ) : null}
 
       {/* 3. Sequência de Cenas e Imagens Rápidas */}
-      {scenes.map((scene, index) => {
-        let startFrame = 0;
-        for (let i = 0; i < index; i++) {
-          startFrame += Math.round(scenes[i].durationInSeconds * fps);
-        }
-        const sceneDurationFrames = Math.round(scene.durationInSeconds * fps);
+      <Track name="Cenas">
+        {scenes.map((scene, index) => {
+          let startFrame = 0;
+          for (let i = 0; i < index; i++) {
+            startFrame += Math.round(scenes[i].durationInSeconds * fps);
+          }
+          const sceneDurationFrames = Math.round(
+            scene.durationInSeconds * fps
+          );
 
-        return (
-          <Sequence
-            key={scene.id || index}
-            from={startFrame}
-            durationInFrames={sceneDurationFrames}
-          >
-            <KenBurnsImage
-              imageSrc={staticFile(scene.mediaSrc)}
+          return (
+            <SceneKenBurns
+              key={scene.id || index}
+              name={`Cena ${String(index + 1).padStart(2, "0")} — ${
+                scene.headline || scene.type
+              }`}
+              from={startFrame}
               durationInFrames={sceneDurationFrames}
+              imageSrc={scene.mediaSrc}
               direction={index % 2 === 0 ? "zoom-in" : "zoom-out"}
               headline={showSceneMetadata ? scene.headline : undefined}
               caption={scene.notes}
-              badge={showSceneMetadata ? (scene.badge || badge) : undefined}
+              badge={
+                showSceneMetadata ? scene.badge || badge : undefined
+              }
             />
-          </Sequence>
-        );
-      })}
+          );
+        })}
+      </Track>
 
       {/* 4. Overlay de Top Badge Fixo para Shorts */}
       <div

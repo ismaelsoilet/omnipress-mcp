@@ -68,6 +68,12 @@ class UniversalVideoEngine:
             out_dir = (recipe_dir or Path.cwd()) / "output_video" / str(data["composition"])
         out_dir.mkdir(parents=True, exist_ok=True)
 
+        media_manifest = data.get("media_manifest")
+        if not media_manifest and recipe_dir is not None:
+            candidate = recipe_dir / "media.json"
+            if candidate.is_file():
+                media_manifest = str(candidate)
+
         spec = {
             "composition": data["composition"],
             "props": data.get("props") or {},
@@ -78,6 +84,11 @@ class UniversalVideoEngine:
             "duration_frames": data.get("duration_frames"),
             "timeout_seconds": data.get("timeout_seconds") or 3600,
             "channel_slug": target_slug if self.channel_manager.get_channel(target_slug) else None,
+            "entry_point": data.get("entry_point"),
+            "public_dir": data.get("public_dir"),
+            "media_manifest": media_manifest,
+            "normalize_media": data.get("normalize_media", True),
+            "stage_legacy_media": data.get("stage_legacy_media", True),
         }
         result = self.provider.render(spec, out_dir)
         result["engine"] = "universal_video"

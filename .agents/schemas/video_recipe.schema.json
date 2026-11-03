@@ -11,6 +11,21 @@
     "channel_slug": { "type": "string" },
     "episode_slug": { "type": "string" },
     "composition": { "type": "string" },
+    "entry_point": {
+      "type": "string",
+      "description": "Project-relative Remotion entry point, e.g. channels/<slug>/video/episodes/<episode>/index.ts"
+    },
+    "public_dir": {
+      "type": "string",
+      "description": "Project-relative public directory for staticFile() assets"
+    },
+    "media_manifest": {
+      "type": "string",
+      "description": "Project-relative media.json manifest for deterministic staging"
+    },
+    "normalize_media": { "type": "boolean", "default": true },
+    "stage_legacy_media": { "type": "boolean", "default": true },
+    "editable": { "type": "boolean", "default": false },
     "props": { "type": "object", "additionalProperties": true },
     "output": { "type": "string" },
     "codec": { "enum": ["h264", "h265", "vp8", "vp9", "prores"] },

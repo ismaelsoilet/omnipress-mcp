@@ -66,7 +66,7 @@ if hasattr(mcp, "custom_route"):
             return JSONResponse({
                 "status": "healthy",
                 "service": "omnipress-mcp",
-                "version": "0.10.1",
+                "version": "0.11.0",
             })
     except (ImportError, Exception):
         pass
@@ -211,6 +211,13 @@ MCP_TOOL_ANNOTATIONS = {
         "readOnlyHint": False,
         "destructiveHint": False,
         "idempotentHint": True,
+        "openWorldHint": False,
+    },
+    "omnipress_prepare_editable_video": {
+        "title": "Prepare Editable Remotion Episode",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
         "openWorldHint": False,
     },
     "omnipress_fetch_assets": {
@@ -1150,9 +1157,11 @@ def omnipress_render_video(
 
     Use when:
     - Rendering intros, episodes or shorts from a JSON recipe instead of manual CLI flags.
+    - Rendering a generated editable episode by passing a recipe with entry_point/public_dir.
 
     Do NOT use when:
     - Rendering still carousel slides (use omnipress_build_carousel).
+    - Preparing an editable episode (use omnipress_prepare_editable_video first).
 
     Returns:
     - JSON with the MP4/WebM output path, checksum and composition id.
@@ -1165,6 +1174,40 @@ def omnipress_render_video(
         result = engine.render_recipe(
             recipe=Path(recipe_path).resolve(),
             channel_slug=channel_slug,
+        )
+        return json.dumps(result, indent=2, ensure_ascii=False)
+    except Exception as e:
+        return json.dumps({"status": "error", "error": str(e)}, indent=2, ensure_ascii=False)
+
+
+@mcp.tool(annotations=get_tool_annotations("omnipress_prepare_editable_video"))
+def omnipress_prepare_editable_video(
+    recipe_path: str,
+    channel_slug: Optional[str] = None,
+    aspect_ratio: str = "16:9",
+    force: bool = False,
+) -> str:
+    """Generates a per-episode editable Remotion TSX with a hash guard.
+
+    Use when:
+    - A human needs to refine an agent-generated documentary episode in Remotion Studio.
+
+    Do NOT use when:
+    - Rendering the final MP4 (use omnipress_render_video after editing).
+
+    Returns:
+    - JSON with episode_tsx, entry_point, public_dir, studio_command and warnings.
+    """
+    import json
+    from src.engine.editable_video import EditableVideoEngine
+
+    try:
+        engine = EditableVideoEngine(channel_manager=channel_manager)
+        result = engine.scaffold(
+            Path(recipe_path).resolve(),
+            channel_slug=channel_slug,
+            aspect_ratio=aspect_ratio,
+            force=force,
         )
         return json.dumps(result, indent=2, ensure_ascii=False)
     except Exception as e:

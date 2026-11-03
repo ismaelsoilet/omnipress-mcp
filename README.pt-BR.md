@@ -117,6 +117,8 @@ Motor de vídeo de alta fidelidade em React & TypeScript (`src/video/`) projetad
 - **Componentes Cinemáticos**: Decodificador militar (`ScrambledText`), partículas de poeira 3D (`DustParticles`), flare anamórfico dourado (`AnamorphicFlare`), carimbo oficial (`ClassifiedStamp`), grade tática (`TacticalGrid`), grão de película (`FilmGrain`) e zoom suave Ken Burns (`KenBurnsImage`).
 - **Paisagem Sonora em 48kHz Sincronizada**: Áudio estéreo broadcast integrado via `<Audio />` com ducking dinâmico automático (-18dB a -22dB durante a voz).
 - **Gerador Programático de Miniaturas (Regra 15)**: Criação de capas 16:9 de alto CTR via código React (`ThumbnailEpisode.tsx`) cumprindo a Escala Tipográfica Titânica (160px–220px, limite de 3 palavras, zero micro-fontes < 50px e escudo contra o badge de tempo do YouTube).
+- **Nova Experiência de Edição Interativa (Remotion 4.0.540)**: Timelines long-form usam `<Track>` + sequências nomeadas; átomos de cena usam `Interactive.create()`. `omnipress video --scaffold-editable` gera um TSX por episódio com um nó JSX por cena, e `omnipress studio` abre o episódio para refinamento humano. Edições manuais são protegidas por hash guard e viram a fonte de verdade do episódio.
+- **Staging de Mídia para `staticFile()`**: Mídia de canal é preparada via `media.json` + `MediaStager` e servida com `--public-dir`; caminhos absolutos nunca chegam ao `staticFile()`.
 
 ### 6. Publicação Multi-Canal & Integração Direta com YouTube
 - **Integração Nativa com YouTube**: Conexão direta com canais do YouTube através do Buffer (`buffer_channel_id` configurado em `channel.json`).
@@ -147,10 +149,10 @@ Geração declarativa de ativos 3D fotorrealistas isolados com canal alfa transp
 | Camada | Responsabilidade |
 |---|---|
 | `src/core/` | Descoberta de canal, credenciais, cache, validação de schema, registry de capabilities |
-| `src/engine/` | `universal_carousel`, `universal_publisher`, `universal_audio`, `universal_captions`, `universal_thumbnail`, `universal_documentary`, `universal_video`, `universal_assets`, `universal_3d`, `universal_deploy` |
+| `src/engine/` | `universal_carousel`, `universal_publisher`, `universal_audio`, `universal_captions`, `universal_thumbnail`, `universal_documentary`, `universal_video`, `editable_video`, `media_stager`, `universal_assets`, `universal_3d`, `universal_deploy` |
 | `src/engine/providers/` | Única porta para runtimes externos: Blender, Remotion, FFmpeg, Edge-TTS, Whisper, IA de imagem, prompt export, acervos |
 | `src/adapters/` | Provedores de publicação (Buffer, Instagram, Dev.to, Ghost, Reddit, Webhook, Markdown) |
-| `src/video/` | Composições Remotion com tema 100% via props (`theme.ts`) |
+| `src/video/` | Composições Remotion com tema 100% via props (`theme.ts`); `public.ts` expõe fábricas genéricas para episódios gerados |
 
 Toda receita é validada contra `.agents/schemas/*.schema.json` antes de qualquer execução:
 
@@ -159,6 +161,9 @@ omnipress carousel    --recipe channels/<slug>/episodios/<ep>/carrossel/carousel
 omnipress thumbnail   --recipe channels/<slug>/media/thumbnails/<post>/thumbnail_recipe.json --preview 120 320
 omnipress documentary --recipe channels/<slug>/episodios/<ep>/documentario/documentary_recipe.json
 omnipress video       --recipe channels/<slug>/recursos_globais/vinhetas/intro_recipe.json
+omnipress video       --recipe channels/<slug>/episodios/<ep>/documentario/episode_config.json --scaffold-editable
+omnipress studio      --channel <slug> --episode <ep>
+omnipress video       --recipe channels/<slug>/video/episodes/<ep>-16x9/video_recipe.editable.json
 omnipress master-audio voice.mp3 -o master.mp3 --mix-bed soundtrack.mp3 --bed-volume 0.18
 omnipress align-captions whisper.json -o captions.json --verify
 omnipress assets      --recipe channels/<slug>/media/raw/assets/asset_recipe.json

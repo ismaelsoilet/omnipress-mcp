@@ -1,18 +1,29 @@
 import React from "react";
 import { Composition } from "remotion";
 import { ChannelIntro } from "./compositions/ChannelIntro";
-import { DocumentaryEpisode, DocumentaryEpisodeProps } from "./compositions/DocumentaryEpisode";
+import {
+  DocumentaryEpisode,
+  DocumentaryEpisodeProps,
+} from "./compositions/DocumentaryEpisode";
 import { DocumentaryScene } from "./types";
-import { DocumentaryShort, DocumentaryShortProps } from "./compositions/DocumentaryShort";
-import { ThumbnailEpisode, ThumbnailEpisodeProps } from "./compositions/ThumbnailEpisode";
+import { DocumentaryShort } from "./compositions/DocumentaryShort";
+import { ThumbnailEpisode } from "./compositions/ThumbnailEpisode";
+import {
+  SceneDocumentReveal,
+  SceneHeraldic,
+  SceneKenBurns,
+  SceneOutro,
+} from "./components/scenes";
 import { sampleShortCaptions, sampleEpisodeCaptions } from "./fixtures/sampleCaptions";
 
 /**
- * Universal Remotion Root for OmniPress MCP.
- * Agnostic compositions receiving parameters dynamically via props.
- * Channel-specific content, media and scripts belong in channels/<channel_slug>/.
+ * Universal Remotion compositions for OmniPress MCP.
+ *
+ * Keep defaultProps inline on each <Composition> so the Remotion Studio props
+ * editor can write visual edits back to this file. Channel-specific content and
+ * generated editable episodes live in channels/<slug>/video/.
  */
-export const Root: React.FC = () => {
+export const CoreCompositions: React.FC = () => {
   return (
     <>
       {/* 1. Vinheta 16:9 — Português (YouTube Principal) */}
@@ -92,7 +103,7 @@ export const Root: React.FC = () => {
       />
 
       {/* 5. Episódio Documental Universal 16:9 (YouTube Widescreen) */}
-      <Composition<any, any>
+      <Composition<any, DocumentaryEpisodeProps>
         id="DocumentaryEpisode-16x9"
         component={DocumentaryEpisode}
         durationInFrames={25083}
@@ -100,17 +111,22 @@ export const Root: React.FC = () => {
         width={1920}
         height={1080}
         calculateMetadata={({ props }) => {
-          const epProps = props as DocumentaryEpisodeProps;
-          const introFrames = epProps.enableIntro ? (epProps.introDurationFrames ?? 120) : 0;
-          const scenesFrames = (epProps.config?.scenes || []).reduce(
-            (acc: number, s: DocumentaryScene) => acc + Math.round((s.durationInSeconds || 0) * 30),
+          const introFrames = props.enableIntro
+            ? props.introDurationFrames ?? 120
+            : 0;
+          const scenesFrames = (props.config?.scenes || []).reduce(
+            (acc: number, scene: DocumentaryScene) =>
+              acc + Math.round((scene.durationInSeconds || 0) * 30),
             0
           );
-          const totalFrames = scenesFrames > 0
-            ? introFrames + scenesFrames
-            : (epProps.config?.voiceovers?.[0]
-                ? Math.round((epProps.config.voiceovers[0].durationInSeconds || 0) * 30) + introFrames
-                : 25083);
+          const totalFrames =
+            scenesFrames > 0
+              ? introFrames + scenesFrames
+              : props.config?.voiceovers?.[0]
+                ? Math.round(
+                    (props.config.voiceovers[0].durationInSeconds || 0) * 30
+                  ) + introFrames
+                : 25083;
           return {
             durationInFrames: totalFrames,
             props,
@@ -202,6 +218,72 @@ export const Root: React.FC = () => {
           showClassifiedStamp: false,
         }}
       />
+      {/* 9. Connected scene previews for interactive template design */}
+      <Composition
+        id="SceneKenBurns-Preview"
+        component={SceneKenBurns}
+        durationInFrames={150}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          imageSrc: "https://remotion.media/image.jpeg",
+          badge: "PREVIEW // KEN BURNS",
+          direction: "zoom-in",
+        }}
+      />
+
+      <Composition
+        id="SceneDocumentReveal-Preview"
+        component={SceneDocumentReveal}
+        durationInFrames={180}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          headline: "DOCUMENT HEADLINE",
+          subheadline: "Supporting archival line",
+          badge: "CONFIDENCIAL",
+          accentColor: "#3B82F6",
+          dangerColor: "#EF4444",
+        }}
+      />
+
+      <Composition
+        id="SceneHeraldic-Preview"
+        component={SceneHeraldic}
+        durationInFrames={180}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          beforeSrc: "https://remotion.media/image.jpeg",
+          afterSrc: "https://remotion.media/image.jpeg",
+          badge: "METAMORFOSE VISUAL",
+        }}
+      />
+
+      <Composition
+        id="SceneOutro-Preview"
+        component={SceneOutro}
+        durationInFrames={240}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          channelName: "CHANNEL NAME",
+          primaryColor: "#3B82F6",
+          tagline: "STORIES & INVESTIGATIONS",
+        }}
+      />
     </>
   );
+};
+
+/**
+ * Default Remotion root. Generated channel episodes compose their own root via
+ * createEpisodeRoot(), which includes CoreCompositions plus the episode.
+ */
+export const Root: React.FC = () => {
+  return <CoreCompositions />;
 };
