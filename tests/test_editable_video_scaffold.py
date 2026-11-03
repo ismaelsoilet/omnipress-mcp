@@ -105,8 +105,8 @@ def test_scaffold_generates_explicit_scene_nodes(tmp_path: Path):
     assert "<SceneDocumentReveal" in tsx
     assert "<SceneHeraldic" in tsx
     assert "scenes.map" not in tsx
-    assert "staticFile(" in tsx
-    assert 'staticFile("sfx/03' in tsx
+    assert "resolveMediaSrc(" in tsx
+    assert 'resolveMediaSrc("sfx/03' in tsx
     assert "createEpisodeRoot" in index
     assert "Episode-ep-test-16x9" in index
     assert meta["config_hash"]
@@ -378,3 +378,15 @@ def test_outro_music_attribute_escaping_uses_jsx_expression(tmp_path: Path):
     result = EditableVideoEngine(project_root=tmp_path).scaffold(config)
     tsx = (Path(result["episode_dir"]) / "Episode.tsx").read_text(encoding="utf-8")
     assert r'outroMusicSrc={"music/outro.wav\""}' in tsx
+
+
+def test_remote_scene_audio_uses_resolve_media_src(tmp_path: Path):
+    make_channel(tmp_path)
+    config = make_episode_config()
+    config["scenes"][0]["voiceoverAudioSrc"] = "https://example.test/vo.mp3"
+    config["scenes"][2]["sfxSrc"] = "https://example.test/sfx.mp3"
+    result = EditableVideoEngine(project_root=tmp_path).scaffold(config)
+    tsx = (Path(result["episode_dir"]) / "Episode.tsx").read_text(encoding="utf-8")
+    assert 'resolveMediaSrc("https://example.test/vo.mp3")' in tsx
+    assert 'resolveMediaSrc("https://example.test/sfx.mp3")' in tsx
+    assert 'staticFile("https://' not in tsx

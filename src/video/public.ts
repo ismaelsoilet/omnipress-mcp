@@ -23,6 +23,7 @@ export type {
   SceneOutroProps,
 } from "./components/scenes";
 export { DEFAULT_THEME, resolveTheme, themeVars } from "./theme";
+export { resolveMediaSrc } from "./media";
 export type { VideoTheme } from "./theme";
 export type {
   ActData,
