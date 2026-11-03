@@ -82,3 +82,50 @@ def test_missing_voiceover_and_sfx_return_warnings(tmp_path: Path):
     result = UniversalDocumentaryEngine(ChannelManager(tmp_path)).execute_recipe(recipe)
     assert any("Voiceover not found" in warning for warning in result["warnings"])
     assert any("SFX not found" in warning for warning in result["warnings"])
+
+
+def test_full_caption_payload_is_normalized_with_cumulative_timelines(tmp_path: Path):
+    make_channel(tmp_path)
+    recipe = make_recipe()
+    act = lambda name, word: {
+        "name": name,
+        "duration": 1.0,
+        "words": [{"word": word, "start": 0.0, "end": 1.0}],
+        "chunks": [
+            {
+                "text": word,
+                "start": 0.0,
+                "end": 1.0,
+                "words": [{"word": word, "start": 0.0, "end": 1.0}],
+            }
+        ],
+    }
+    recipe["captions"] = {
+        "metadata": {"act_id": "act_01"},
+        "words": [],
+        "chunks": act("act_01", "UM")["chunks"],
+        "act_01": act("act_01", "UM"),
+        "act_02": act("act_02", "DOIS"),
+    }
+    result = UniversalDocumentaryEngine(ChannelManager(tmp_path)).execute_recipe(recipe)
+    episode_config = json.loads(
+        (Path(result["episode_config"])).read_text(encoding="utf-8")
+    )
+    assert set(episode_config["captions"].keys()) == {"act_01", "act_02"}
+    assert episode_config["actTimelines"] == [
+        {"id": "act_01", "globalStart": 0.0, "globalEnd": 1.0},
+        {"id": "act_02", "globalStart": 1.0, "globalEnd": 2.0},
+    ]
+
+
+def test_remote_sfx_url_is_preserved(tmp_path: Path):
+    make_channel(tmp_path)
+    recipe = make_recipe()
+    remote = "https://example.test/sfx.mp3"
+    recipe["scenes"][0]["sfx"] = remote
+    result = UniversalDocumentaryEngine(ChannelManager(tmp_path)).execute_recipe(recipe)
+    episode_config = json.loads(
+        (Path(result["episode_config"])).read_text(encoding="utf-8")
+    )
+    assert episode_config["scenes"][0]["sfxSrc"] == remote
+    assert result["warnings"] == []

@@ -44,13 +44,24 @@ export const SynchronizedCaptions: React.FC<SynchronizedCaptionsProps> = ({
     return null;
   }
 
+  // Act-keyed captions take precedence over a top-level chunks array: a full
+  // align-captions payload contains both, and the acts carry cumulative timing.
+  const actEntries = !Array.isArray(captionsData)
+    ? Object.entries(captionsData as Record<string, ActData>).filter(
+        ([, value]) => Boolean(value) && Array.isArray(value.chunks)
+      )
+    : [];
+
   // CASO 1: array direto de chunks ou payload flat {metadata, words, chunks}
-  const flatChunks: CaptionChunkItem[] | null = Array.isArray(captionsData)
-    ? captionsData
-    : captionsData &&
-        Array.isArray((captionsData as { chunks?: unknown }).chunks)
-      ? ((captionsData as { chunks?: unknown }).chunks as CaptionChunkItem[])
-      : null;
+  const flatChunks: CaptionChunkItem[] | null =
+    actEntries.length > 0
+      ? null
+      : Array.isArray(captionsData)
+        ? captionsData
+        : captionsData &&
+            Array.isArray((captionsData as { chunks?: unknown }).chunks)
+          ? ((captionsData as { chunks?: unknown }).chunks as CaptionChunkItem[])
+          : null;
 
   if (flatChunks) {
     const activeChunk = flatChunks.find((chunk) => {
@@ -151,9 +162,6 @@ export const SynchronizedCaptions: React.FC<SynchronizedCaptionsProps> = ({
   }
 
   // CASO 2: captionsData agrupado por Atos
-  const actEntries = Object.entries(captionsData as Record<string, ActData>).filter(
-    ([, value]) => Boolean(value) && Array.isArray(value.chunks)
-  );
   const effectiveActTimelines =
     actTimelines && actTimelines.length > 0
       ? actTimelines

@@ -58,7 +58,12 @@
       "minItems": 1,
       "items": { "$ref": "#/definitions/scene" }
     },
-    "captions": { "type": "string" },
+    "captions": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "object", "additionalProperties": true }
+      ]
+    },
     "audio": {
       "type": "object",
       "additionalProperties": true,

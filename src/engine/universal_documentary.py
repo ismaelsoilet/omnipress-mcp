@@ -71,8 +71,52 @@ class UniversalDocumentaryEngine:
         root = Path(self.channel_manager.root_dir).resolve()
         try:
             return path.resolve().relative_to(root).as_posix()
-        except ValueError:
-            return str(path.resolve())
+        except ValueError as exc:
+            raise ValueError(
+                f"Media source must live inside the project/channel root: {path}"
+            ) from exc
+
+    @staticmethod
+    def _normalize_captions(
+        captions: Any,
+    ) -> Tuple[Any, List[Dict[str, Any]]]:
+        """Normalize align-captions payloads and derive cumulative act timelines."""
+        if isinstance(captions, list):
+            return captions, []
+        if not isinstance(captions, dict):
+            return {}, []
+
+        acts = {
+            key: value
+            for key, value in captions.items()
+            if isinstance(value, dict) and isinstance(value.get("chunks"), list)
+        }
+        if acts:
+            timelines: List[Dict[str, Any]] = []
+            cursor = 0.0
+            for act_id, act in acts.items():
+                start = float(act.get("start") or cursor)
+                duration = float(act.get("duration") or 0)
+                if duration <= 0 and act.get("chunks"):
+                    duration = max(
+                        float(chunk.get("end") or 0)
+                        for chunk in act["chunks"]
+                    )
+                global_end = start + duration
+                timelines.append(
+                    {
+                        "id": str(act_id),
+                        "globalStart": start,
+                        "globalEnd": global_end,
+                    }
+                )
+                cursor = max(cursor, global_end)
+            return acts, timelines
+
+        if isinstance(captions.get("chunks"), list):
+            return captions["chunks"], []
+
+        return captions, []
 
     def output_dir(
         self,
@@ -299,13 +343,18 @@ class UniversalDocumentaryEngine:
             sfx_raw = str(scene.get("sfx") or "").strip()
             sfx_src = ""
             if sfx_raw:
-                sfx_path = self.resolve_media(sfx_raw, target_slug, recipe_dir)
-                if sfx_path.is_file():
-                    sfx_src = self._portable_source(sfx_path)
+                if sfx_raw.startswith(("http://", "https://")):
+                    sfx_src = sfx_raw
                 else:
-                    warnings.append(
-                        f"Scene {scene_id}: SFX not found: {sfx_raw}"
+                    sfx_path = self.resolve_media(
+                        sfx_raw, target_slug, recipe_dir
                     )
+                    if sfx_path.is_file():
+                        sfx_src = self._portable_source(sfx_path)
+                    else:
+                        warnings.append(
+                            f"Scene {scene_id}: SFX not found: {sfx_raw}"
+                        )
             rendered.append(
                 {
                     "id": scene_id,
@@ -344,6 +393,10 @@ class UniversalDocumentaryEngine:
             captions_data = captions
         else:
             captions_data = {}
+
+        captions_data, derived_act_timelines = self._normalize_captions(
+            captions_data
+        )
 
         audio = data.get("audio") or {}
         media_entries: List[Dict[str, str]] = []
@@ -429,6 +482,8 @@ class UniversalDocumentaryEngine:
             sfx = str(scene.get("sfxSrc") or "").strip()
             if not sfx:
                 continue
+            if sfx.startswith(("http://", "https://")):
+                continue
             sfx_path = Path(sfx)
             if not sfx_path.is_absolute():
                 sfx_path = (
@@ -452,6 +507,7 @@ class UniversalDocumentaryEngine:
             "backgroundMusicVolume": audio.get("soundtrack_volume", 0.16),
             "scenes": rendered,
             "captions": captions_data,
+            "actTimelines": data.get("actTimelines") or derived_act_timelines,
             "voiceovers": voiceovers,
             "mediaManifest": "media.json",
             "generatedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),

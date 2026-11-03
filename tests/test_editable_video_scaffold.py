@@ -356,3 +356,25 @@ def test_multi_act_captions_derive_cumulative_timelines(tmp_path: Path):
     tsx = (Path(result["episode_dir"]) / "Episode.tsx").read_text(encoding="utf-8")
     assert '"id": "act_01", "globalStart": 0.0, "globalEnd": 1.0' in tsx
     assert '"id": "act_02", "globalStart": 1.0, "globalEnd": 2.0' in tsx
+
+
+def test_overlapping_scene_sfx_is_lane_packed(tmp_path: Path):
+    make_channel(tmp_path)
+    config = make_episode_config()
+    config["scenes"][0]["sfxSrc"] = "media/raw/sfx.wav"
+    config["scenes"][1]["sfxSrc"] = "media/raw/sfx.wav"
+    config["scenes"][1]["startInSeconds"] = 2
+    result = EditableVideoEngine(project_root=tmp_path).scaffold(config)
+    tsx = (Path(result["episode_dir"]) / "Episode.tsx").read_text(encoding="utf-8")
+    assert 'Track name="SFX de Cena 2"' in tsx
+
+
+def test_outro_music_attribute_escaping_uses_jsx_expression(tmp_path: Path):
+    channel = make_channel(tmp_path)
+    quote_file = channel / "media/raw/outro.wav\""
+    quote_file.write_bytes(b"fake-quote-outro")
+    config = make_episode_config()
+    config["outroMusicSrc"] = 'media/raw/outro.wav"'
+    result = EditableVideoEngine(project_root=tmp_path).scaffold(config)
+    tsx = (Path(result["episode_dir"]) / "Episode.tsx").read_text(encoding="utf-8")
+    assert r'outroMusicSrc={"music/outro.wav\""}' in tsx
