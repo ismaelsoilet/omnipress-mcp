@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `EditableVideoEngine` e `DocumentaryEpisode` agora emitem esses componentes para `tactical-map`, `stat-counter` e `video-clip`.
 - **Prune de Staging**:
   - `MediaStager.prune()` usa o índice `.staging-index.json` e remove somente arquivos gerados em execuções anteriores; arquivos do usuário, `.gitkeep` aninhados e diretórios do usuário são preservados.
+  - Symlinks de diretório são ignorados e symlinks de arquivo são removidos sem seguir o alvo, evitando deleção de arquivos compartilhados.
   - `prune_media: true` no recipe; episódios editáveis ativam prune no scaffold e no render.
 - **Compatibilidade de Harness**:
   - `opencode.json` para OpenCode (MCP local + descoberta de `.agents/skills/`).

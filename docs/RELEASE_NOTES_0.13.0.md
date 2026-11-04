@@ -76,7 +76,7 @@ Para Command Code/OpenCode/Antigravity, use as configurações de MCP do projeto
 | Verificação | Resultado |
 |---|---|
 | `npm run typecheck` | ✅ |
-| `uv run pytest -q` | ✅ 263 passed, 3 skipped |
+| `uv run pytest -q` | ✅ 265 passed, 3 skipped |
 | `npx remotion compositions src/video/index.ts` | ✅ 15 composições (com previews das novas cenas) |
 | Fixture editável | ✅ typecheck + composição carregada |
 | Prune de staging | ✅ testes de remoção indexada e preservação de arquivos do usuário |

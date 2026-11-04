@@ -330,3 +330,57 @@ def test_prune_preserves_empty_user_directory(tmp_path: Path):
     }
     stager.prune(manifest, "channels/test-channel/public", previous=[])
     assert user_dir.is_dir()
+
+
+def test_prune_dry_run_leaf_symlink_does_not_unlink(tmp_path: Path):
+    stager = MediaStager(tmp_path)
+    public = tmp_path / "channels/test-channel/public"
+    public.mkdir(parents=True)
+    outside = tmp_path.parent / f"outside-dry-{tmp_path.name}.jpg"
+    outside.write_bytes(b"outside")
+    link = public / "out.jpg"
+    link.symlink_to(outside)
+    manifest = {
+        "files": [
+            {
+                "source": "channels/test-channel/media/raw/a.jpg",
+                "target": "scenes/01.jpg",
+            }
+        ]
+    }
+    report = stager.prune(
+        manifest,
+        "channels/test-channel/public",
+        previous=["out.jpg"],
+        dry_run=True,
+    )
+    assert "out.jpg" in report["removed"]
+    assert link.is_symlink()
+    assert outside.is_file()
+
+
+def test_prune_skips_directory_symlink_outside_public(tmp_path: Path):
+    stager = MediaStager(tmp_path)
+    public = tmp_path / "channels/test-channel/public"
+    public.mkdir(parents=True)
+    outside_dir = tmp_path.parent / f"outside-dir-{tmp_path.name}"
+    outside_dir.mkdir()
+    victim = outside_dir / "user.jpg"
+    victim.write_bytes(b"outside-user")
+    (public / "scenes").symlink_to(outside_dir, target_is_directory=True)
+    manifest = {
+        "files": [
+            {
+                "source": "channels/test-channel/media/raw/a.jpg",
+                "target": "scenes/01.jpg",
+            }
+        ]
+    }
+    report = stager.prune(
+        manifest,
+        "channels/test-channel/public",
+        previous=["scenes/user.jpg"],
+    )
+    assert report["removed"] == []
+    assert victim.is_file()
+    assert (public / "scenes").is_symlink()
