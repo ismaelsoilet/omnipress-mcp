@@ -261,3 +261,72 @@ def test_prune_dry_run_preserves_files_and_index(tmp_path: Path):
     assert "scenes/old.jpg" in report["removed"]
     assert (public / "scenes/old.jpg").is_file()
     assert stager.read_index("channels/test-channel/public") == ["scenes/old.jpg"]
+
+
+def test_prune_skips_symlinked_parent_directory(tmp_path: Path):
+    stager = MediaStager(tmp_path)
+    public = tmp_path / "channels/test-channel/public"
+    shared = public / "shared"
+    shared.mkdir(parents=True)
+    (public / "scenes").symlink_to(shared, target_is_directory=True)
+    victim = shared / "user.jpg"
+    victim.write_bytes(b"user")
+    manifest = {
+        "files": [
+            {
+                "source": "channels/test-channel/media/raw/a.jpg",
+                "target": "scenes/01.jpg",
+            }
+        ]
+    }
+    report = stager.prune(
+        manifest,
+        "channels/test-channel/public",
+        previous=["scenes/user.jpg"],
+    )
+    assert report["removed"] == []
+    assert victim.is_file()
+    assert (public / "scenes").is_symlink()
+
+
+def test_prune_unlinks_outside_leaf_symlink_without_following(tmp_path: Path):
+    stager = MediaStager(tmp_path)
+    public = tmp_path / "channels/test-channel/public"
+    public.mkdir(parents=True)
+    outside = tmp_path.parent / f"outside-{tmp_path.name}.jpg"
+    outside.write_bytes(b"outside")
+    link = public / "scene.jpg"
+    link.symlink_to(outside)
+    manifest = {
+        "files": [
+            {
+                "source": "channels/test-channel/media/raw/a.jpg",
+                "target": "scenes/01.jpg",
+            }
+        ]
+    }
+    report = stager.prune(
+        manifest,
+        "channels/test-channel/public",
+        previous=["scene.jpg"],
+    )
+    assert "scene.jpg" in report["removed"]
+    assert not link.is_symlink()
+    assert outside.is_file()
+
+
+def test_prune_preserves_empty_user_directory(tmp_path: Path):
+    stager = MediaStager(tmp_path)
+    public = tmp_path / "channels/test-channel/public"
+    user_dir = public / "custom-empty"
+    user_dir.mkdir(parents=True)
+    manifest = {
+        "files": [
+            {
+                "source": "channels/test-channel/media/raw/a.jpg",
+                "target": "scenes/01.jpg",
+            }
+        ]
+    }
+    stager.prune(manifest, "channels/test-channel/public", previous=[])
+    assert user_dir.is_dir()

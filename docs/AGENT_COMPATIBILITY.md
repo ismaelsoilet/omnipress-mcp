@@ -244,4 +244,4 @@ Se o agente não encontrar as ferramentas:
 2. Rode o servidor manualmente e veja se há erro de import.
 3. Verifique `OMNIPRESS_ACTIVE_CHANNEL` e o `channel.json` do canal.
 4. Em Command Code/OpenCode, confirme que o MCP está `enabled`.
-5. Em Antigravity, confirme que a skill está em `~/.gemini/config/skills/`.
+5. Em Antigravity, confirme `.agents/mcp_config.json` (workspace) e `.agents/skills/<skill>/SKILL.md`; `~/.gemini/config/` é o fallback global.

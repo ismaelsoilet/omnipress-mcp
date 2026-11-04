@@ -253,10 +253,31 @@ class MediaStager:
             if candidate.is_absolute() or ".." in candidate.parts:
                 continue
             link_path = public / candidate
+            if link_path.name == ".gitkeep":
+                continue
+
+            # Reject paths whose parent components are symlinks. Unlinking
+            # through a symlinked directory would delete the resolved target.
+            parent = public
+            unsafe_parent = False
+            for part in candidate.parts[:-1]:
+                parent = parent / part
+                if parent.is_symlink():
+                    unsafe_parent = True
+                    break
+            if unsafe_parent:
+                continue
+
+            if link_path.is_symlink():
+                # Remove the generated link itself; never follow an outside
+                # target.
+                if not dry_run:
+                    link_path.unlink()
+                removed.append(relative)
+                continue
+
             resolved = link_path.resolve()
             if not self._is_relative_to(resolved, public) or not link_path.is_file():
-                continue
-            if link_path.name == ".gitkeep":
                 continue
             if not dry_run:
                 link_path.unlink()
