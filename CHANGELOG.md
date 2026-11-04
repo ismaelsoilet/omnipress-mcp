@@ -15,12 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Previews conectados `SceneTacticalMap-Preview`, `SceneStatCounter-Preview` e `SceneVideoClip-Preview`.
   - `EditableVideoEngine` e `DocumentaryEpisode` agora emitem esses componentes para `tactical-map`, `stat-counter` e `video-clip`.
 - **Prune de Staging**:
-  - `MediaStager.prune()` remove assets antigos apenas nas pastas geradas (`scenes/`, `audio/`, `music/`, `sfx/`, `_legacy/`), preservando `.gitkeep` e arquivos do usuário.
+  - `MediaStager.prune()` usa o índice `.staging-index.json` e remove somente arquivos gerados em execuções anteriores; arquivos do usuário, `.gitkeep` aninhados e diretórios do usuário são preservados.
   - `prune_media: true` no recipe; episódios editáveis ativam prune no scaffold e no render.
 - **Compatibilidade de Harness**:
   - `opencode.json` para OpenCode (MCP local + descoberta de `.agents/skills/`).
   - `.mcp.json` para Command Code (project scope, stdio).
-  - `mcp_config.json` atualizado para Antigravity.
+  - `.agents/mcp_config.json` para Antigravity workspace; `mcp_config.json` da raiz é shim de compatibilidade.
   - `docs/AGENT_COMPATIBILITY.md` com snippets, skills, tool prefixes e troubleshooting para Antigravity, Command Code e OpenCode.
 - **CI**:
   - Smoke de `remotion compositions` para o Root core e para o fixture de episódio editável.

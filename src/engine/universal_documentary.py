@@ -317,6 +317,7 @@ class UniversalDocumentaryEngine:
         manifest_mode = str(data.get("mode") or "render") == "manifest"
 
         rendered: List[Dict[str, Any]] = []
+        rendered_cards = 0
         warnings: List[str] = []
         cursor = 0.0
         for index, scene in enumerate(data.get("scenes") or [], start=1):
@@ -341,6 +342,7 @@ class UniversalDocumentaryEngine:
                 self._render_scene(
                     scene, media_path, out_path, aspect_ratio, theme, typography
                 )
+                rendered_cards += 1
             scene_media = (
                 str(out_path)
                 if not manifest_mode and not native_react_scene
@@ -549,7 +551,8 @@ class UniversalDocumentaryEngine:
             "engine": "universal_documentary",
             "channel_slug": target_slug,
             "episode_slug": episode_slug,
-            "scenes_rendered": 0 if manifest_mode else len(rendered),
+            "scenes_rendered": rendered_cards,
+            "scenes_total": len(rendered),
             "mode": "manifest" if manifest_mode else "render",
             "scenes": [item["mediaSrc"] for item in rendered],
             "episode_config": str(config_path),

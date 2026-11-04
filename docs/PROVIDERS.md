@@ -81,7 +81,7 @@ Runs `npx remotion render <entry_point> <composition> <output> --props=<json> [-
 - `media_manifest` is a `media.json` file staged by `MediaStager` before render.
 - Absolute media paths in legacy props are rewritten to public-relative paths; `staticFile()` never receives an absolute path.
 - When `editable` is true, the provider does not pass `--frames`; the generated composition duration is authoritative.
-- `prune_media` removes stale generated files from the episode-local public dir before render; only `scenes/`, `audio/`, `music/`, `sfx/` and `_legacy/` are pruned.
+- `prune_media` removes only files recorded in the previous `.staging-index.json`; user files, nested `.gitkeep` and user directories are preserved. Episodes created before the index exists are not auto-pruned.
 - Path safety: `entry_point`/`public_dir` must stay inside the project; when `channel_slug` is present, inside `channels/<slug>/`.
 
 ### 3.3 `ffmpeg`

@@ -460,3 +460,39 @@ def test_scaffold_prunes_only_previous_generated_assets(tmp_path: Path):
     assert user_file.is_file()
     assert nested_keep.is_file()
     assert forced["pruned_files"] >= 1
+
+
+def test_video_clip_without_suffix_uses_mp4_fallback(tmp_path: Path):
+    channel = make_channel(tmp_path)
+    (channel / "media/raw/clip").write_bytes(b"fake-video-no-suffix")
+    config = make_episode_config()
+    config["scenes"] = [
+        {
+            "id": "clip",
+            "type": "video-clip",
+            "mediaSrc": "media/raw/clip",
+            "startInSeconds": 0,
+            "durationInSeconds": 3,
+        }
+    ]
+    result = EditableVideoEngine(project_root=tmp_path).scaffold(config)
+    tsx = (Path(result["episode_dir"]) / "Episode.tsx").read_text(encoding="utf-8")
+    assert "scenes/01_clip.mp4" in tsx
+
+
+def test_stat_counter_locale_follows_english_language(tmp_path: Path):
+    make_channel(tmp_path)
+    config = make_episode_config()
+    config["language"] = "en-US"
+    config["scenes"] = [
+        {
+            "id": "stat",
+            "type": "stat-counter",
+            "startInSeconds": 0,
+            "durationInSeconds": 3,
+            "statValue": 1889,
+        }
+    ]
+    result = EditableVideoEngine(project_root=tmp_path).scaffold(config)
+    tsx = (Path(result["episode_dir"]) / "Episode.tsx").read_text(encoding="utf-8")
+    assert 'locale={"en-US"}' in tsx

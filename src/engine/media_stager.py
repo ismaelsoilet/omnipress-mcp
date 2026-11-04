@@ -252,13 +252,14 @@ class MediaStager:
             candidate = Path(relative)
             if candidate.is_absolute() or ".." in candidate.parts:
                 continue
-            path = (public / candidate).resolve()
-            if not self._is_relative_to(path, public) or not path.is_file():
+            link_path = public / candidate
+            resolved = link_path.resolve()
+            if not self._is_relative_to(resolved, public) or not link_path.is_file():
                 continue
-            if path.name == ".gitkeep":
+            if link_path.name == ".gitkeep":
                 continue
             if not dry_run:
-                path.unlink()
+                link_path.unlink()
             removed.append(relative)
 
         if not dry_run:

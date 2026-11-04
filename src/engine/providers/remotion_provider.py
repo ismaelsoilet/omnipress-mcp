@@ -164,11 +164,18 @@ class RemotionProvider(RenderProvider):
                     / "episodes"
                 ).resolve()
                 try:
-                    resolved_public.relative_to(episode_root)
+                    relative_public = resolved_public.relative_to(episode_root)
                 except ValueError:
+                    relative_public = None
+                if (
+                    relative_public is None
+                    or resolved_public.name != "public"
+                    or len(relative_public.parts) != 2
+                    or resolved_public.parent.parent.name != "episodes"
+                ):
                     errors.append(
-                        "prune_media requires public_dir under the channel's "
-                        "video/episodes/ directory"
+                        "prune_media requires an episode-local public dir "
+                        "(channels/<slug>/video/episodes/<episode>/public)"
                     )
 
         fmt = str(spec.get("format") or "mp4").lower()

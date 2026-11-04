@@ -33,8 +33,8 @@ Todas usam `Interactive.create()`, aparecem na timeline do Studio e são editáv
 
 ## Prune de staging
 
-- `MediaStager.prune()` remove arquivos antigos somente em `scenes/`, `audio/`, `music/`, `sfx/` e `_legacy/`.
-- Arquivos do usuário e `.gitkeep` são preservados.
+- `MediaStager.prune()` usa o índice `.staging-index.json` e remove somente arquivos gerados em execuções anteriores; arquivos do usuário, `.gitkeep` aninhados e diretórios do usuário são preservados.
+- Episódios criados antes do índice existir não são podados automaticamente (migração segura).
 - `prune_media: true` no recipe; episódios editáveis ativam automaticamente.
 - Resultado inclui `pruned_files` no scaffold e `media_pruned` no provider.
 
@@ -76,7 +76,7 @@ Para Command Code/OpenCode/Antigravity, use as configurações de MCP do projeto
 | Verificação | Resultado |
 |---|---|
 | `npm run typecheck` | ✅ |
-| `uv run pytest -q` | ✅ 255 passed, 3 skipped |
+| `uv run pytest -q` | ✅ 260 passed, 3 skipped |
 | `npx remotion compositions src/video/index.ts` | ✅ 15 composições (com previews das novas cenas) |
 | Fixture editável | ✅ typecheck + composição carregada |
 | Prune de staging | ✅ testes de remoção indexada e preservação de arquivos do usuário |

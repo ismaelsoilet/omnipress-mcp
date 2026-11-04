@@ -333,7 +333,11 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
                 headline={scene.headline || episodeTitle}
                 accentColor={config?.theme?.highlight || config?.theme?.accent}
                 backgroundSrc={scene.mediaSrc}
-                locale={config?.language === "en" ? "en-US" : "pt-BR"}
+                locale={
+                  String(config?.language || "").toLowerCase().startsWith("en")
+                    ? "en-US"
+                    : "pt-BR"
+                }
               />
             );
           }

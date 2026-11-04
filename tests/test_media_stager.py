@@ -186,3 +186,78 @@ def test_prune_removes_only_previously_generated_files_and_preserves_users(tmp_p
 
     second = stager.prune(new_manifest, "channels/test-channel/public")
     assert second["removed"] == []
+
+
+def test_prune_does_not_follow_symlink_to_user_file(tmp_path: Path):
+    source = _make_media(tmp_path)
+    stager = MediaStager(tmp_path)
+    public = tmp_path / "channels/test-channel/public"
+    old_manifest = {
+        "files": [
+            {
+                "source": "channels/test-channel/media/raw/a.jpg",
+                "target": "scenes/link.jpg",
+            }
+        ]
+    }
+    stager.ensure(old_manifest, "channels/test-channel/public")
+    link = public / "scenes/link.jpg"
+    victim = public / "scenes/victim.jpg"
+    victim.write_bytes(b"user-victim")
+    link.unlink()
+    link.symlink_to(victim)
+    previous = stager.read_index("channels/test-channel/public")
+
+    new_manifest = {
+        "files": [
+            {
+                "source": "channels/test-channel/media/raw/a.jpg",
+                "target": "scenes/01.jpg",
+            }
+        ]
+    }
+    stager.ensure(new_manifest, "channels/test-channel/public", write_index=False)
+    report = stager.prune(
+        new_manifest,
+        "channels/test-channel/public",
+        previous=previous,
+    )
+
+    assert "scenes/link.jpg" in report["removed"]
+    assert not link.is_symlink()
+    assert victim.is_file()
+    assert source.is_file()
+
+
+def test_prune_dry_run_preserves_files_and_index(tmp_path: Path):
+    _make_media(tmp_path)
+    stager = MediaStager(tmp_path)
+    public = tmp_path / "channels/test-channel/public"
+    old_manifest = {
+        "files": [
+            {
+                "source": "channels/test-channel/media/raw/a.jpg",
+                "target": "scenes/old.jpg",
+            }
+        ]
+    }
+    stager.ensure(old_manifest, "channels/test-channel/public")
+    previous = stager.read_index("channels/test-channel/public")
+    new_manifest = {
+        "files": [
+            {
+                "source": "channels/test-channel/media/raw/a.jpg",
+                "target": "scenes/01.jpg",
+            }
+        ]
+    }
+    stager.ensure(new_manifest, "channels/test-channel/public", write_index=False)
+    report = stager.prune(
+        new_manifest,
+        "channels/test-channel/public",
+        previous=previous,
+        dry_run=True,
+    )
+    assert "scenes/old.jpg" in report["removed"]
+    assert (public / "scenes/old.jpg").is_file()
+    assert stager.read_index("channels/test-channel/public") == ["scenes/old.jpg"]

@@ -55,7 +55,7 @@ Tipos desconhecidos caem em `SceneKenBurns` com aviso.
 - **Não** edite `media.json` manualmente; ele é regenerado e contém caminhos relativos à raiz do projeto (portátil entre clones).
 - Edições manuais em `Episode.tsx`, `index.ts` e `data/*` são protegidas por hash. Reexecutar o scaffold sem `--force` falha; com `--force`, cria backup.
 - O `video_recipe.editable.json` não fixa `duration_frames`; a duração da composição em `index.ts` é a autoridade após edições de timing.
-- `prune_media` remove assets antigos apenas nas pastas geradas (`scenes/`, `audio/`, `music/`, `sfx/`, `_legacy/`), preservando arquivos do usuário.
+- `prune_media` usa o índice `.staging-index.json` para remover somente assets gerados em execuções anteriores; arquivos do usuário e `.gitkeep` são preservados. Episódios antigos sem índice não são podados automaticamente.
 - Retiming de `from`/`durationInFrames` pode dessincronizar locução e legendas. Para mudanças narrativas, regenere a partir do JSON e re-alinhe o áudio.
 - O áudio permanece travado ao alinhamento da fala (Regra 10).
 - `public/` é staging: não versione binários; `media.json` reconstrói tudo.
