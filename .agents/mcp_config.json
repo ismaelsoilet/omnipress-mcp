@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "omnipress": {
+      "command": ".venv/bin/python",
+      "args": ["-m", "src.server"],
+      "env": {
+        "OMNIPRESS_ACTIVE_CHANNEL": "default"
+      }
+    }
+  }
+}

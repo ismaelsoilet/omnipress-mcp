@@ -329,10 +329,11 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
                 value={scene.statValue ?? 0}
                 prefix={scene.statPrefix}
                 suffix={scene.statSuffix}
-                label={scene.statLabel}
+                label={scene.statLabel || scene.subheadline}
                 headline={scene.headline || episodeTitle}
                 accentColor={config?.theme?.highlight || config?.theme?.accent}
                 backgroundSrc={scene.mediaSrc}
+                locale={config?.language === "en" ? "en-US" : "pt-BR"}
               />
             );
           }

@@ -330,12 +330,22 @@ class UniversalDocumentaryEngine:
                 raise FileNotFoundError(f"Scene media not found: {media_path}")
 
             scene_id = str(scene.get("id") or f"scene_{index:02d}")
+            scene_type = _SCENE_TYPE_MAP.get(str(scene.get("type")), "ken-burns")
+            native_react_scene = scene_type in (
+                "tactical-map",
+                "stat-counter",
+                "video-clip",
+            )
             out_path = out_dir / "scenes" / f"{index:02d}_{scene_id}.jpg"
-            if not manifest_mode:
+            if not manifest_mode and not native_react_scene:
                 self._render_scene(
                     scene, media_path, out_path, aspect_ratio, theme, typography
                 )
-            scene_media = str(out_path) if not manifest_mode else str(media_path)
+            scene_media = (
+                str(out_path)
+                if not manifest_mode and not native_react_scene
+                else str(media_path)
+            )
 
             duration = float(scene.get("duration_seconds") or 6.0)
             start = float(scene.get("start_seconds", cursor))
@@ -359,7 +369,7 @@ class UniversalDocumentaryEngine:
             rendered.append(
                 {
                     "id": scene_id,
-                    "type": _SCENE_TYPE_MAP.get(str(scene.get("type")), "ken-burns"),
+                    "type": scene_type,
                     "sourceType": scene.get("type"),
                     "mediaSrc": self._portable_source(Path(scene_media)),
                     "durationInSeconds": duration,
@@ -367,6 +377,7 @@ class UniversalDocumentaryEngine:
                     "headline": scene.get("headline", ""),
                     "subheadline": scene.get("subheadline", ""),
                     "badge": scene.get("badge", ""),
+                    "notes": scene.get("overlay_text", scene.get("notes", "")),
                     "coordinates": scene.get("coordinates", ""),
                     "statValue": scene.get("stat_value"),
                     "statPrefix": scene.get("stat_prefix", ""),

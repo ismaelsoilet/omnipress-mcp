@@ -44,7 +44,7 @@ Todas usam `Interactive.create()`, aparecem na timeline do Studio e são editáv
 
 | Harness | Config | Skills |
 |---|---|---|
-| Antigravity | `mcp_config.json` / `~/.gemini/config/mcp_config.json` | `~/.gemini/config/skills/` |
+| Antigravity | `.agents/mcp_config.json` / `~/.gemini/config/mcp_config.json` | `.agents/skills/` (workspace) / global opcional |
 | Command Code | `.mcp.json` / `cmd mcp add` | `.agents/skills/` automático |
 | OpenCode | `opencode.json` | `.agents/skills/` automático |
 
@@ -76,11 +76,11 @@ Para Command Code/OpenCode/Antigravity, use as configurações de MCP do projeto
 | Verificação | Resultado |
 |---|---|
 | `npm run typecheck` | ✅ |
-| `uv run pytest -q` | ✅ 254 passed, 3 skipped |
-| `npx remotion compositions src/video/index.ts` | ✅ 12 composições (com previews das novas cenas) |
+| `uv run pytest -q` | ✅ 255 passed, 3 skipped |
+| `npx remotion compositions src/video/index.ts` | ✅ 15 composições (com previews das novas cenas) |
 | Fixture editável | ✅ typecheck + composição carregada |
-| Prune de staging | ✅ testes de remoção e preservação |
-| Configs de agentes | ✅ JSON e contrato cobertos por testes |
+| Prune de staging | ✅ testes de remoção indexada e preservação de arquivos do usuário |
+| Configs de agentes | ✅ JSON, workspace Antigravity, OpenCode e Command Code cobertos por testes |
 
 ---
 

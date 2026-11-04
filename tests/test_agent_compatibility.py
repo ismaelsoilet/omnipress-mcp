@@ -31,12 +31,15 @@ def test_command_code_project_mcp_config():
     assert server["env"]["OMNIPRESS_ACTIVE_CHANNEL"] == "default"
 
 
-def test_antigravity_mcp_config():
-    config = _load("mcp_config.json")
+def test_antigravity_workspace_mcp_config():
+    config = _load(".agents/mcp_config.json")
     server = config["mcpServers"]["omnipress"]
     assert server["command"].endswith("python")
     assert server["args"] == ["-m", "src.server"]
     assert server["env"]["OMNIPRESS_ACTIVE_CHANNEL"] == "default"
+
+    shim = _load("mcp_config.json")
+    assert "omnipress" in shim["mcpServers"]
 
 
 def test_agent_compatibility_docs_cover_all_harnesses():

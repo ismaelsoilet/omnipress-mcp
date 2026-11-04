@@ -184,3 +184,31 @@ def test_open_studio_uses_provider_command(tmp_path: Path):
     assert cmd[:4] == ["npx", "remotion", "studio", str(entry.resolve())]
     assert "--public-dir" in cmd
     assert "--port" in cmd
+
+
+def test_prune_media_requires_episode_local_public_dir(tmp_path: Path):
+    entry = make_entry(tmp_path)
+    provider = RemotionProvider(project_root=tmp_path)
+    base = {
+        "composition": "Episode-x",
+        "channel_slug": "test-channel",
+        "entry_point": entry.relative_to(tmp_path).as_posix(),
+        "prune_media": True,
+    }
+    errors = provider.validate(
+        {
+            **base,
+            "public_dir": "channels/test-channel/public",
+        }
+    )
+    assert any("prune_media requires public_dir under" in error for error in errors)
+
+    episode_public = (
+        tmp_path
+        / "channels/test-channel/video/episodes/ep-test-16x9/public"
+    )
+    episode_public.mkdir(parents=True, exist_ok=True)
+    errors = provider.validate(
+        {**base, "public_dir": episode_public.relative_to(tmp_path).as_posix()}
+    )
+    assert errors == []

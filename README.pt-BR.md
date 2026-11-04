@@ -261,7 +261,7 @@ Principais integrações disponíveis:
 ### Passo 3: Conectar ao Agente de IA
 
 #### No Google Antigravity (Recomendado)
-Adicione o servidor no seu arquivo `~/.gemini/config/mcp_config.json` (ou no `mcp_config.json` da raiz do projeto):
+Adicione o servidor em `.agents/mcp_config.json` (workspace) ou `~/.gemini/config/mcp_config.json` (global):
 
 ```json
 {

@@ -33,7 +33,7 @@ Todos os exemplos abaixo assumem que o repositório está em `/caminho/para/omni
 
 | Harness | Config MCP | Skills | Observações |
 |---|---|---|---|
-| **Google Antigravity** | `~/.gemini/config/mcp_config.json` ou `mcp_config.json` do projeto | `~/.gemini/config/skills/<skill>/SKILL.md` | Skills globais; copie/symlink as skills do projeto |
+| **Google Antigravity** | `.agents/mcp_config.json` (workspace) ou `~/.gemini/config/mcp_config.json` (global) | `.agents/skills/` (workspace) ou `~/.gemini/config/skills/<skill>/SKILL.md` (global) | Skills do workspace são carregadas automaticamente; global é opcional |
 | **Command Code** | `.mcp.json` (project scope) ou `cmd mcp add` | `.agents/skills/` é lido automaticamente | `/skills`, `/mcp`; ferramentas com prefixo `mcp__omnipress__` |
 | **OpenCode** | `opencode.json` (project) ou `~/.config/opencode/opencode.json` | `.agents/skills/` é lido automaticamente | Ferramenta `skill`; MCP local em `mcp` |
 | **Claude Desktop** | `claude_desktop_config.json` | `~/.claude/skills/` | Compatibilidade legada |
@@ -45,13 +45,13 @@ Todos os exemplos abaixo assumem que o repositório está em `/caminho/para/omni
 
 ### 3.1 MCP
 
-Use o [`mcp_config.json`](../mcp_config.json) do projeto ou copie para o arquivo global:
+Use o arquivo **workspace** [`.agents/mcp_config.json`](../.agents/mcp_config.json). O `mcp_config.json` da raiz é mantido apenas como shim de compatibilidade.
 
 ```json
 {
   "mcpServers": {
     "omnipress": {
-      "command": "/caminho/para/omnipress-mcp/.venv/bin/python",
+      "command": ".venv/bin/python",
       "args": ["-m", "src.server"],
       "env": {
         "OMNIPRESS_ACTIVE_CHANNEL": "default"
@@ -61,23 +61,13 @@ Use o [`mcp_config.json`](../mcp_config.json) do projeto ou copie para o arquivo
 }
 ```
 
-Local do arquivo global: `~/.gemini/config/mcp_config.json`.
+Para disponibilidade global, copie o mesmo bloco para `~/.gemini/config/mcp_config.json` e use um caminho absoluto para o interpretador.
 
 ### 3.2 Skills
 
-O Antigravity carrega skills globais em `~/.gemini/config/skills/`. O projeto já contém as skills em `.agents/skills/`; exponha as que você usa:
+O Antigravity carrega skills do workspace em `.agents/skills/` automaticamente. A exposição global em `~/.gemini/config/skills/` é **opcional**, útil apenas para reutilizar as skills em outros projetos.
 
-```bash
-mkdir -p ~/.gemini/config/skills
-ln -sfn "$(pwd)/.agents/skills/omnipress" \
-  ~/.gemini/config/skills/omnipress
-ln -sfn "$(pwd)/.agents/skills/omnipress-youtube-documentary" \
-  ~/.gemini/config/skills/omnipress-youtube-documentary
-ln -sfn "$(pwd)/.agents/skills/omnipress-darkchannel" \
-  ~/.gemini/config/skills/omnipress-darkchannel
-```
-
-Para carregar todas as skills do projeto:
+Se quiser expor globalmente:
 
 ```bash
 mkdir -p ~/.gemini/config/skills

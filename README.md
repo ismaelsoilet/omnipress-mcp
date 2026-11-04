@@ -264,7 +264,7 @@ Key integrations:
 ### Step 3: Connect to Your AI Agent
 
 #### Google Antigravity (Recommended)
-Add the server to `~/.gemini/config/mcp_config.json` (or the project root `mcp_config.json`):
+Add the server to `.agents/mcp_config.json` (workspace) or `~/.gemini/config/mcp_config.json` (global):
 
 ```json
 {

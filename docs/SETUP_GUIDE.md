@@ -175,7 +175,7 @@ If `OMNIPRESS_WEBHOOK_SECRET` is set, OmniPress includes an `X-OmniPress-Signatu
 
 ## 6. Antigravity & Claude Desktop Configuration
 
-### Google Antigravity (`~/.gemini/config/mcp_config.json`)
+### Google Antigravity (`.agents/mcp_config.json` ou `~/.gemini/config/mcp_config.json`)
 ```json
 {
   "mcpServers": {

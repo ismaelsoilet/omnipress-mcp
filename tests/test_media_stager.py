@@ -141,9 +141,27 @@ def test_relative_source_mapping_rewrites_props(tmp_path: Path):
     ]
 
 
-def test_prune_removes_stale_generated_files_and_preserves_user_files(tmp_path: Path):
+def test_prune_removes_only_previously_generated_files_and_preserves_users(tmp_path: Path):
     source = _make_media(tmp_path)
-    manifest = {
+    stager = MediaStager(tmp_path)
+    public = tmp_path / "channels/test-channel/public"
+    old_manifest = {
+        "files": [
+            {
+                "source": "channels/test-channel/media/raw/a.jpg",
+                "target": "scenes/old.jpg",
+            }
+        ]
+    }
+    stager.ensure(old_manifest, "channels/test-channel/public")
+    previous_index = stager.read_index("channels/test-channel/public")
+
+    (public / "scenes/custom.jpg").write_bytes(b"user-file")
+    (public / "scenes/.gitkeep").write_bytes(b"")
+    (public / "custom-dir").mkdir()
+    (public / "custom-dir/user.txt").write_bytes(b"keep")
+
+    new_manifest = {
         "files": [
             {
                 "source": "channels/test-channel/media/raw/a.jpg",
@@ -151,17 +169,20 @@ def test_prune_removes_stale_generated_files_and_preserves_user_files(tmp_path: 
             }
         ]
     }
-    stager = MediaStager(tmp_path)
-    stager.ensure(manifest, "channels/test-channel/public")
-    public = tmp_path / "channels/test-channel/public"
-    (public / "scenes/stale.jpg").write_bytes(b"stale")
-    (public / ".gitkeep").write_bytes(b"")
-    (public / "custom.txt").write_bytes(b"keep")
+    stager.ensure(new_manifest, "channels/test-channel/public", write_index=False)
+    report = stager.prune(
+        new_manifest,
+        "channels/test-channel/public",
+        previous=previous_index,
+    )
 
-    report = stager.prune(manifest, "channels/test-channel/public")
-
-    assert "scenes/stale.jpg" in report["removed"]
+    assert "scenes/old.jpg" in report["removed"]
     assert (public / "scenes/01.jpg").is_file()
-    assert (public / "custom.txt").is_file()
-    assert (public / ".gitkeep").is_file()
+    assert (public / "scenes/custom.jpg").is_file()
+    assert (public / "scenes/.gitkeep").is_file()
+    assert (public / "custom-dir/user.txt").is_file()
+    assert (public / ".staging-index.json").is_file()
     assert source.is_file()
+
+    second = stager.prune(new_manifest, "channels/test-channel/public")
+    assert second["removed"] == []

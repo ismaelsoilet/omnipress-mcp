@@ -440,15 +440,23 @@ def test_new_scene_types_generate_first_class_components(tmp_path: Path):
     assert "scenes/03_clip.mp4" in tsx
 
 
-def test_scaffold_prunes_stale_public_assets(tmp_path: Path):
+def test_scaffold_prunes_only_previous_generated_assets(tmp_path: Path):
     make_channel(tmp_path)
-    result = EditableVideoEngine(project_root=tmp_path).scaffold(make_episode_config())
-    episode = Path(result["episode_dir"])
-    stale = episode / "public/scenes/stale.jpg"
-    stale.parent.mkdir(parents=True, exist_ok=True)
-    stale.write_bytes(b"stale")
+    old_config = make_episode_config()
+    old_config["scenes"][0]["id"] = "old"
+    old_result = EditableVideoEngine(project_root=tmp_path).scaffold(old_config)
+    episode = Path(old_result["episode_dir"])
+    old_target = episode / "public/scenes/01_old.jpg"
+    assert old_target.is_file()
+    user_file = episode / "public/scenes/custom.jpg"
+    user_file.write_bytes(b"user")
+    nested_keep = episode / "public/scenes/.gitkeep"
+    nested_keep.write_bytes(b"")
+
     forced = EditableVideoEngine(project_root=tmp_path).scaffold(
-        make_episode_config(), force=True
+        make_episode_config()
     )
-    assert not stale.exists()
+    assert not old_target.exists()
+    assert user_file.is_file()
+    assert nested_keep.is_file()
     assert forced["pruned_files"] >= 1

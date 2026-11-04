@@ -174,7 +174,7 @@ Se `OMNIPRESS_WEBHOOK_SECRET` for definido, cada requisição incluirá o cabeç
 
 ## 6. Configuração no Google Antigravity e Claude Desktop
 
-### No Google Antigravity (`~/.gemini/config/mcp_config.json`)
+### No Google Antigravity (`.agents/mcp_config.json` ou `~/.gemini/config/mcp_config.json`)
 ```json
 {
   "mcpServers": {

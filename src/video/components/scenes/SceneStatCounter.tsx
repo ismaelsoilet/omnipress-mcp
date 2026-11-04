@@ -20,6 +20,7 @@ export interface SceneStatCounterProps {
   headline?: string;
   accentColor?: string;
   backgroundSrc?: string;
+  locale?: string;
 }
 
 const sceneStatCounterSchema = {
@@ -62,6 +63,11 @@ const sceneStatCounterSchema = {
     default: "",
     description: "Imagem de fundo",
   },
+  locale: {
+    type: "string",
+    default: "pt-BR",
+    description: "Locale do número",
+  },
 } as const satisfies InteractivitySchema;
 
 const SceneStatCounterInner: React.FC<SceneStatCounterProps> = ({
@@ -72,6 +78,7 @@ const SceneStatCounterInner: React.FC<SceneStatCounterProps> = ({
   headline = "",
   accentColor = "#FACC15",
   backgroundSrc = "",
+  locale = "pt-BR",
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames, width, height } = useVideoConfig();
@@ -90,7 +97,7 @@ const SceneStatCounterInner: React.FC<SceneStatCounterProps> = ({
       extrapolateRight: "clamp",
     })
   );
-  const formatted = new Intl.NumberFormat("pt-BR").format(current);
+  const formatted = new Intl.NumberFormat(locale).format(current);
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#04060A", overflow: "hidden" }}>

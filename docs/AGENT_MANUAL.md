@@ -24,7 +24,7 @@ O servidor MCP é unificado em Python ([`src/server.py`](file:///home/ismaelsoil
 ### Compatibilidade de Harness
 | Harness | Configuração | Skills |
 |---|---|---|
-| **Google Antigravity** | `mcp_config.json` / `~/.gemini/config/mcp_config.json` | `~/.gemini/config/skills/` |
+| **Google Antigravity** | `.agents/mcp_config.json` / `~/.gemini/config/mcp_config.json` | `.agents/skills/` (workspace) / `~/.gemini/config/skills/` (global opcional) |
 | **Command Code** | `.mcp.json` / `cmd mcp add` | `.agents/skills/` automático |
 | **OpenCode** | `opencode.json` | `.agents/skills/` automático |
 | **Claude Desktop** | `claude_desktop_config.json` | `~/.claude/skills/` |

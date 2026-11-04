@@ -145,6 +145,7 @@ class MediaStager:
         self,
         manifest: Union[str, Path, Dict[str, Any], List[Any]],
         public_dir: Union[str, Path],
+        write_index: bool = True,
     ) -> Dict[str, Any]:
         """Copy every manifest entry into the public directory.
 
@@ -181,6 +182,9 @@ class MediaStager:
                 }
             )
 
+        if write_index:
+            self.write_index(public, [entry["target"] for entry in staged])
+
         return {
             "status": "success",
             "public_dir": str(public),
@@ -189,55 +193,76 @@ class MediaStager:
         }
 
     # ------------------------------------------------------------------
-    # Pruning
+    # Staging index and pruning
     # ------------------------------------------------------------------
-    PRUNE_PREFIXES = ("scenes/", "audio/", "music/", "sfx/", "_legacy/")
+    INDEX_NAME = ".staging-index.json"
+
+    def _read_index_entries(self, public: Path) -> List[str]:
+        index_path = public / self.INDEX_NAME
+        if not index_path.is_file():
+            return []
+        try:
+            payload = json.loads(index_path.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+        files = payload.get("files") if isinstance(payload, dict) else None
+        if not isinstance(files, list):
+            return []
+        return [str(item) for item in files]
+
+    def read_index(self, public_dir: Union[str, Path]) -> List[str]:
+        public = self._resolve_public_dir(public_dir)
+        return self._read_index_entries(public)
+
+    def write_index(self, public_dir: Union[str, Path], targets: List[str]) -> Path:
+        public = self._resolve_public_dir(public_dir)
+        index_path = public / self.INDEX_NAME
+        index_path.write_text(
+            json.dumps(
+                {"files": sorted(set(targets))},
+                ensure_ascii=False,
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+        return index_path
 
     def prune(
         self,
         manifest: Union[str, Path, Dict[str, Any], List[Any]],
         public_dir: Union[str, Path],
+        previous: Optional[List[str]] = None,
         dry_run: bool = False,
     ) -> Dict[str, Any]:
-        """Remove stale generated media from an episode-local public dir.
+        """Remove only files that the engine generated in a previous run.
 
-        Only known generated prefixes are considered; unrelated user files and
-        .gitkeep are preserved.
+        Deletion is driven by the sidecar staging index, never by directory
+        prefixes. User files and nested .gitkeep files are always preserved.
         """
         entries = self._load_manifest(manifest)
         public = self._resolve_public_dir(public_dir)
-        keep = {
-            Path(str(entry["target"])).as_posix()
-            for entry in entries
-        }
+        current = {Path(str(entry["target"])).as_posix() for entry in entries}
+        previous_targets = (
+            self._read_index_entries(public) if previous is None else previous
+        )
         removed: List[str] = []
-        for path in sorted(public.rglob("*")):
-            if not path.is_file():
+        for relative in sorted(set(previous_targets)):
+            if relative in current:
                 continue
-            relative = path.relative_to(public).as_posix()
-            if relative == ".gitkeep":
+            candidate = Path(relative)
+            if candidate.is_absolute() or ".." in candidate.parts:
                 continue
-            if not any(
-                relative.startswith(prefix) for prefix in self.PRUNE_PREFIXES
-            ):
+            path = (public / candidate).resolve()
+            if not self._is_relative_to(path, public) or not path.is_file():
                 continue
-            if relative in keep:
+            if path.name == ".gitkeep":
                 continue
             if not dry_run:
                 path.unlink()
             removed.append(relative)
 
         if not dry_run:
-            directories = sorted(
-                (path for path in public.rglob("*") if path.is_dir()),
-                key=lambda path: len(path.parts),
-                reverse=True,
-            )
-            for directory in directories:
-                if directory == public:
-                    continue
-                if not any(directory.iterdir()):
-                    directory.rmdir()
+            self.write_index(public, sorted(current))
 
         return {
             "status": "success",

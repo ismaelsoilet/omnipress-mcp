@@ -7,7 +7,7 @@ OmniPress was built natively to integrate with **Google Antigravity** via the Mo
 ## 1. Global MCP Server Registration
 
 Add the server to your Antigravity global MCP configuration file:
-- **Location**: `~/.gemini/config/mcp_config.json`
+- **Location**: `.agents/mcp_config.json` (workspace) or `~/.gemini/config/mcp_config.json` (global)
 
 ```json
 {

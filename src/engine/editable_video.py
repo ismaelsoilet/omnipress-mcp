@@ -226,9 +226,11 @@ class EditableVideoEngine:
             media_value = scene.get("mediaSrc") or scene.get("media")
             if scene_type in ("ken-burns", "tactical-map", "video-clip"):
                 if media_value:
+                    fallback = ".mp4" if scene_type == "video-clip" else ".jpg"
                     suffix = self._target_suffix(
-                        self._resolve_media(media_value, channel_dir) or Path("x.jpg"),
-                        ".jpg",
+                        self._resolve_media(media_value, channel_dir)
+                        or Path("x" + fallback),
+                        fallback,
                     )
                     targets[f"media:{index}"] = add(
                         media_value, f"scenes/{index:02d}_{scene_id}{suffix}"
@@ -319,6 +321,7 @@ class EditableVideoEngine:
         theme: Dict[str, str],
         intro_props: Dict[str, Any],
         channel: Dict[str, Any],
+        language: str,
     ) -> Tuple[str, bool]:
         scene_id = _slug(str(scene.get("id") or f"scene-{index:02d}"))
         scene_type = str(scene.get("type") or "ken-burns")
@@ -394,6 +397,10 @@ class EditableVideoEngine:
                 _js_prop("headline", headline),
                 _js_prop("accentColor", theme["highlight"]),
                 _js_prop("backgroundSrc", media),
+                _js_prop(
+                    "locale",
+                    "en-US" if str(language).lower().startswith("en") else "pt-BR",
+                ),
             ]
             return f"<SceneStatCounter {' '.join(props)} />", False
 
@@ -522,6 +529,7 @@ class EditableVideoEngine:
                 theme,
                 intro_props,
                 channel,
+                str(config.get("language") or "pt"),
             )
             scene_timeline.append(
                 (start_frame, start_frame + scene_frames, f"        {node}")
@@ -934,8 +942,13 @@ export const theme: EpisodeTheme = {json.dumps(theme, ensure_ascii=False, indent
             "media.json": json.dumps({"files": entries}, ensure_ascii=False, indent=2),
         }
         backup = self._check_guard(episode_dir, generated, force)
-        staged = self.stager.ensure({"files": entries}, public_rel)
-        pruned = self.stager.prune({"files": entries}, public_rel)
+        previous_index = self.stager.read_index(public_rel)
+        staged = self.stager.ensure(
+            {"files": entries}, public_rel, write_index=False
+        )
+        pruned = self.stager.prune(
+            {"files": entries}, public_rel, previous=previous_index
+        )
 
         for relative, content in generated.items():
             self._write(episode_dir / relative, content)

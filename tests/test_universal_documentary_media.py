@@ -132,9 +132,10 @@ def test_remote_sfx_url_is_preserved(tmp_path: Path):
     assert result["warnings"] == []
 
 
-def test_documentary_maps_new_scene_types(tmp_path: Path):
+def test_documentary_maps_new_scene_types_in_render_mode(tmp_path: Path):
     make_channel(tmp_path)
     recipe = make_recipe()
+    recipe["mode"] = "render"
     recipe["scenes"] = [
         {
             "id": "tactical",
@@ -157,6 +158,7 @@ def test_documentary_maps_new_scene_types(tmp_path: Path):
             "media": "media/raw/clip.mp4",
             "duration_seconds": 3,
             "video_muted": True,
+            "overlay_text": "Registro original",
         },
     ]
     result = UniversalDocumentaryEngine(ChannelManager(tmp_path)).execute_recipe(recipe)
@@ -170,3 +172,8 @@ def test_documentary_maps_new_scene_types(tmp_path: Path):
     ]
     assert episode_config["scenes"][0]["coordinates"] == "23°33′S 46°38′W"
     assert episode_config["scenes"][1]["statValue"] == 1889
+    assert episode_config["scenes"][2]["notes"] == "Registro original"
+    assert all(
+        scene["mediaSrc"].startswith("channels/test-channel/media/raw/")
+        for scene in episode_config["scenes"]
+    )

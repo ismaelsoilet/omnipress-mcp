@@ -136,8 +136,9 @@ class RemotionProvider(RenderProvider):
         except ProviderError as exc:
             errors.append(str(exc))
 
+        resolved_public: Optional[Path] = None
         try:
-            self._public_dir(spec)
+            resolved_public = self._public_dir(spec)
         except ProviderError as exc:
             errors.append(str(exc))
 
@@ -145,6 +146,30 @@ class RemotionProvider(RenderProvider):
             self._media_manifest(spec)
         except ProviderError as exc:
             errors.append(str(exc))
+
+        if spec.get("prune_media"):
+            channel_slug = str(spec.get("channel_slug") or "").strip()
+            if not channel_slug:
+                errors.append("prune_media requires channel_slug")
+            elif resolved_public is None:
+                errors.append(
+                    "prune_media requires an episode-local public_dir"
+                )
+            else:
+                episode_root = (
+                    self.project_root
+                    / "channels"
+                    / channel_slug
+                    / "video"
+                    / "episodes"
+                ).resolve()
+                try:
+                    resolved_public.relative_to(episode_root)
+                except ValueError:
+                    errors.append(
+                        "prune_media requires public_dir under the channel's "
+                        "video/episodes/ directory"
+                    )
 
         fmt = str(spec.get("format") or "mp4").lower()
         if fmt not in ("mp4", "webm"):
@@ -176,10 +201,20 @@ class RemotionProvider(RenderProvider):
         pruned_report: Optional[Dict[str, Any]] = None
         manifest_path = self._media_manifest(spec)
         if manifest_path is not None:
-            staged_report = self.stager.ensure(manifest_path, public_dir)
+            prune_media = bool(spec.get("prune_media"))
+            previous_index = (
+                self.stager.read_index(public_dir) if prune_media else None
+            )
+            staged_report = self.stager.ensure(
+                manifest_path, public_dir, write_index=not prune_media
+            )
             staged_mapping = staged_report.get("mapping", {})
-            if spec.get("prune_media"):
-                pruned_report = self.stager.prune(manifest_path, public_dir)
+            if prune_media:
+                pruned_report = self.stager.prune(
+                    manifest_path,
+                    public_dir,
+                    previous=previous_index,
+                )
 
         if spec.get("normalize_media", True):
             props, replacements = self.stager.normalize_props(
