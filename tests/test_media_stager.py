@@ -139,3 +139,29 @@ def test_relative_source_mapping_rewrites_props(tmp_path: Path):
             "to": "scenes/01.jpg",
         }
     ]
+
+
+def test_prune_removes_stale_generated_files_and_preserves_user_files(tmp_path: Path):
+    source = _make_media(tmp_path)
+    manifest = {
+        "files": [
+            {
+                "source": "channels/test-channel/media/raw/a.jpg",
+                "target": "scenes/01.jpg",
+            }
+        ]
+    }
+    stager = MediaStager(tmp_path)
+    stager.ensure(manifest, "channels/test-channel/public")
+    public = tmp_path / "channels/test-channel/public"
+    (public / "scenes/stale.jpg").write_bytes(b"stale")
+    (public / ".gitkeep").write_bytes(b"")
+    (public / "custom.txt").write_bytes(b"keep")
+
+    report = stager.prune(manifest, "channels/test-channel/public")
+
+    assert "scenes/stale.jpg" in report["removed"]
+    assert (public / "scenes/01.jpg").is_file()
+    assert (public / "custom.txt").is_file()
+    assert (public / ".gitkeep").is_file()
+    assert source.is_file()

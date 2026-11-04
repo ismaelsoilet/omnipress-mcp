@@ -35,6 +35,8 @@ OmniPress provides an agent runbook skill installed at:
 
 Because skills use **progressive disclosure**, Antigravity automatically detects when you want to publish or adapt content and loads the runbook into context dynamically.
 
+> **New video workflow:** use `omnipress video --scaffold-editable` and `omnipress studio` to refine agent-generated episodes. See [`docs/AGENT_COMPATIBILITY.md`](../AGENT_COMPATIBILITY.md) for the full matrix with Command Code and OpenCode.
+
 ---
 
 ## 3. How to Prompt Antigravity

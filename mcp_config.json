@@ -2,9 +2,9 @@
   "mcpServers": {
     "omnipress": {
       "command": ".venv/bin/python",
-      "args": ["src/server.py"],
+      "args": ["-m", "src.server"],
       "env": {
-        "ARTICLES_DIR": "./articles"
+        "OMNIPRESS_ACTIVE_CHANNEL": "default"
       }
     }
   }

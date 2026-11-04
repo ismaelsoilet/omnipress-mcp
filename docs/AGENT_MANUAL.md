@@ -18,14 +18,24 @@ O **OmniPress MCP** é um motor agêntico de publicação editorial, distribuiç
 
 ### Topologia de Execução do Servidor
 O servidor MCP é unificado em Python ([`src/server.py`](file:///home/ismaelsoilet/omnipress-mcp/src/server.py)) e opera em dois modos:
-- **STDIO Mode**: Utilizado por clientes locais (Claude Desktop, Gemini CLI, Antigravity IDE). Executado via `python src/server.py`.
+- **STDIO Mode**: Utilizado por clientes locais (Claude Desktop, Gemini CLI, Antigravity IDE, Command Code, OpenCode). Executado via `python -m src.server`.
 - **HTTP/SSE ASGI Mode**: Utilizado por ambientes conteinerizados (Docker, Docker Compose, Coolify na Oracle Cloud). Executado via `python src/server.py --http 3333` ou `OMNIPRESS_MODE=http`. Expõe endpoints SSE e a rota de monitoramento de saúde `/health`.
+
+### Compatibilidade de Harness
+| Harness | Configuração | Skills |
+|---|---|---|
+| **Google Antigravity** | `mcp_config.json` / `~/.gemini/config/mcp_config.json` | `~/.gemini/config/skills/` |
+| **Command Code** | `.mcp.json` / `cmd mcp add` | `.agents/skills/` automático |
+| **OpenCode** | `opencode.json` | `.agents/skills/` automático |
+| **Claude Desktop** | `claude_desktop_config.json` | `~/.claude/skills/` |
+
+Consulte [`docs/AGENT_COMPATIBILITY.md`](./AGENT_COMPATIBILITY.md) para snippets completos, caminhos e solução de problemas.
 
 ---
 
 ## 2. Catálogo Completo de Ferramentas MCP (TDQS A+ 5.0)
 
-O OmniPress expõe **14 ferramentas** (13 canônicas e 1 alias retrocompatível no padrão `verb_noun`), todas enriquecidas com metadados de protocolo (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`):
+O OmniPress expõe **22 ferramentas** (21 canônicas e 1 alias retrocompatível no padrão `verb_noun`), todas enriquecidas com metadados de protocolo (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`):
 
 ### 2.1. `omnipress_publish_article`
 Salva um artigo completo com metadados YAML na árvore de arquivos e emite evento webhook se configurado.
@@ -447,6 +457,8 @@ Quando o usuário pedir: *"Quero ajustar o episódio no Studio"*, *"editar as ce
    - O TSX gerado é a fonte de verdade após o scaffold.
    - Reexecutar `--scaffold-editable` sem `--force` falha se o TSX foi editado; `--force` cria backup.
    - O `video_recipe.editable.json` não fixa `duration_frames`; a duração da composição em `index.ts` é a autoridade.
+   - Cenas `tactical-map`, `stat-counter` e `video-clip` geram `SceneTacticalMap`, `SceneStatCounter` e `SceneVideoClip`.
+   - `prune_media` remove assets antigos do `public/` local do episódio, preservando arquivos do usuário.
    - Não edite `media.json` manualmente; ele é regenerado com caminhos relativos portáveis.
    - Legendas do `align-captions` são normalizadas automaticamente e `actTimelines` é derivado quando ausente.
    - Áudio e legendas permanecem travados ao alinhamento da fala. Retiming que dessincronize narração exige re-alinhamento e novo scaffold.

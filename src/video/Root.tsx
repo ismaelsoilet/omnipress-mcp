@@ -13,6 +13,9 @@ import {
   SceneHeraldic,
   SceneKenBurns,
   SceneOutro,
+  SceneStatCounter,
+  SceneTacticalMap,
+  SceneVideoClip,
 } from "./components/scenes";
 import { sampleShortCaptions, sampleEpisodeCaptions } from "./fixtures/sampleCaptions";
 
@@ -274,6 +277,55 @@ export const CoreCompositions: React.FC = () => {
           channelName: "CHANNEL NAME",
           primaryColor: "#3B82F6",
           tagline: "STORIES & INVESTIGATIONS",
+        }}
+      />
+
+      <Composition
+        id="SceneTacticalMap-Preview"
+        component={SceneTacticalMap}
+        durationInFrames={180}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          imageSrc: "https://remotion.media/image.jpeg",
+          headline: "THE ROUTE OF THE ARCHIVE",
+          badge: "MAPA TÁTICO",
+          coordinates: "23°33′S 46°38′W",
+          accentColor: "#3B82F6",
+        }}
+      />
+
+      <Composition
+        id="SceneStatCounter-Preview"
+        component={SceneStatCounter}
+        durationInFrames={180}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          value: 1889,
+          prefix: "",
+          suffix: "",
+          label: "Documentos analisados",
+          headline: "O número que mudou a investigação",
+          accentColor: "#FACC15",
+        }}
+      />
+
+      <Composition
+        id="SceneVideoClip-Preview"
+        component={SceneVideoClip}
+        durationInFrames={180}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          videoSrc: "https://remotion.media/video.mp4",
+          headline: "ARQUIVO EM MOVIMENTO",
+          badge: "CLIPE // ARQUIVO",
+          overlayText: "Registro original restaurado",
+          muted: true,
         }}
       />
     </>

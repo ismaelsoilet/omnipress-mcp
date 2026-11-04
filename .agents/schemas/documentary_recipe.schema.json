@@ -21,6 +21,7 @@
             "document_card",
             "portrait",
             "stat_card",
+            "video_clip",
             "closing_card"
           ]
         },
@@ -36,6 +37,12 @@
         "overlay_text": { "type": "string" },
         "camera": { "enum": ["slow_zoom_in", "slow_zoom_out", "pan_left", "pan_right", "static"] },
         "transition": { "enum": ["cut", "whip_pan", "flash", "dissolve"] },
+        "coordinates": { "type": "string", "description": "Coordinates or archival reference for tactical map scenes." },
+        "stat_value": { "type": "number", "minimum": 0, "description": "Final numeric value for stat-counter scenes." },
+        "stat_prefix": { "type": "string" },
+        "stat_suffix": { "type": "string" },
+        "stat_label": { "type": "string" },
+        "video_muted": { "type": "boolean", "default": true },
         "sfx": { "type": "string", "description": "Optional tactical SFX path for this scene." },
         "sfx_volume": { "type": "number", "minimum": 0, "maximum": 1, "description": "SFX volume ceiling for this scene (defaults to 0.35)." },
         "top_bias": { "type": "number", "minimum": 0, "maximum": 1 },

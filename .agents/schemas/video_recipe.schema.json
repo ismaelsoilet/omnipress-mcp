@@ -25,6 +25,7 @@
     },
     "normalize_media": { "type": "boolean", "default": true },
     "stage_legacy_media": { "type": "boolean", "default": true },
+    "prune_media": { "type": "boolean", "default": false },
     "editable": { "type": "boolean", "default": false },
     "props": { "type": "object", "additionalProperties": true },
     "output": { "type": "string" },

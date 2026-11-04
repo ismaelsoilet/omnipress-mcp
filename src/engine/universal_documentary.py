@@ -27,9 +27,10 @@ _SCENE_TYPE_MAP = {
     "ken_burns": "ken-burns",
     "archive_photo": "ken-burns",
     "portrait": "ken-burns",
-    "tactical_map": "ken-burns",
+    "tactical_map": "tactical-map",
     "document_card": "document-reveal",
     "stat_card": "stat-counter",
+    "video_clip": "video-clip",
     "closing_card": "channel-outro",
 }
 
@@ -366,6 +367,12 @@ class UniversalDocumentaryEngine:
                     "headline": scene.get("headline", ""),
                     "subheadline": scene.get("subheadline", ""),
                     "badge": scene.get("badge", ""),
+                    "coordinates": scene.get("coordinates", ""),
+                    "statValue": scene.get("stat_value"),
+                    "statPrefix": scene.get("stat_prefix", ""),
+                    "statSuffix": scene.get("stat_suffix", ""),
+                    "statLabel": scene.get("stat_label", ""),
+                    "videoMuted": scene.get("video_muted", True),
                     "sfxSrc": sfx_src,
                     "sfxVolume": scene.get("sfx_volume"),
                     "cameraDirection": {

@@ -60,7 +60,7 @@ Every deliverable is a JSON document validated by `.agents/schemas/*.schema.json
 | Image | `image_recipe.json` | `ai_image` → `prompt_export` fallback |
 | Public archive asset | `asset_recipe.json` | `universal_assets` |
 
-**Editable video episodes** are a generated artifact, not a new source of channel configuration. `EditableVideoEngine` reads an `episode_config.json`, writes `channels/<slug>/video/episodes/<episode>-<aspect>/` and stages media through a versioned `media.json` manifest. The generated TSX becomes the episode source of truth; `meta.json` protects manual edits with hashes. Remotion receives a per-episode `entry_point`, `public_dir` and `media_manifest` through the `video_recipe` contract.
+**Editable video episodes** are a generated artifact, not a new source of channel configuration. `EditableVideoEngine` reads an `episode_config.json`, writes `channels/<slug>/video/episodes/<episode>-<aspect>/` and stages media through a versioned `media.json` manifest. The generated TSX becomes the episode source of truth; `meta.json` protects manual edits with hashes. Remotion receives a per-episode `entry_point`, `public_dir` and `media_manifest` through the `video_recipe` contract. `prune_media` removes stale generated assets from episode-local `public/` directories.
 
 ---
 

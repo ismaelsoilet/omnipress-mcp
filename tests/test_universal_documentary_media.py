@@ -26,6 +26,7 @@ def make_channel(root: Path, slug: str = "test-channel") -> Path:
     (channel / "media" / "raw" / "sfx.wav").write_bytes(b"fake-sfx")
     (channel / "media" / "raw" / "vo.wav").write_bytes(b"fake-vo")
     (channel / "media" / "raw" / "bed.wav").write_bytes(b"fake-bed")
+    (channel / "media" / "raw" / "clip.mp4").write_bytes(b"fake-clip")
     return channel
 
 
@@ -129,3 +130,43 @@ def test_remote_sfx_url_is_preserved(tmp_path: Path):
     )
     assert episode_config["scenes"][0]["sfxSrc"] == remote
     assert result["warnings"] == []
+
+
+def test_documentary_maps_new_scene_types(tmp_path: Path):
+    make_channel(tmp_path)
+    recipe = make_recipe()
+    recipe["scenes"] = [
+        {
+            "id": "tactical",
+            "type": "tactical_map",
+            "media": "media/raw/scene.jpg",
+            "duration_seconds": 3,
+            "coordinates": "23°33′S 46°38′W",
+        },
+        {
+            "id": "stat",
+            "type": "stat_card",
+            "media": "media/raw/scene.jpg",
+            "duration_seconds": 3,
+            "stat_value": 1889,
+            "stat_label": "Documentos",
+        },
+        {
+            "id": "clip",
+            "type": "video_clip",
+            "media": "media/raw/clip.mp4",
+            "duration_seconds": 3,
+            "video_muted": True,
+        },
+    ]
+    result = UniversalDocumentaryEngine(ChannelManager(tmp_path)).execute_recipe(recipe)
+    episode_config = json.loads(
+        (Path(result["episode_config"])).read_text(encoding="utf-8")
+    )
+    assert [scene["type"] for scene in episode_config["scenes"]] == [
+        "tactical-map",
+        "stat-counter",
+        "video-clip",
+    ]
+    assert episode_config["scenes"][0]["coordinates"] == "23°33′S 46°38′W"
+    assert episode_config["scenes"][1]["statValue"] == 1889

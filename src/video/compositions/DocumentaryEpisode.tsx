@@ -11,6 +11,9 @@ import { SceneDocumentReveal } from "../components/scenes/SceneDocumentReveal";
 import { SceneHeraldic } from "../components/scenes/SceneHeraldic";
 import { SceneKenBurns } from "../components/scenes/SceneKenBurns";
 import { SceneOutro } from "../components/scenes/SceneOutro";
+import { SceneStatCounter } from "../components/scenes/SceneStatCounter";
+import { SceneTacticalMap } from "../components/scenes/SceneTacticalMap";
+import { SceneVideoClip } from "../components/scenes/SceneVideoClip";
 import { SynchronizedCaptions } from "../components/SynchronizedCaptions";
 import { resolveMediaSrc } from "../media";
 import { DocumentaryScene, EpisodeConfig, KenBurnsSceneProps } from "../types";
@@ -296,6 +299,56 @@ export const DocumentaryEpisode: React.FC<DocumentaryEpisodeProps> = ({
                 channelName={config?.introProps?.channelName || ""}
                 primaryColor={config?.introProps?.primaryColor}
                 tagline={config?.introProps?.subText || ""}
+              />
+            );
+          }
+
+          if (scene.type === "tactical-map") {
+            return (
+              <SceneTacticalMap
+                key={scene.id || index}
+                name={sceneName}
+                from={startFrame}
+                durationInFrames={sceneDurationFrames}
+                imageSrc={scene.mediaSrc}
+                headline={scene.headline || episodeTitle}
+                badge={scene.badge}
+                coordinates={scene.coordinates}
+                accentColor={config?.theme?.accent}
+              />
+            );
+          }
+
+          if (scene.type === "stat-counter") {
+            return (
+              <SceneStatCounter
+                key={scene.id || index}
+                name={sceneName}
+                from={startFrame}
+                durationInFrames={sceneDurationFrames}
+                value={scene.statValue ?? 0}
+                prefix={scene.statPrefix}
+                suffix={scene.statSuffix}
+                label={scene.statLabel}
+                headline={scene.headline || episodeTitle}
+                accentColor={config?.theme?.highlight || config?.theme?.accent}
+                backgroundSrc={scene.mediaSrc}
+              />
+            );
+          }
+
+          if (scene.type === "video-clip") {
+            return (
+              <SceneVideoClip
+                key={scene.id || index}
+                name={sceneName}
+                from={startFrame}
+                durationInFrames={sceneDurationFrames}
+                videoSrc={scene.mediaSrc}
+                headline={scene.headline || episodeTitle}
+                badge={scene.badge}
+                overlayText={scene.notes}
+                muted={scene.videoMuted ?? true}
               />
             );
           }

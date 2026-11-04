@@ -70,6 +70,8 @@ O motor `EditableVideoEngine` gera:
 
 Após o scaffold, o **TSX gerado é a fonte de verdade** daquele episódio. Reexecutar o scaffold sem `--force` falha se houver edições manuais; `--force` cria backup antes de sobrescrever.
 
+Cenas suportadas: `ken-burns`, `document-reveal`, `heraldic-surgery`/`image-morph`, `channel-outro`, `tactical-map` (`SceneTacticalMap`), `stat-counter` (`SceneStatCounter`) e `video-clip` (`SceneVideoClip`). O staging usa `prune_media` para remover assets antigos do `public/` local.
+
 ### Regras de mídia
 
 `staticFile()` do Remotion **rejeita caminhos absolutos**. O OmniPress resolve isso com:

@@ -189,6 +189,64 @@ class MediaStager:
         }
 
     # ------------------------------------------------------------------
+    # Pruning
+    # ------------------------------------------------------------------
+    PRUNE_PREFIXES = ("scenes/", "audio/", "music/", "sfx/", "_legacy/")
+
+    def prune(
+        self,
+        manifest: Union[str, Path, Dict[str, Any], List[Any]],
+        public_dir: Union[str, Path],
+        dry_run: bool = False,
+    ) -> Dict[str, Any]:
+        """Remove stale generated media from an episode-local public dir.
+
+        Only known generated prefixes are considered; unrelated user files and
+        .gitkeep are preserved.
+        """
+        entries = self._load_manifest(manifest)
+        public = self._resolve_public_dir(public_dir)
+        keep = {
+            Path(str(entry["target"])).as_posix()
+            for entry in entries
+        }
+        removed: List[str] = []
+        for path in sorted(public.rglob("*")):
+            if not path.is_file():
+                continue
+            relative = path.relative_to(public).as_posix()
+            if relative == ".gitkeep":
+                continue
+            if not any(
+                relative.startswith(prefix) for prefix in self.PRUNE_PREFIXES
+            ):
+                continue
+            if relative in keep:
+                continue
+            if not dry_run:
+                path.unlink()
+            removed.append(relative)
+
+        if not dry_run:
+            directories = sorted(
+                (path for path in public.rglob("*") if path.is_dir()),
+                key=lambda path: len(path.parts),
+                reverse=True,
+            )
+            for directory in directories:
+                if directory == public:
+                    continue
+                if not any(directory.iterdir()):
+                    directory.rmdir()
+
+        return {
+            "status": "success",
+            "public_dir": str(public),
+            "removed": removed,
+            "dry_run": dry_run,
+        }
+
+    # ------------------------------------------------------------------
     # Legacy absolute-path normalisation
     # ------------------------------------------------------------------
     @staticmethod

@@ -37,6 +37,7 @@ When an agent generates a content campaign, it must produce three synchronized a
 - **Strict Decoupling Gate**: Channel-specific assets (video episode configs, Whisper alignment JSON, voiceovers, background music, or custom scripts) must NEVER be committed to `src/` (e.g. `src/video/fixtures/` or `Root.tsx`). The core engine must remain 100% agnostic.
 - **Engine vs. Channel Asset Separation**: Core layout engines, publisher adapters, and MCP tools remain in `src/` (`src/core/`, `src/engine/`, `src/adapters/`, `src/video/`). Channel-specific generation scripts and post definitions belong in `channels/<slug>/scripts/`.
 - **Dynamic Configuration**: Publisher adapters resolve credentials and channel IDs (e.g., `buffer_channel_id`) dynamically from `channel.json` before falling back to `.env`.
+- **Agent Harness Compatibility**: Antigravity uses `mcp_config.json`, Command Code uses `.mcp.json`, and OpenCode uses `opencode.json`. All three discover project skills in `.agents/skills/`; Antigravity additionally needs the skill exposed under `~/.gemini/config/skills/`. See [`docs/AGENT_COMPATIBILITY.md`](docs/AGENT_COMPATIBILITY.md).
 
 ### 5. Visual Contrast & Carousel Legibility Standards (Rule 08)
 - **Universal Readability**: All carousel slides must comply with [`.agents/rules/08_visual_contrast_and_carousel_legibility_standards.md`](.agents/rules/08_visual_contrast_and_carousel_legibility_standards.md).
@@ -179,6 +180,7 @@ Ao gerar campanhas de conteúdo, o agente deve produzir 3 formatos integrados:
 - **Portão de Desacoplamento Estrito**: Ativos de canal (arquivos de configuração de episódios, JSONs de alinhamento Whisper, locuções gravadas, trilhas musicais ou scripts locais) NUNCA devem ser commitados no diretório `src/` (como `src/video/fixtures/` ou `Root.tsx`). O motor central do repositório deve permanecer 100% agnóstico e genérico.
 - **Separação Motor vs. Canal**: Motores universais de layout, adaptadores e ferramentas MCP pertencem a `src/` (`src/core/`, `src/engine/`, `src/adapters/`, `src/video/`). Scripts e criativos específicos do canal pertencem a `channels/<slug>/scripts/`.
 - **Configuração Dinâmica**: Adaptadores de publicação resolvem IDs de canal (ex.: `buffer_channel_id`) diretamente de `channel.json` antes de consultar `.env`.
+- **Compatibilidade de Harness de Agente**: Antigravity usa `mcp_config.json`, Command Code usa `.mcp.json` e OpenCode usa `opencode.json`. Os três descobrem skills do projeto em `.agents/skills/`; o Antigravity também exige a skill exposta em `~/.gemini/config/skills/`. Consulte [`docs/AGENT_COMPATIBILITY.md`](docs/AGENT_COMPATIBILITY.md).
 
 ### 5. Padrão de Contraste Visual e Segurança Tipográfica em Carrosséis (Regra 08)
 - **Legibilidade Universal**: Todos os slides gerados devem obedecer estritamente a [`.agents/rules/08_visual_contrast_and_carousel_legibility_standards.md`](.agents/rules/08_visual_contrast_and_carousel_legibility_standards.md).

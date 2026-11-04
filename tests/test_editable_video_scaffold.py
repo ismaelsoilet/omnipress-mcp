@@ -24,7 +24,7 @@ def make_channel(root: Path, slug: str = "test-channel") -> Path:
     (channel / "channel.json").write_text(
         json.dumps(config, ensure_ascii=False), encoding="utf-8"
     )
-    for name in ("a.jpg", "b.jpg", "vo.wav", "bed.wav", "sfx.wav"):
+    for name in ("a.jpg", "b.jpg", "vo.wav", "bed.wav", "sfx.wav", "clip.mp4"):
         (channel / "media" / "raw" / name).write_bytes(b"fake-" + name.encode())
     return channel
 
@@ -390,3 +390,65 @@ def test_remote_scene_audio_uses_resolve_media_src(tmp_path: Path):
     assert 'resolveMediaSrc("https://example.test/vo.mp3")' in tsx
     assert 'resolveMediaSrc("https://example.test/sfx.mp3")' in tsx
     assert 'staticFile("https://' not in tsx
+
+
+def test_new_scene_types_generate_first_class_components(tmp_path: Path):
+    make_channel(tmp_path)
+    config = make_episode_config()
+    config["scenes"] = [
+        {
+            "id": "tactical",
+            "type": "tactical-map",
+            "mediaSrc": "media/raw/a.jpg",
+            "startInSeconds": 0,
+            "durationInSeconds": 3,
+            "headline": "Rota do arquivo",
+            "badge": "MAPA",
+            "coordinates": "23°33′S 46°38′W",
+        },
+        {
+            "id": "stat",
+            "type": "stat-counter",
+            "startInSeconds": 3,
+            "durationInSeconds": 3,
+            "headline": "O número",
+            "statValue": 1889,
+            "statPrefix": "",
+            "statSuffix": "",
+            "statLabel": "Documentos",
+        },
+        {
+            "id": "clip",
+            "type": "video-clip",
+            "mediaSrc": "media/raw/clip.mp4",
+            "startInSeconds": 6,
+            "durationInSeconds": 3,
+            "headline": "Arquivo em movimento",
+            "badge": "CLIPE",
+            "notes": "Registro original",
+            "videoMuted": True,
+        },
+    ]
+    result = EditableVideoEngine(project_root=tmp_path).scaffold(config)
+    tsx = (Path(result["episode_dir"]) / "Episode.tsx").read_text(encoding="utf-8")
+    assert "<SceneTacticalMap" in tsx
+    assert "<SceneStatCounter" in tsx
+    assert "<SceneVideoClip" in tsx
+    assert "value={1889}" in tsx
+    assert "coordinates=\"23°33′S 46°38′W\"" in tsx or "23°33′S 46°38′W" in tsx
+    assert "media/raw/clip.mp4" not in tsx
+    assert "scenes/03_clip.mp4" in tsx
+
+
+def test_scaffold_prunes_stale_public_assets(tmp_path: Path):
+    make_channel(tmp_path)
+    result = EditableVideoEngine(project_root=tmp_path).scaffold(make_episode_config())
+    episode = Path(result["episode_dir"])
+    stale = episode / "public/scenes/stale.jpg"
+    stale.parent.mkdir(parents=True, exist_ok=True)
+    stale.write_bytes(b"stale")
+    forced = EditableVideoEngine(project_root=tmp_path).scaffold(
+        make_episode_config(), force=True
+    )
+    assert not stale.exists()
+    assert forced["pruned_files"] >= 1

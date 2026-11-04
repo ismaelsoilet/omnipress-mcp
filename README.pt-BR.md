@@ -1,6 +1,6 @@
 # 🌐 OmniPress MCP
 
-[🇺🇸 English](README.md) | [🇧🇷 Português](README.pt-BR.md) | [🤖 Manual para Agentes](docs/AGENT_MANUAL.md) | [🎬 Skills de Vídeo](docs/VIDEO_CREATION_AND_PLATFORM_SKILLS.md) | [🎞️ Referência Remotion](docs/REMOTION_SKILLS_AND_DOCS.md) | [📜 Changelog](CHANGELOG.md) | [📦 Notas de Release 0.12.0](docs/RELEASE_NOTES_0.12.0.md)
+[🇺🇸 English](README.md) | [🇧🇷 Português](README.pt-BR.md) | [🤖 Manual para Agentes](docs/AGENT_MANUAL.md) | [🔌 Compatibilidade de Agentes](docs/AGENT_COMPATIBILITY.md) | [🎬 Skills de Vídeo](docs/VIDEO_CREATION_AND_PLATFORM_SKILLS.md) | [🎞️ Referência Remotion](docs/REMOTION_SKILLS_AND_DOCS.md) | [📜 Changelog](CHANGELOG.md) | [📦 Notas de Release 0.13.0](docs/RELEASE_NOTES_0.13.0.md)
 
 > **O Protocolo Universal de Publicação Agêntica e Motor de Distribuição Multi-Canal para Agentes de IA via Model Context Protocol (MCP)**
 
@@ -118,6 +118,8 @@ Motor de vídeo de alta fidelidade em React & TypeScript (`src/video/`) projetad
 - **Paisagem Sonora em 48kHz Sincronizada**: Áudio estéreo broadcast integrado via `<Audio />` com ducking dinâmico automático (-18dB a -22dB durante a voz).
 - **Gerador Programático de Miniaturas (Regra 15)**: Criação de capas 16:9 de alto CTR via código React (`ThumbnailEpisode.tsx`) cumprindo a Escala Tipográfica Titânica (160px–220px, limite de 3 palavras, zero micro-fontes < 50px e escudo contra o badge de tempo do YouTube).
 - **Nova Experiência de Edição Interativa (Remotion 4.0.540)**: Timelines long-form usam `<Track>` + sequências nomeadas; átomos de cena usam `Interactive.create()`. `omnipress video --scaffold-editable` gera um TSX por episódio com um nó JSX por cena, e `omnipress studio` abre o episódio para refinamento humano. Edições manuais são protegidas por hash guard e viram a fonte de verdade do episódio.
+- **Cenas Editáveis Dedicadas**: `SceneTacticalMap`, `SceneStatCounter` e `SceneVideoClip` cobrem `tactical-map`, `stat-counter` e `video-clip` com textos, coordenadas, valores e vídeo mutável editáveis.
+- **Prune de Staging**: `prune_media` remove assets antigos gerados do `public/` local do episódio, preservando arquivos do usuário.
 - **Staging de Mídia para `staticFile()`**: Mídia de canal é preparada via `media.json` + `MediaStager` e servida com `--public-dir`; caminhos absolutos nunca chegam ao `staticFile()`.
 
 ### 6. Publicação Multi-Canal & Integração Direta com YouTube
@@ -274,6 +276,37 @@ Adicione o servidor no seu arquivo `~/.gemini/config/mcp_config.json` (ou no `mc
   }
 }
 ```
+
+#### No Command Code
+Use o `.mcp.json` do projeto (já incluído) ou registre via CLI:
+
+```bash
+cmd mcp add --env OMNIPRESS_ACTIVE_CHANNEL=default omnipress \
+  -- .venv/bin/python -m src.server
+```
+
+As skills em `.agents/skills/` são descobertas automaticamente; use `/skills` ou `/skill:omnipress`.
+
+#### No OpenCode
+Use o `opencode.json` do projeto (já incluído) ou adicione em `~/.config/opencode/opencode.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "omnipress": {
+      "type": "local",
+      "command": [".venv/bin/python", "-m", "src.server"],
+      "enabled": true,
+      "environment": {
+        "OMNIPRESS_ACTIVE_CHANNEL": "default"
+      }
+    }
+  }
+}
+```
+
+As skills em `.agents/skills/` são descobertas automaticamente. Consulte [`docs/AGENT_COMPATIBILITY.md`](docs/AGENT_COMPATIBILITY.md).
 
 #### No Claude Desktop
 No seu arquivo `claude_desktop_config.json`:

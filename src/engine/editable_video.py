@@ -224,7 +224,7 @@ class EditableVideoEngine:
             scene_type = str(scene.get("type") or "ken-burns")
 
             media_value = scene.get("mediaSrc") or scene.get("media")
-            if scene_type in ("ken-burns", "tactical-map", "stat-counter", "video-clip"):
+            if scene_type in ("ken-burns", "tactical-map", "video-clip"):
                 if media_value:
                     suffix = self._target_suffix(
                         self._resolve_media(media_value, channel_dir) or Path("x.jpg"),
@@ -235,6 +235,15 @@ class EditableVideoEngine:
                     )
                 else:
                     warnings.append(f"Scene {scene_id} has no mediaSrc")
+            elif scene_type == "stat-counter":
+                if media_value:
+                    suffix = self._target_suffix(
+                        self._resolve_media(media_value, channel_dir) or Path("x.jpg"),
+                        ".jpg",
+                    )
+                    targets[f"media:{index}"] = add(
+                        media_value, f"scenes/{index:02d}_{scene_id}{suffix}"
+                    )
             elif scene_type in ("heraldic-surgery", "image-morph"):
                 before_value = scene.get("beforeSrc") or media_value
                 after_value = scene.get("afterSrc")
@@ -321,6 +330,11 @@ class EditableVideoEngine:
             _js_prop("durationInFrames", duration_frames, number=True),
         ]
 
+        media = targets.get(f"media:{index}")
+        if not media:
+            raw = scene.get("mediaSrc") or scene.get("media") or ""
+            media = str(raw) if str(raw).startswith(REMOTE_PREFIXES) else ""
+
         if scene_type == "document-reveal":
             props = [
                 *common,
@@ -351,6 +365,50 @@ class EditableVideoEngine:
                 props.append(_js_prop("bannerSrc", targets[f"bannerSrc:{index}"]))
             return f"<SceneOutro {' '.join(props)} />", False
 
+        if scene_type == "tactical-map":
+            props = [
+                *common,
+                _js_prop("imageSrc", media),
+                _js_prop("headline", headline),
+                _js_prop("badge", str(scene.get("badge") or "")),
+                _js_prop("coordinates", str(scene.get("coordinates") or "")),
+                _js_prop("accentColor", theme["accent"]),
+            ]
+            return f"<SceneTacticalMap {' '.join(props)} />", False
+
+        if scene_type == "stat-counter":
+            raw_value = scene.get("statValue", scene.get("value", 0))
+            try:
+                stat_value = int(float(raw_value or 0))
+            except (TypeError, ValueError):
+                stat_value = 0
+            props = [
+                *common,
+                _js_prop("value", stat_value, number=True),
+                _js_prop("prefix", str(scene.get("statPrefix") or "")),
+                _js_prop("suffix", str(scene.get("statSuffix") or "")),
+                _js_prop(
+                    "label",
+                    str(scene.get("statLabel") or scene.get("subheadline") or ""),
+                ),
+                _js_prop("headline", headline),
+                _js_prop("accentColor", theme["highlight"]),
+                _js_prop("backgroundSrc", media),
+            ]
+            return f"<SceneStatCounter {' '.join(props)} />", False
+
+        if scene_type == "video-clip":
+            muted = bool(scene.get("videoMuted", True))
+            props = [
+                *common,
+                _js_prop("videoSrc", media),
+                _js_prop("headline", headline),
+                _js_prop("badge", str(scene.get("badge") or "")),
+                _js_prop("overlayText", str(scene.get("notes") or "")),
+                f"muted={{{'true' if muted else 'false'}}}",
+            ]
+            return f"<SceneVideoClip {' '.join(props)} />", False
+
         if scene_type in ("heraldic-surgery", "image-morph"):
             props = [
                 *common,
@@ -360,11 +418,7 @@ class EditableVideoEngine:
             ]
             return f"<SceneHeraldic {' '.join(props)} />", False
 
-        # ken-burns and generic fallbacks
-        media = targets.get(f"media:{index}")
-        if not media:
-            raw = scene.get("mediaSrc") or scene.get("media") or ""
-            media = str(raw) if str(raw).startswith(REMOTE_PREFIXES) else ""
+        # ken-burns fallback for unknown scene types
         direction_map = {
             "slow_zoom_in": "zoom-in",
             "slow_zoom_out": "zoom-out",
@@ -396,9 +450,6 @@ class EditableVideoEngine:
         ]
         unknown = scene_type not in (
             "ken-burns",
-            "tactical-map",
-            "stat-counter",
-            "video-clip",
         )
         return f"<SceneKenBurns {' '.join(props)} />", unknown
 
@@ -594,6 +645,9 @@ import {{
   SceneHeraldic,
   SceneKenBurns,
   SceneOutro,
+  SceneStatCounter,
+  SceneTacticalMap,
+  SceneVideoClip,
   resolveMediaSrc,
 }} from {_js(CORE_PUBLIC)};
 import {{ captions }} from "./data/captions";
@@ -881,6 +935,7 @@ export const theme: EpisodeTheme = {json.dumps(theme, ensure_ascii=False, indent
         }
         backup = self._check_guard(episode_dir, generated, force)
         staged = self.stager.ensure({"files": entries}, public_rel)
+        pruned = self.stager.prune({"files": entries}, public_rel)
 
         for relative, content in generated.items():
             self._write(episode_dir / relative, content)
@@ -911,6 +966,7 @@ export const theme: EpisodeTheme = {json.dumps(theme, ensure_ascii=False, indent
                 datetime.timezone.utc
             ).isoformat(),
             "warnings": warnings,
+            "pruned_files": len(pruned.get("removed", [])),
         }
         self._write(
             episode_dir / "meta.json",
@@ -930,6 +986,7 @@ export const theme: EpisodeTheme = {json.dumps(theme, ensure_ascii=False, indent
             "fps": fps,
             "editable": True,
             "normalize_media": False,
+            "prune_media": True,
             "props": {},
         }
         self._write(
@@ -954,6 +1011,7 @@ export const theme: EpisodeTheme = {json.dumps(theme, ensure_ascii=False, indent
             "duration_in_frames": duration_frames,
             "scenes": len(scenes),
             "media_files": len(staged.get("files", [])),
+            "pruned_files": len(pruned.get("removed", [])),
             "backup": str(backup) if backup else None,
             "warnings": warnings,
             "studio_command": (

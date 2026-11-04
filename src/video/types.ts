@@ -44,6 +44,12 @@ export interface DocumentaryScene {
   notes?: string;
   beforeSrc?: string;
   afterSrc?: string;
+  coordinates?: string;
+  statValue?: number;
+  statPrefix?: string;
+  statSuffix?: string;
+  statLabel?: string;
+  videoMuted?: boolean;
 }
 
 export interface VoiceoverTrack {

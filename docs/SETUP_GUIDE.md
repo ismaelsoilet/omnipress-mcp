@@ -190,6 +190,37 @@ If `OMNIPRESS_WEBHOOK_SECRET` is set, OmniPress includes an `X-OmniPress-Signatu
 }
 ```
 
+### Command Code (`.mcp.json` na raiz do projeto)
+```json
+{
+  "mcpServers": {
+    "omnipress": {
+      "transport": "stdio",
+      "command": ".venv/bin/python",
+      "args": ["-m", "src.server"],
+      "env": { "OMNIPRESS_ACTIVE_CHANNEL": "dossie-historico" }
+    }
+  }
+}
+```
+
+### OpenCode (`opencode.json`)
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "omnipress": {
+      "type": "local",
+      "command": [".venv/bin/python", "-m", "src.server"],
+      "enabled": true,
+      "environment": { "OMNIPRESS_ACTIVE_CHANNEL": "dossie-historico" }
+    }
+  }
+}
+```
+
+Consulte [`AGENT_COMPATIBILITY.md`](./AGENT_COMPATIBILITY.md) para skills e troubleshooting.
+
 ### Claude Desktop (`claude_desktop_config.json`)
 ```json
 {

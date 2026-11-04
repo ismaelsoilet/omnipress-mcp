@@ -36,11 +36,26 @@ video/
    omnipress video --recipe channels/<slug>/video/episodes/<slug>-16x9/video_recipe.editable.json
    ```
 
+## Cenas suportadas
+
+O motor gera componentes interativos dedicados para:
+
+- `ken-burns`
+- `document-reveal`
+- `heraldic-surgery` / `image-morph`
+- `channel-outro`
+- `tactical-map` (`SceneTacticalMap`)
+- `stat-counter` (`SceneStatCounter`)
+- `video-clip` (`SceneVideoClip`)
+
+Tipos desconhecidos caem em `SceneKenBurns` com aviso.
+
 ## Regras
 
 - **Não** edite `media.json` manualmente; ele é regenerado e contém caminhos relativos à raiz do projeto (portátil entre clones).
 - Edições manuais em `Episode.tsx`, `index.ts` e `data/*` são protegidas por hash. Reexecutar o scaffold sem `--force` falha; com `--force`, cria backup.
 - O `video_recipe.editable.json` não fixa `duration_frames`; a duração da composição em `index.ts` é a autoridade após edições de timing.
+- `prune_media` remove assets antigos apenas nas pastas geradas (`scenes/`, `audio/`, `music/`, `sfx/`, `_legacy/`), preservando arquivos do usuário.
 - Retiming de `from`/`durationInFrames` pode dessincronizar locução e legendas. Para mudanças narrativas, regenere a partir do JSON e re-alinhe o áudio.
 - O áudio permanece travado ao alinhamento da fala (Regra 10).
 - `public/` é staging: não versione binários; `media.json` reconstrói tudo.

@@ -89,6 +89,7 @@ class UniversalVideoEngine:
             "media_manifest": media_manifest,
             "normalize_media": data.get("normalize_media", True),
             "stage_legacy_media": data.get("stage_legacy_media", True),
+            "prune_media": data.get("prune_media", False),
             "editable": data.get("editable", False),
         }
         result = self.provider.render(spec, out_dir)

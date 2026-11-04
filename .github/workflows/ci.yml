@@ -51,3 +51,9 @@ jobs:
 
       - name: TypeScript Static Typecheck
         run: npm run typecheck
+
+      - name: Remotion Composition Smoke
+        run: npm run remotion:compositions
+
+      - name: Editable Fixture Composition Smoke
+        run: npx remotion compositions tests/fixtures/editable_video/index.ts

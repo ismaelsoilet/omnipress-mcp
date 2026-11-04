@@ -173,10 +173,13 @@ class RemotionProvider(RenderProvider):
         props: Dict[str, Any] = dict(spec.get("props") or {})
         staged_mapping: Dict[str, str] = {}
         staged_report: Optional[Dict[str, Any]] = None
+        pruned_report: Optional[Dict[str, Any]] = None
         manifest_path = self._media_manifest(spec)
         if manifest_path is not None:
             staged_report = self.stager.ensure(manifest_path, public_dir)
             staged_mapping = staged_report.get("mapping", {})
+            if spec.get("prune_media"):
+                pruned_report = self.stager.prune(manifest_path, public_dir)
 
         if spec.get("normalize_media", True):
             props, replacements = self.stager.normalize_props(
@@ -253,5 +256,10 @@ class RemotionProvider(RenderProvider):
             payload["media_staging"] = {
                 "public_dir": staged_report["public_dir"],
                 "files": len(staged_report["files"]),
+            }
+        if pruned_report is not None:
+            payload["media_pruned"] = {
+                "public_dir": pruned_report["public_dir"],
+                "files": len(pruned_report["removed"]),
             }
         return payload

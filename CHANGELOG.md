@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] — 2026-11-03
+
+### Added
+- **Cenas Interativas Dedicadas**:
+  - `SceneTacticalMap` (`src/video/components/scenes/SceneTacticalMap.tsx`): mapa de arquivo com grade tática, coordenadas, headline e card protetor da Regra 08.
+  - `SceneStatCounter` (`src/video/components/scenes/SceneStatCounter.tsx`): contador animado com `spring()`/`interpolate()`, prefixo, sufixo, rótulo e fundo opcional.
+  - `SceneVideoClip` (`src/video/components/scenes/SceneVideoClip.tsx`): clipe de arquivo via `<OffthreadVideo>` com overlay, badge e controle de mute.
+  - Previews conectados `SceneTacticalMap-Preview`, `SceneStatCounter-Preview` e `SceneVideoClip-Preview`.
+  - `EditableVideoEngine` e `DocumentaryEpisode` agora emitem esses componentes para `tactical-map`, `stat-counter` e `video-clip`.
+- **Prune de Staging**:
+  - `MediaStager.prune()` remove assets antigos apenas nas pastas geradas (`scenes/`, `audio/`, `music/`, `sfx/`, `_legacy/`), preservando `.gitkeep` e arquivos do usuário.
+  - `prune_media: true` no recipe; episódios editáveis ativam prune no scaffold e no render.
+- **Compatibilidade de Harness**:
+  - `opencode.json` para OpenCode (MCP local + descoberta de `.agents/skills/`).
+  - `.mcp.json` para Command Code (project scope, stdio).
+  - `mcp_config.json` atualizado para Antigravity.
+  - `docs/AGENT_COMPATIBILITY.md` com snippets, skills, tool prefixes e troubleshooting para Antigravity, Command Code e OpenCode.
+- **CI**:
+  - Smoke de `remotion compositions` para o Root core e para o fixture de episódio editável.
+
+### Changed
+- `documentary_recipe.schema.json` declara `video_clip`, `coordinates`, `stat_value`, `stat_prefix`, `stat_suffix`, `stat_label` e `video_muted`.
+- `video_recipe.schema.json` aceita `prune_media`.
+- `README.md`, `README.pt-BR.md`, `docs/SETUP_GUIDE.md`, `docs/SETUP_GUIDE.pt-BR.md`, `docs/AGENT_MANUAL.md`, `docs/wiki/Antigravity-Integration.md` e `channels/_template/video/README.md` documentam o fluxo e os três harnesses.
+- Versão sincronizada em **0.13.0** (sem publicação de release).
+
+### Fixed
+- Cenas `tactical-map`, `stat-counter` e `video-clip` não caem mais em `SceneKenBurns` silenciosamente.
+- `public/` de episódios editáveis não acumula mais mídia antiga após re-scaffold/render.
+- `SceneVideoClip` usa variáveis de tema em vez de dourado hardcoded (invariante de arquitetura).
+
 ## [0.12.0] — 2026-11-03
 
 ### Added
