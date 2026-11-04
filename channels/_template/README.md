@@ -2,6 +2,8 @@
 
 Este diretório define a estrutura canônica e universal para **qualquer canal de mídia, marca editorial ou perfil pessoal** no **OmniPress MCP**.
 
+> **Importante:** apenas `channels/_template/` é versionado neste repositório. Canais reais em `channels/<slug>/` são ignorados pelo Git e permanecem locais. Faça backup separado do seu workspace de canal (incluindo `video/episodes/` e `media.json`).
+
 ---
 
 ## 🧭 O que é um "Channel" no OmniPress?

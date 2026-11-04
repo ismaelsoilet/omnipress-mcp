@@ -38,12 +38,18 @@ def cmd_status(args: argparse.Namespace) -> int:
     """Reports configured channels, active channel workspace, and ledger entries."""
     cm = ChannelManager()
     channels = cm.list_channels(include_templates=False)
-    active_slug = os.getenv("OMNIPRESS_ACTIVE_CHANNEL", "default")
+    env_slug = os.getenv("OMNIPRESS_ACTIVE_CHANNEL", "").strip()
+    active_slug = cm.get_active_channel_slug()
 
     print("============================================================")
     print("                 OmniPress MCP — System Status              ")
     print("============================================================")
     print(f"  Active Channel Workspace : {active_slug}")
+    if env_slug and env_slug != active_slug:
+        print(
+            f"  Env Override             : {env_slug} "
+            f"(resolved to {active_slug})"
+        )
     print(f"  Configured Channels Count: {len(channels)}")
     for ch in channels:
         marker = "👉 " if ch.get("slug") == active_slug else "   "

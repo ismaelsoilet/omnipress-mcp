@@ -240,6 +240,29 @@ OmniPress supports true multi-tenant workspace isolation:
 
 > 💡 **Offline Mode**: OmniPress works out-of-the-box **without any API keys**. In offline mode, articles are safely stored locally in Markdown and social copies are printed in chat ready for manual copying.
 
+#### Private Channel Workspaces (Not Committed)
+Your real channels are **local by design**. The repository `.gitignore` keeps `channels/*` ignored and tracks only `channels/_template/`:
+
+- `channels/<slug>/` — your existing channel, credentials, media, episodes, generated editable TSX, and manifests.
+- `channels/_template/` — tracked boilerplate only.
+- `public/` — ignored Remotion staging; regenerate it at any time.
+
+Before using an existing channel, point the active channel to its slug in `opencode.json`, `.mcp.json`, `.agents/mcp_config.json`, `mcp_config.json`, or pass `channel_slug` explicitly to each MCP tool/CLI call:
+
+```jsonc
+"OMNIPRESS_ACTIVE_CHANNEL": "your-channel-slug"
+```
+
+Do **not** rely on `"default"` when you have multiple channels: if `channels/default/` does not exist, OmniPress resolves to the first detected channel. Verify with:
+
+```bash
+omnipress list-channels
+omnipress info-channel your-channel-slug
+omnipress status
+```
+
+Back up `channels/<slug>/` separately (private Git repository, encrypted drive, or object storage). This includes the `video/episodes/` TSX edits and `media.json` manifests. The generated `public/` staging does not need to be backed up.
+
 Key integrations:
 1. **Developer Thought Leadership (Dev.to)**:
    - Obtain your API Key at: [dev.to/settings/extensions](https://dev.to/settings/extensions).

@@ -27,6 +27,24 @@ O comando padrão do servidor é:
 
 Todos os exemplos abaixo assumem que o repositório está em `/caminho/para/omnipress-mcp`. Ajuste o caminho se necessário.
 
+### Canais existentes e canais privados
+
+Os canais reais ficam em `channels/<slug>/` e são **ignorados pelo Git** (apenas `channels/_template/` é versionado). Antes de usar:
+
+```bash
+omnipress list-channels
+omnipress info-channel <slug>
+omnipress status
+```
+
+Aponte o canal ativo nos arquivos de harness (`opencode.json`, `.mcp.json`, `.agents/mcp_config.json`, `mcp_config.json`) ou em `.env`:
+
+```jsonc
+"OMNIPRESS_ACTIVE_CHANNEL": "seu-slug"
+```
+
+Se `"default"` não existir, o OmniPress resolve para o primeiro canal detectado. Com múltiplos canais, sempre use o slug explícito ou passe `channel_slug` nas ferramentas. Faça backup separado de `channels/<slug>/`; o `public/` é staging regenerável.
+
 ---
 
 ## 2. Matriz de compatibilidade

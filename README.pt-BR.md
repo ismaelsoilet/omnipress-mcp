@@ -238,6 +238,29 @@ O OmniPress suporta isolamento completo de credenciais entre canais:
 
 > 💡 **Nota**: O OmniPress funciona perfeitamente **mesmo sem nenhuma chave externa**. Se nenhuma API for configurada, os artigos são arquivados localmente em Markdown e os textos das redes sociais são exibidos na tela prontos para você copiar e colar.
 
+#### Canais Privados (Não Versionados no Repositório)
+Seus canais reais ficam **locais por design**. O `.gitignore` ignora `channels/*` e versiona apenas `channels/_template/`:
+
+- `channels/<slug>/` — canal existente, credenciais, mídia, episódios, TSX editável e manifestos.
+- `channels/_template/` — apenas o boilerplate versionado.
+- `public/` — staging do Remotion ignorado; pode ser regenerado.
+
+Antes de usar um canal existente, aponte o canal ativo para o slug dele em `opencode.json`, `.mcp.json`, `.agents/mcp_config.json`, `mcp_config.json`, ou passe `channel_slug` explicitamente em cada ferramenta MCP/CLI:
+
+```jsonc
+"OMNIPRESS_ACTIVE_CHANNEL": "slug-do-seu-canal"
+```
+
+Não confie em `"default"` se você tem vários canais: se `channels/default/` não existir, o OmniPress resolve para o primeiro canal detectado. Verifique com:
+
+```bash
+omnipress list-channels
+omnipress info-channel slug-do-seu-canal
+omnipress status
+```
+
+Faça backup de `channels/<slug>/` separadamente (repositório Git privado, disco criptografado ou object storage). Isso inclui as edições de `video/episodes/` e os manifestos `media.json`. O `public/` gerado não precisa ser backup.
+
 Principais integrações disponíveis:
 1. **Artigos Técnicos e Engenharia (Dev.to)**:
    - Obtenha sua chave em: [dev.to/settings/extensions](https://dev.to/settings/extensions).

@@ -152,6 +152,17 @@ python src/cli.py build-carousel \
   --aspect-ratio 3:4
 ```
 
+### Existing / Private Channels
+Only `channels/_template/` is tracked by Git; `channels/<slug>/` is ignored. Existing channels stay local, including their `video/episodes/` edits and `media.json`. Back them up separately.
+
+```bash
+omnipress list-channels
+omnipress info-channel <slug>
+omnipress status
+```
+
+Set `OMNIPRESS_ACTIVE_CHANNEL=<slug>` in the harness configs or `.env`, or pass `channel_slug` explicitly. `"default"` resolves to the first detected channel if `channels/default/` does not exist.
+
 ### Setting the Default Active Channel
 In your `.env` file:
 ```env

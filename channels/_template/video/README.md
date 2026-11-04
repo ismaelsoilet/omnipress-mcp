@@ -11,7 +11,7 @@ video/
         ├── index.ts                    # registerRoot + composição do episódio
         ├── Episode.tsx                 # um nó JSX por cena (fonte de verdade após o scaffold)
         ├── meta.json                   # hashes, composição, entry point e public_dir
-        ├── media.json                  # manifesto de staging (versionado)
+        ├── media.json                  # manifesto de staging (versionado no repo privado do canal)
         ├── data/
         │   ├── captions.ts             # legendas tipadas
         │   └── theme.ts                # cores/fontes resolvidas do channel.json
@@ -59,3 +59,7 @@ Tipos desconhecidos caem em `SceneKenBurns` com aviso.
 - Retiming de `from`/`durationInFrames` pode dessincronizar locução e legendas. Para mudanças narrativas, regenere a partir do JSON e re-alinhe o áudio.
 - O áudio permanece travado ao alinhamento da fala (Regra 10).
 - `public/` é staging: não versione binários; `media.json` reconstrói tudo.
+
+## Git e backup
+
+`channels/*` é ignorado pelo Git neste repositório; apenas `channels/_template/` é versionado. Portanto, `Episode.tsx`, `index.ts`, `data/*` e `media.json` do seu episódio **não sobem para este repo** — mantenha um repositório privado ou backup separado do canal. O `public/` gerado não precisa ser versionado.

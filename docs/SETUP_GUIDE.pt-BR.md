@@ -151,6 +151,17 @@ python src/cli.py build-carousel \
   --aspect-ratio 3:4
 ```
 
+### Canais Existentes / Privados
+Apenas `channels/_template/` é versionado pelo Git; `channels/<slug>/` é ignorado. Canais existentes ficam locais, incluindo edições em `video/episodes/` e `media.json`. Faça backup separado.
+
+```bash
+omnipress list-channels
+omnipress info-channel <slug>
+omnipress status
+```
+
+Configure `OMNIPRESS_ACTIVE_CHANNEL=<slug>` nos configs dos harnesses ou no `.env`, ou passe `channel_slug` explicitamente. `"default"` resolve para o primeiro canal detectado se `channels/default/` não existir.
+
 ### Definindo o Canal Ativo Padrão
 No arquivo `.env`:
 ```env

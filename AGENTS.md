@@ -38,6 +38,7 @@ When an agent generates a content campaign, it must produce three synchronized a
 - **Engine vs. Channel Asset Separation**: Core layout engines, publisher adapters, and MCP tools remain in `src/` (`src/core/`, `src/engine/`, `src/adapters/`, `src/video/`). Channel-specific generation scripts and post definitions belong in `channels/<slug>/scripts/`.
 - **Dynamic Configuration**: Publisher adapters resolve credentials and channel IDs (e.g., `buffer_channel_id`) dynamically from `channel.json` before falling back to `.env`.
 - **Agent Harness Compatibility**: Antigravity uses `.agents/mcp_config.json` (workspace) or `~/.gemini/config/mcp_config.json` (global); Command Code uses `.mcp.json`; OpenCode uses `opencode.json`. All three discover project skills in `.agents/skills/`; global Antigravity skills are optional. See [`docs/AGENT_COMPATIBILITY.md`](docs/AGENT_COMPATIBILITY.md).
+- **Private Channel Workspaces**: `channels/*` is Git-ignored except `channels/_template/`. Existing channels, credentials, media, `video/episodes/` edits and `media.json` stay local and must be backed up separately. Set `OMNIPRESS_ACTIVE_CHANNEL` to the real slug or pass `channel_slug` explicitly; never assume `default`.
 
 ### 5. Visual Contrast & Carousel Legibility Standards (Rule 08)
 - **Universal Readability**: All carousel slides must comply with [`.agents/rules/08_visual_contrast_and_carousel_legibility_standards.md`](.agents/rules/08_visual_contrast_and_carousel_legibility_standards.md).
@@ -181,6 +182,7 @@ Ao gerar campanhas de conteúdo, o agente deve produzir 3 formatos integrados:
 - **Separação Motor vs. Canal**: Motores universais de layout, adaptadores e ferramentas MCP pertencem a `src/` (`src/core/`, `src/engine/`, `src/adapters/`, `src/video/`). Scripts e criativos específicos do canal pertencem a `channels/<slug>/scripts/`.
 - **Configuração Dinâmica**: Adaptadores de publicação resolvem IDs de canal (ex.: `buffer_channel_id`) diretamente de `channel.json` antes de consultar `.env`.
 - **Compatibilidade de Harness de Agente**: Antigravity usa `.agents/mcp_config.json` (workspace) ou `~/.gemini/config/mcp_config.json` (global); Command Code usa `.mcp.json`; OpenCode usa `opencode.json`. Os três descobrem skills do projeto em `.agents/skills/`; skills globais do Antigravity são opcionais. Consulte [`docs/AGENT_COMPATIBILITY.md`](docs/AGENT_COMPATIBILITY.md).
+- **Canais Privados**: `channels/*` é ignorado pelo Git, exceto `channels/_template/`. Canais existentes, credenciais, mídia, edições em `video/episodes/` e `media.json` permanecem locais e exigem backup separado. Configure `OMNIPRESS_ACTIVE_CHANNEL` com o slug real ou passe `channel_slug` explicitamente; nunca assuma `default`.
 
 ### 5. Padrão de Contraste Visual e Segurança Tipográfica em Carrosséis (Regra 08)
 - **Legibilidade Universal**: Todos os slides gerados devem obedecer estritamente a [`.agents/rules/08_visual_contrast_and_carousel_legibility_standards.md`](.agents/rules/08_visual_contrast_and_carousel_legibility_standards.md).

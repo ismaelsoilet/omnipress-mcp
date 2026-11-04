@@ -36,6 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cenas `tactical-map`, `stat-counter` e `video-clip` não caem mais em `SceneKenBurns` silenciosamente.
 - `public/` de episódios editáveis não acumula mais mídia antiga após re-scaffold/render.
 - `SceneVideoClip` usa variáveis de tema em vez de dourado hardcoded (invariante de arquitetura).
+- `omnipress status` agora mostra o canal ativo resolvido (fallback) e o override de ambiente quando `OMNIPRESS_ACTIVE_CHANNEL` aponta para um slug inexistente.
+- Documentação de canais privados: `channels/*` ignorado pelo Git, backup separado e configuração explícita de `OMNIPRESS_ACTIVE_CHANNEL`/`channel_slug`.
 
 ## [0.12.0] — 2026-11-03
 

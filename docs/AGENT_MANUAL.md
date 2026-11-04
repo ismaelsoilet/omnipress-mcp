@@ -501,6 +501,27 @@ Quando gerenciar múltiplos canais ou marcas:
     └── scripts/             # Scripts específicos do canal
   ```
 
+- **Canais Privados e Git (Não Versionados no Repo Principal)**:
+  - `.gitignore` ignora `channels/*`, exceto `channels/_template/`.
+  - Canais reais (com `.env`, mídia, episódios, `video/episodes/` e `media.json`) permanecem locais e **não sobem para este repositório**.
+  - Faça backup separado de `channels/<slug>/` em um repositório privado, disco criptografado ou storage.
+  - `public/` é staging gerado; não precisa de backup.
+  - Antes de usar, rode:
+    ```bash
+    omnipress list-channels
+    omnipress info-channel <slug>
+    omnipress status
+    ```
+  - Configure `OMNIPRESS_ACTIVE_CHANNEL=<slug>` em `opencode.json`, `.mcp.json`, `.agents/mcp_config.json`, `mcp_config.json` ou `.env`, ou passe `channel_slug` explicitamente. Se `"default"` não existir, o sistema usa o primeiro canal detectado — evite ambiguidade com múltiplos canais.
+  - **Checklist de prontidão do canal existente**:
+    1. A pasta está em `channels/<slug>/` deste checkout (não em outro diretório/máquina).
+    2. `omnipress list-channels` lista o slug.
+    3. `omnipress info-channel <slug>` lê o `channel.json` sem erro.
+    4. `OMNIPRESS_ACTIVE_CHANNEL=<slug>` está configurado ou você passa `channel_slug` em cada chamada.
+    5. `omnipress doctor` não reporta runtime crítico ausente.
+    6. Para vídeo, `features.video` está `true` no `channel.json` (recomendado).
+    7. Faça um scaffold de teste em um episódio pequeno antes do episódio real.
+
 - **Ambiente Central vs. Ambientes Isolados**:
   - **`.env` na raiz**: Configura o canal principal padrão (**Dossiê Histórico**), através de `OMNIPRESS_ACTIVE_CHANNEL=dossie-historico`.
   - **`channels/<slug>/.env`**: Cada canal secundário (ex.: `channels/ismael-soilet/.env`) possui seu próprio arquivo `.env` para suas chaves de API particulares (ex.: conta pessoal do Buffer, chaves Dev.to, Ghost, Reddit, Instagram).
