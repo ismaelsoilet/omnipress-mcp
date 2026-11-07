@@ -487,6 +487,85 @@ def test_draw_action_icons():
         CarouselBuilder._draw_action_icon(draw, icon_name, 10, 10, 32, (10, 10, 10, 255))
 
 
+def test_render_tweet_card_badge_and_headline_color(tmp_path: Path):
+    cm = ChannelManager(root_dir=tmp_path)
+    cm.create_channel(
+        slug="test-brand",
+        name="Test Brand",
+        primary_color="#0A66C2",
+        handle="@test.brand",
+        archetype="personal_brand",
+    )
+    builder = CarouselBuilder(channel_manager=cm)
+    out_file = tmp_path / "slide_badge.jpg"
+    res = builder.render_slide(
+        bg_image_path=None,
+        output_path=out_file,
+        channel_slug="test-brand",
+        headline="Título com Badge e Cor Personalizada",
+        body="Texto explicativo para teste de badge.",
+        preset="tweet_card",
+        aspect_ratio="4:5",
+        slide_data={
+            "badge_text": "RISCO / ALERTA CRÍTICO",
+            "headline_color": "#0A66C2",
+            "author": {"name": "Test Brand", "handle": "@test.brand"},
+        },
+    )
+    assert res.exists()
+    img = Image.open(res)
+    assert img.size == (1080, 1350)
+
+
+def test_render_tweet_card_dynamic_image_spacing(tmp_path: Path):
+    cm = ChannelManager(root_dir=tmp_path)
+    cm.create_channel(
+        slug="test-dynamic",
+        name="Test Dynamic",
+        primary_color="#059669",
+        handle="@test.dynamic",
+    )
+    builder = CarouselBuilder(channel_manager=cm)
+
+    # Create dummy 16:9 inner image
+    inner_img = tmp_path / "inner.jpg"
+    Image.new("RGB", (640, 360), (40, 50, 70)).save(inner_img)
+
+    out_file = tmp_path / "slide_tight.jpg"
+    res = builder.render_slide(
+        bg_image_path=None,
+        output_path=out_file,
+        channel_slug="test-dynamic",
+        headline="Slide de Capa com Lead Curto",
+        body="Lead curto em 1 linha.",
+        preset="tweet_card",
+        aspect_ratio="4:5",
+        slide_data={
+            "image": str(inner_img),
+            "tight_image": True,
+            "badge_text": "NOVO REGIME",
+        },
+    )
+    assert res.exists()
+    img = Image.open(res)
+    assert img.size == (1080, 1350)
+
+
+def test_expanded_semantic_categories():
+    pal = {"accent": "#0A66C2", "danger": "#DC2626", "success": "#059669", "warning": "#D97706"}
+    # Danger keyword: TRAVA
+    dot, prefix, prefix_c, content, icon = CarouselBuilder._parse_semantic_line("TRAVA: fornecedor inadimplente", pal, is_dark=False)
+    assert prefix_c == (220, 38, 38, 255)
+
+    # Success keyword: SPLIT PAYMENT
+    dot, prefix, prefix_c, content, icon = CarouselBuilder._parse_semantic_line("SPLIT PAYMENT: crédito na hora", pal, is_dark=False)
+    assert prefix_c == (5, 150, 105, 255)
+
+    # Warning keyword: CUSTO
+    dot, prefix, prefix_c, content, icon = CarouselBuilder._parse_semantic_line("CUSTO: transição de sistemas", pal, is_dark=False)
+    assert prefix_c == (217, 119, 6, 255)
+
+
 if __name__ == "__main__":
     import pytest
     import sys

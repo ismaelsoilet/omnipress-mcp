@@ -558,14 +558,17 @@ class CarouselBuilder:
         cats = semantic_categories or {}
         danger_words = cats.get("danger") if cats.get("danger") is not None else (
             "MITO", "ERRO", "FALSO", "PROBLEMA", "NÃO", "PERIGO", "ATENÇÃO",
-            "RISCO", "DESVANTAGEM", "FAIL", "BUG", "MYTH", "WRONG", "ERROR", "DANGER"
+            "RISCO", "DESVANTAGEM", "FAIL", "BUG", "MYTH", "WRONG", "ERROR", "DANGER",
+            "BLOQUEIO", "TRAVA", "GLOSA", "PROIBIÇÃO", "VEDAÇÃO", "CALOTE", "MULTA", "AUTUAÇÃO", "INADIMPLÊNCIA", "SONEGAÇÃO", "SEM CRÉDITO", "STATUS SUSPENSO"
         )
         success_words = cats.get("success") if cats.get("success") is not None else (
             "VERDADE", "FATO", "CORRETO", "SOLUÇÃO", "SIM", "VANTAGEM",
-            "CERTO", "SUCESSO", "TRUTH", "FACT", "CORRECT", "SOLUTION"
+            "CERTO", "SUCESSO", "TRUTH", "FACT", "CORRECT", "SOLUTION",
+            "100%", "À VISTA", "MODERNIZAÇÃO", "PLENO", "AUTOMAÇÃO", "HOMOLOGADO", "SPLIT PAYMENT", "PROTEÇÃO", "GANHO", "IMPACTO DIRETO", "CRÉDITO", "ESTÍMULO"
         )
         warning_words = cats.get("warning") if cats.get("warning") is not None else (
-            "AVISO", "NOTA", "ALERTA", "IMPORTANTE", "WARNING", "NOTE", "ALERT", "OBS"
+            "AVISO", "NOTA", "ALERTA", "IMPORTANTE", "WARNING", "NOTE", "ALERT", "OBS",
+            "CUSTO", "ALÍVIO", "CUIDADO", "CHECKLIST", "GUIA", "PRAZO", "TRANSIÇÃO", "VENDOR RISK", "MUDANÇA"
         )
         accent_words = cats.get("accent") if cats.get("accent") is not None else ()
 
@@ -787,6 +790,40 @@ class CarouselBuilder:
 
         curr_y = start_y + avatar_size + int(h * header_gap_ratio)
 
+        # Category Badge Tag (above headline if present)
+        badge_text = slide_data.get("badge_text") or ""
+        if badge_text:
+            badge_upper = badge_text.upper()
+            accent_rgb = hex_to_rgb(pal.get("accent") or pal.get("primary", "#0A66C2"))
+            if any(k in badge_upper for k in ("PERIGO", "RISCO", "VEDAÇ", "ALERTA", "ARMADILHA", "ATENÇÃO", "GLOSA")):
+                badge_color = hex_to_rgb(pal.get("danger", "#DC2626" if not is_dark else "#EF4444"))
+            elif any(k in badge_upper for k in ("NOVO", "MUDANÇA", "VIRADA", "SOLUÇÃO", "100%", "CAPEX", "CRÉDITO PLENO", "CRÉDITO FINANCEIRO")):
+                badge_color = hex_to_rgb(pal.get("success", "#059669" if not is_dark else "#10B981"))
+            elif any(k in badge_upper for k in ("ART.", "LEI", "CF", "PLP", "CHECKLIST", "GUIA")):
+                badge_color = hex_to_rgb(pal.get("warning", "#D97706" if not is_dark else "#F59E0B"))
+            else:
+                badge_color = accent_rgb
+
+            font_badge = load_font_by_family("sans", size=max(13, int(w * 0.024)), is_bold=True, custom_path=typo.get("bold_font"))
+            b_bbox = draw.textbbox((0, 0), badge_text, font=font_badge)
+            bw = b_bbox[2] - b_bbox[0]
+            bh = b_bbox[3] - b_bbox[1]
+            pad_x = 12
+            pad_y = 5
+            pill_h = bh + (pad_y * 2)
+            pill_w = bw + (pad_x * 2)
+            pill_bg = (*badge_color, 24 if not is_dark else 40)
+            pill_border = (*badge_color, 120 if not is_dark else 160)
+            draw.rounded_rectangle(
+                [margin_x, curr_y, margin_x + pill_w, curr_y + pill_h],
+                radius=min(8, pill_h // 2),
+                fill=pill_bg,
+                outline=pill_border,
+                width=1,
+            )
+            draw.text((margin_x + pad_x, curr_y + pad_y - 1), badge_text, fill=(*badge_color, 255), font=font_badge)
+            curr_y += pill_h + int(h * 0.012)
+
         # Headline
         clean_headline = re.sub(r'[\U00010000-\U0010ffff]', '', headline)
         clean_headline = re.sub(r'[\u2600-\u27bf]', '', clean_headline)
@@ -795,13 +832,16 @@ class CarouselBuilder:
         head_size = slide_data.get("headline_font_size") or int(w * headline_scale)
         font_head = load_font_by_family("sans", size=head_size, is_bold=True, custom_path=typo.get("bold_font"))
         head_lines = wrap_text_by_pixel(clean_headline, font_head, max_w, draw)
+        head_color_hex = slide_data.get("headline_color") or pal.get("headline_color")
+        head_color = (*hex_to_rgb(head_color_hex), 255) if head_color_hex else name_color
         for line in head_lines:
-            draw.text((margin_x, curr_y), line, fill=name_color, font=font_head)
+            draw.text((margin_x, curr_y), line, fill=head_color, font=font_head)
             curr_y += int(font_head.size * line_h_head)
 
         curr_y += int(h * headline_gap_ratio)
 
         # Body/Lead
+        clean_body = ""
         if body:
             clean_body = re.sub(r'[\U00010000-\U0010ffff]', '', body)
             clean_body = re.sub(r'[\u2600-\u27bf]', '', clean_body)
@@ -926,8 +966,13 @@ class CarouselBuilder:
             default_top = int(h * img_default_top_ratio)
 
             # Image MUST start strictly below text, never overlapping
-            if not body or not body.strip():
+            if not clean_body or not clean_body.strip():
                 img_y = curr_y + int(h * 0.02)
+            elif slide_data.get("img_top_ratio") is not None:
+                img_y = max(curr_y + int(h * 0.018), int(h * slide_data["img_top_ratio"]))
+            elif slide_data.get("tight_image") or len([p for p in clean_body.split("\n") if p.strip()]) <= 2:
+                # When body is short (e.g. cover slide with 1-2 lines), place image naturally below text
+                img_y = curr_y + int(h * 0.022)
             else:
                 img_y = max(curr_y + int(h * 0.018), default_top)
 

@@ -1,3 +1,3 @@
 """OmniPress MCP - Agentic Content & Social Media Automation."""
 
-__version__ = "0.13.0"
+__version__ = "0.13.1"

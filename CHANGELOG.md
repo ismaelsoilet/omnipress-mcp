@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.1] — 2026-11-07
+
+### Added
+- **Insígnias e Pílulas de Categoria Semântica no CarouselBuilder**:
+  - `badge_text` no preset `tweet_card` renderiza pílula temática com fundo e borda coloridos de acordo com a semântica (`PERIGO/ALERTA`, `NOVO/SOLUÇÃO`, `LEGISLAÇÃO/GUIA` ou cor de destaque).
+  - Suporte a `headline_color` explícito por slide ou no canal, permitindo realçar títulos em cores institucionais.
+  - Expansão de categorias semânticas automáticas com termos do ecossistema fiscal (`TRAVA`, `BLOQUEIO`, `GLOSA`, `SPLIT PAYMENT`, `PLENO`, `À VISTA`, `CUSTO`, `CHECKLIST`).
+
+### Changed
+- **Espaçamento e Posicionamento Dinâmico de Imagens no CarouselBuilder**:
+  - Eliminação do vácuo de espaçamento vertical forçado quando o corpo do slide tem poucas linhas (como slides de capa com <= 2 parágrafos).
+  - Posicionamento proporcional da imagem interna logo abaixo do texto dinamicamente (`curr_y + gap`) ou via flag `tight_image` / `img_top_ratio`.
+
+### Fixed
+- **Diagramação e Vácuo no Slide 1**:
+  - Correção de vão em branco de 218px entre o texto e a ilustração 3D em carrosséis executivos.
+
 ## [0.13.0] — 2026-11-03
 
 ### Added
