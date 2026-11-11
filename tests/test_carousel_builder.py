@@ -566,6 +566,35 @@ def test_expanded_semantic_categories():
     assert prefix_c == (217, 119, 6, 255)
 
 
+def test_render_tweet_card_inline_bold_and_highlight(tmp_path: Path):
+    cm = ChannelManager(root_dir=tmp_path)
+    cm.create_channel(
+        slug="test-inline",
+        name="Test Inline",
+        primary_color="#0A66C2",
+        handle="@test.inline",
+    )
+    builder = CarouselBuilder(channel_manager=cm)
+    out_file = tmp_path / "slide_inline_bold.jpg"
+    res = builder.render_slide(
+        bg_image_path=None,
+        output_path=out_file,
+        channel_slug="test-inline",
+        headline="O que é a **IA** nos dias de hoje?",
+        body="• MOTOR: A IA é **muito mais que um chatbot** comum.\n• FATO: Modelo é **estocástico (probabilístico)** e não determinístico.",
+        preset="tweet_card",
+        aspect_ratio="4:5",
+        slide_data={
+            "headline_color": "#0A66C2",
+            "headline_highlight_color": "#FFE500",
+            "bold_color": "#FFFFFF",
+        },
+    )
+    assert res.exists()
+    img = Image.open(res)
+    assert img.size == (1080, 1350)
+
+
 if __name__ == "__main__":
     import pytest
     import sys

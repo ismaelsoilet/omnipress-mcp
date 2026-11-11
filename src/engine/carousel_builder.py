@@ -619,6 +619,70 @@ class CarouselBuilder:
         # 5. Standard line
         return None, "", (*body_rgb, 255), clean_p, None
 
+    @staticmethod
+    def _tokenize_inline_markdown(text: str) -> List[Tuple[str, bool]]:
+        """Parses inline **bold** markdown tags into (word, is_bold) tokens.
+        
+        Properly preserves attached punctuation to prevent detached spacing.
+        """
+        pattern = re.compile(r"(\*\*.*?\*\*)")
+        parts = pattern.split(text)
+        words_with_style: List[Tuple[str, bool]] = []
+        for part in parts:
+            if not part:
+                continue
+            if part.startswith("**") and part.endswith("**") and len(part) >= 4:
+                clean_part = part[2:-2]
+                for w in clean_part.split():
+                    words_with_style.append((w, True))
+            else:
+                cur_part = part
+                if words_with_style and cur_part and cur_part[0] in ".,!?:;)":
+                    m = re.match(r"^([.,!?:;)]+)(.*)$", cur_part)
+                    if m:
+                        last_w, last_s = words_with_style[-1]
+                        words_with_style[-1] = (last_w + m.group(1), last_s)
+                        cur_part = m.group(2)
+                for w in cur_part.split():
+                    words_with_style.append((w, False))
+        return words_with_style
+
+    @staticmethod
+    def _wrap_styled_words_two_stage(
+        words_with_style: List[Tuple[str, bool]],
+        font_regular: Any,
+        font_bold: Any,
+        first_max_w: int,
+        rest_max_w: int,
+        draw: ImageDraw.ImageDraw,
+    ) -> List[List[Tuple[str, bool]]]:
+        """Wraps styled words across lines, respecting different line 1 vs line 2+ max widths."""
+        lines: List[List[Tuple[str, bool]]] = []
+        current_line: List[Tuple[str, bool]] = []
+        current_w = 0
+        space_w_reg = draw.textbbox((0, 0), " ", font=font_regular)[2]
+        space_w_bold = draw.textbbox((0, 0), " ", font=font_bold)[2]
+
+        for word, is_bold in words_with_style:
+            f = font_bold if is_bold else font_regular
+            bbox = draw.textbbox((0, 0), word, font=f)
+            w = bbox[2] - bbox[0]
+            space_w = space_w_bold if is_bold else space_w_reg
+            add_w = (space_w + w) if current_line else w
+            max_w_curr = first_max_w if len(lines) == 0 else rest_max_w
+
+            if current_line and (current_w + add_w > max_w_curr):
+                lines.append(current_line)
+                current_line = [(word, is_bold)]
+                current_w = w
+            else:
+                current_line.append((word, is_bold))
+                current_w += add_w
+
+        if current_line:
+            lines.append(current_line)
+        return lines
+
     # -------------------------------------------------------------------------
     # Preset Renderers
     # -------------------------------------------------------------------------
@@ -831,12 +895,30 @@ class CarouselBuilder:
 
         head_size = slide_data.get("headline_font_size") or int(w * headline_scale)
         font_head = load_font_by_family("sans", size=head_size, is_bold=True, custom_path=typo.get("bold_font"))
-        head_lines = wrap_text_by_pixel(clean_headline, font_head, max_w, draw)
         head_color_hex = slide_data.get("headline_color") or pal.get("headline_color")
         head_color = (*hex_to_rgb(head_color_hex), 255) if head_color_hex else name_color
-        for line in head_lines:
-            draw.text((margin_x, curr_y), line, fill=head_color, font=font_head)
-            curr_y += int(font_head.size * line_h_head)
+        head_highlight_hex = slide_data.get("headline_highlight_color") or pal.get("headline_highlight_color", "#38BDF8" if is_dark else pal.get("accent", "#0A66C2"))
+        head_highlight_color = (*hex_to_rgb(head_highlight_hex), 255)
+
+        if "**" in clean_headline:
+            head_tokens = self._tokenize_inline_markdown(clean_headline)
+            head_lines = self._wrap_styled_words_two_stage(head_tokens, font_head, font_head, max_w, max_w, draw)
+            for hl in head_lines:
+                cur_x = margin_x
+                for word, is_highlight in hl:
+                    c = head_highlight_color if is_highlight else head_color
+                    draw.text((cur_x, curr_y), word, fill=c, font=font_head)
+                    bbox_w = draw.textbbox((0, 0), word, font=font_head)
+                    w_token = bbox_w[2] - bbox_w[0]
+                    space_bbox = draw.textbbox((0, 0), " ", font=font_head)
+                    w_space = space_bbox[2] - space_bbox[0]
+                    cur_x += w_token + w_space
+                curr_y += int(font_head.size * line_h_head)
+        else:
+            head_lines = wrap_text_by_pixel(clean_headline, font_head, max_w, draw)
+            for line in head_lines:
+                draw.text((margin_x, curr_y), line, fill=head_color, font=font_head)
+                curr_y += int(font_head.size * line_h_head)
 
         curr_y += int(h * headline_gap_ratio)
 
@@ -898,37 +980,60 @@ class CarouselBuilder:
                     bbox = draw.textbbox((0, 0), prefix, font=font_body_bold)
                     prefix_w = bbox[2] - bbox[0]
 
-                # Full text wrapping for content
+                # Full text wrapping for content (supporting optional inline **bold** emphasis)
+                bold_color = (*hex_to_rgb(slide_data.get("bold_color") or pal.get("bold_color", "#FFFFFF" if is_dark else "#0F172A")), 255)
                 avail_first = max_w - (text_x + prefix_w - margin_x)
-                words = content.split()
-                first_line_words = []
-                idx = 0
-                while idx < len(words):
-                    w_word = words[idx]
-                    test = " ".join(first_line_words + [w_word]) if first_line_words else w_word
-                    bbox = draw.textbbox((0, 0), test, font=font_body)
-                    if (bbox[2] - bbox[0]) <= avail_first:
-                        first_line_words.append(w_word)
-                        idx += 1
-                    else:
-                        if not first_line_words:
+                sub_x = text_x + prefix_w if prefix and prefix[0].isdigit() else margin_x
+                sub_w = max_w - (sub_x - margin_x)
+
+                if "**" in content:
+                    styled_tokens = self._tokenize_inline_markdown(content)
+                    content_lines = self._wrap_styled_words_two_stage(
+                        styled_tokens, font_body, font_body_bold, avail_first, sub_w, draw
+                    )
+                    space_w_reg = draw.textbbox((0, 0), " ", font=font_body)[2]
+                    space_w_bold = draw.textbbox((0, 0), " ", font=font_body_bold)[2]
+
+                    for l_idx, line_words in enumerate(content_lines):
+                        line_start_x = (text_x + prefix_w) if l_idx == 0 else sub_x
+                        cur_x = line_start_x
+                        for word, is_bold in line_words:
+                            f = font_body_bold if is_bold else font_body
+                            c = bold_color if is_bold else body_color
+                            draw.text((cur_x, curr_y), word, fill=c, font=f)
+                            bbox_w = draw.textbbox((0, 0), word, font=f)
+                            w_token = bbox_w[2] - bbox_w[0]
+                            w_space = space_w_bold if is_bold else space_w_reg
+                            cur_x += w_token + w_space
+                        curr_y += int(font_body.size * 1.32)
+                else:
+                    words = content.split()
+                    first_line_words = []
+                    idx = 0
+                    while idx < len(words):
+                        w_word = words[idx]
+                        test = " ".join(first_line_words + [w_word]) if first_line_words else w_word
+                        bbox = draw.textbbox((0, 0), test, font=font_body)
+                        if (bbox[2] - bbox[0]) <= avail_first:
                             first_line_words.append(w_word)
                             idx += 1
-                        break
+                        else:
+                            if not first_line_words:
+                                first_line_words.append(w_word)
+                                idx += 1
+                            break
 
-                if first_line_words:
-                    draw.text((text_x + prefix_w, curr_y), " ".join(first_line_words), fill=body_color, font=font_body)
-                    curr_y += int(font_body.size * 1.32)
-
-                # Subsequent lines
-                remaining_text = " ".join(words[idx:])
-                if remaining_text:
-                    sub_x = text_x + prefix_w if prefix and prefix[0].isdigit() else margin_x
-                    sub_w = max_w - (sub_x - margin_x)
-                    sub_lines = wrap_text_by_pixel(remaining_text, font_body, sub_w, draw)
-                    for sl in sub_lines:
-                        draw.text((sub_x, curr_y), sl, fill=body_color, font=font_body)
+                    if first_line_words:
+                        draw.text((text_x + prefix_w, curr_y), " ".join(first_line_words), fill=body_color, font=font_body)
                         curr_y += int(font_body.size * 1.32)
+
+                    # Subsequent lines
+                    remaining_text = " ".join(words[idx:])
+                    if remaining_text:
+                        sub_lines = wrap_text_by_pixel(remaining_text, font_body, sub_w, draw)
+                        for sl in sub_lines:
+                            draw.text((sub_x, curr_y), sl, fill=body_color, font=font_body)
+                            curr_y += int(font_body.size * 1.32)
 
                 curr_y += int(font_body.size * 0.20)
 

@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.2] — 2026-11-11
+
+### Added
+- **Suporte a Ênfase e Negrito Inline Markdown (`**texto**`) no CarouselBuilder**:
+  - Implementação de tokenização e quebra de linha de dois estágios (`_tokenize_inline_markdown` e `_wrap_styled_words_two_stage`) no preset `tweet_card`.
+  - Termos envolvidos por `**` são renderizados com peso bold e cor de destaque de alto contraste (`bold_color`), com tratamento de pontuações anexas.
+  - Suporte a realce seletivo de palavras-chave nos títulos (`headline_highlight_color`) via marcação `**palavra**`.
+  - Cobertura de testes unitários em `tests/test_carousel_builder.py` validando negritos inline e realce cromático de títulos.
+
+### Changed
+- **Paleta Executiva Sóbria e Alto Contraste**:
+  - Ajuste no fallback de realce para utilizar o acento institucional do canal (`#0A66C2` no modo claro e `#38BDF8` no modo escuro), eliminando amarelos de baixo contraste sobre cartões claros.
+
 ## [0.13.1] — 2026-11-07
 
 ### Added
