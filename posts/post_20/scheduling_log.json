@@ -1,0 +1,59 @@
+{
+  "post_slug": "post_20_ia_agentica_mcp_model_context_protocol_automacao",
+  "channel_slug": "ismael-soilet",
+  "scheduled_at_utc": "2026-11-14T18:36:06.572831+00:00",
+  "rule_09_compliance": {
+    "exactly_once": true,
+    "pre_flight_checked": true,
+    "health_check_verified": true
+  },
+  "posts": [
+    {
+      "platform": "linkedin",
+      "id": "6af8a9fe76c23bf1c733656e",
+      "status": "scheduled",
+      "due_at_utc": "2026-11-18T12:30:00.000Z",
+      "due_at_brt": "2026-11-18 09:30:00 -03:00",
+      "channel_id": "6add60cf2f1f5ed648c22aab",
+      "document_title": "IA Agêntica e o MCP: O Fim dos Chatbots e a Nova Era da Ação Autônoma",
+      "post_id": "6af8a9fe76c23bf1c733656e",
+      "current_status": "scheduled",
+      "execution_state": "PENDING_SCHEDULED",
+      "last_verified_at": "2026-11-14T18:37:05.923471+00:00"
+    },
+    {
+      "platform": "x",
+      "id": "6af8aa04918fe79d2e996edb",
+      "status": "scheduled",
+      "due_at_utc": "2026-11-18T16:00:00.000Z",
+      "due_at_brt": "2026-11-18 13:00:00 -03:00",
+      "channel_id": "6add609b2f1f5ed648c229b0",
+      "thread_count": 11,
+      "post_id": "6af8aa04918fe79d2e996edb",
+      "current_status": "scheduled",
+      "execution_state": "PENDING_SCHEDULED",
+      "last_verified_at": "2026-11-14T18:37:05.923471+00:00",
+      "actual_thread_count": 11
+    },
+    {
+      "platform": "instagram",
+      "id": "6af8aa0bb9a106584c61f1b8",
+      "status": "scheduled",
+      "due_at_utc": "2026-11-18T21:45:00.000Z",
+      "due_at_brt": "2026-11-18 18:45:00 -03:00",
+      "channel_id": "6add607e2f1f5ed648c22914",
+      "media_count": 10,
+      "post_id": "6af8aa0bb9a106584c61f1b8",
+      "current_status": "scheduled",
+      "execution_state": "PENDING_SCHEDULED",
+      "last_verified_at": "2026-11-14T18:37:05.923471+00:00"
+    }
+  ],
+  "last_audit_at": "2026-11-14T18:37:05.923471+00:00",
+  "audit_summary": {
+    "sent": 0,
+    "scheduled": 3,
+    "error": 0,
+    "unknown": 0
+  }
+}
