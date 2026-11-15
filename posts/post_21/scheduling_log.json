@@ -1,0 +1,59 @@
+{
+  "post_slug": "post_21_fisco_tempo_real_ia_apuracao_continua_tax_compliance",
+  "channel_slug": "ismael-soilet",
+  "scheduled_at_utc": "2026-11-15T16:06:36.005823+00:00",
+  "posts": [
+    {
+      "platform": "linkedin",
+      "post_id": "6af9d87016191f4f5d2df3c8",
+      "id": "6af9d87016191f4f5d2df3c8",
+      "status": "scheduled",
+      "due_at_utc": "2026-11-19T12:30:00.000Z",
+      "due_at_brt": "2026-11-19 09:30:00 -03:00",
+      "channel_id": "6add60cf2f1f5ed648c22aab",
+      "document_title": "O Fisco em Tempo Real: A Morte da Autópsia Fiscal e a Nova Era do Compliance com IA",
+      "current_status": "scheduled",
+      "execution_state": "PENDING_SCHEDULED",
+      "last_verified_at": "2026-11-15T16:06:46.675433+00:00"
+    },
+    {
+      "platform": "x",
+      "post_id": "6af9d877e5a113497af9d740",
+      "id": "6af9d877e5a113497af9d740",
+      "status": "scheduled",
+      "due_at_utc": "2026-11-19T16:00:00.000Z",
+      "due_at_brt": "2026-11-19 13:00:00 -03:00",
+      "channel_id": "6add609b2f1f5ed648c229b0",
+      "thread_count": 11,
+      "current_status": "scheduled",
+      "execution_state": "PENDING_SCHEDULED",
+      "last_verified_at": "2026-11-15T16:06:46.675433+00:00",
+      "actual_thread_count": 11
+    },
+    {
+      "platform": "instagram",
+      "post_id": "6af9d87f16191f4f5d2dfa1d",
+      "id": "6af9d87f16191f4f5d2dfa1d",
+      "status": "scheduled",
+      "due_at_utc": "2026-11-19T21:45:00.000Z",
+      "due_at_brt": "2026-11-19 18:45:00 -03:00",
+      "channel_id": "6add607e2f1f5ed648c22914",
+      "media_count": 10,
+      "current_status": "scheduled",
+      "execution_state": "PENDING_SCHEDULED",
+      "last_verified_at": "2026-11-15T16:06:46.675433+00:00"
+    }
+  ],
+  "rule_09_compliance": {
+    "exactly_once": true,
+    "pre_flight_checked": true,
+    "health_check_verified": true
+  },
+  "last_audit_at": "2026-11-15T16:06:46.675433+00:00",
+  "audit_summary": {
+    "sent": 0,
+    "scheduled": 3,
+    "error": 0,
+    "unknown": 0
+  }
+}
