@@ -1,0 +1,56 @@
+{
+  "post_slug": "post_25_recuperacao_tributaria_rag_juridico_agentes_fiscais",
+  "channel_slug": "ismael-soilet",
+  "publication_date_brt": "2026-11-25",
+  "status": "scheduled",
+  "verified": true,
+  "posts": [
+    {
+      "platform": "linkedin",
+      "id": "6b01bcb3846b0ee9071c6f52",
+      "channel_id": "6add60cf2f1f5ed648c22aab",
+      "scheduled_at_utc": "2026-11-25T12:30:00.000Z",
+      "scheduled_at_brt": "2026-11-25 09:30 BRT",
+      "status": "scheduled",
+      "verified": true,
+      "format": "Article + 14-page Master PDF (4:5 ultra HD)",
+      "current_status": "scheduled",
+      "execution_state": "PENDING_SCHEDULED",
+      "last_verified_at": "2026-11-21T15:47:09.393480+00:00"
+    },
+    {
+      "platform": "x",
+      "id": "6b01bcba846b0ee9071c704a",
+      "channel_id": "6add609b2f1f5ed648c229b0",
+      "scheduled_at_utc": "2026-11-25T16:00:00.000Z",
+      "scheduled_at_brt": "2026-11-25 13:00 BRT",
+      "status": "scheduled",
+      "verified": true,
+      "format": "Technical Thread (11 tweets) + HD Cover",
+      "current_status": "scheduled",
+      "execution_state": "PENDING_SCHEDULED",
+      "last_verified_at": "2026-11-21T15:47:09.393480+00:00",
+      "actual_thread_count": 11
+    },
+    {
+      "platform": "instagram",
+      "id": "6b01bcbf846b0ee9071c715b",
+      "channel_id": "6add607e2f1f5ed648c22914",
+      "scheduled_at_utc": "2026-11-25T21:45:00.000Z",
+      "scheduled_at_brt": "2026-11-25 18:45 BRT",
+      "status": "scheduled",
+      "verified": true,
+      "format": "Carousel Album (10 slides 4:5 HD)",
+      "current_status": "scheduled",
+      "execution_state": "PENDING_SCHEDULED",
+      "last_verified_at": "2026-11-21T15:47:09.393480+00:00"
+    }
+  ],
+  "last_audit_at": "2026-11-21T15:47:09.393480+00:00",
+  "audit_summary": {
+    "sent": 0,
+    "scheduled": 3,
+    "error": 0,
+    "unknown": 0
+  }
+}
